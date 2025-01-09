@@ -12,6 +12,7 @@ class ApiService {
   late String baseUrl;
   late String token;
   late String userName = '';
+
   late bool isAuthenticated = true;
   late Dio dio;
   late CookieJar cookieJar;
