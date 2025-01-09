@@ -12,7 +12,6 @@ class ApiService {
   late String baseUrl;
   late String token;
   late String userName = '';
-
   late bool isAuthenticated = true;
   late Dio dio;
   late CookieJar cookieJar;
@@ -129,7 +128,7 @@ class ApiService {
     baseUrl = prefs.getString('baseUrl') ?? baseUrl1;
     token = prefs.getString("token") ?? '';
     userName = prefs.getString("userName") ?? '';
-    isAuthenticated = prefs.getBool("isAuthenticated") ?? false;
+    isAuthenticated = prefs.getBool("isAuthenticated") ?? isAuthenticated;
     print("DataLoaded - isAuthenticated: $isAuthenticated");
   }
 
