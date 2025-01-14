@@ -4,7 +4,8 @@ import 'package:samparka/Screens/login.dart'; //LoginPage()
 import 'package:samparka/Screens/error_page.dart'; //ErrorPage()
 import 'package:samparka/Screens/add_influencer.dart'; //AddInfluencerPage()
 import 'package:samparka/Service/api_service.dart';
-import 'Screens/API_TEST.dart'; //TaskListScreen()
+import 'Screens/API_TEST.dart';
+import 'Screens/temp.dart'; //TaskListScreen()
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure bindings are initialized
@@ -46,6 +47,7 @@ class MyApp extends StatelessWidget {
           title: 'Samparka',
           // Depending on whether the user is authenticated or not, show the correct page
           home: apiService.isAuthenticated ? const InfluencersPage() : const LoginPage(),
+          //home: apiService.isAuthenticated ? TempPage() : const LoginPage(),
         );
       },
     );
@@ -55,20 +57,3 @@ class MyApp extends StatelessWidget {
     await Future.delayed(const Duration(milliseconds: 10));
   }
 }
-
-
-/*class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-  //final ApiService apiService = ApiService();
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Samparka',
-      //home: InfluencersPage(),
-      //home: AddInfluencerPage(),
-      home: LoginPage()
-    );
-  }
-}*/

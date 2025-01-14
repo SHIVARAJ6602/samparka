@@ -132,15 +132,69 @@ class _ApiScreenState extends State<ApiScreen> {
           Expanded(
             child: Row(
               children: [
-                TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => TempPage()),
-                      );
-                    },
-                    child: Text('Temp page')
-                )
+                Expanded(
+                  child: Column(
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          apiService.CreateGanyaVyakthi();
+                          },
+                          child: Text('Add GV')
+                      )
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      TextButton(
+                          onPressed: () {
+                            apiService.homePage();
+                          },
+                          child: Text('Home Page')
+                      )
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      TextButton(
+                          onPressed: () {
+                            apiService.myTeam();
+                          },
+                          child: Text('My Team')
+                      )
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      TextButton(
+                          onPressed: () {
+                            apiService.myInfluencer(0,3);
+                          },
+                          child: Text('My Influencer')
+                      )
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => TempPage()),
+                            );
+                          },
+                          child: Text('Temp page')
+                      )
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

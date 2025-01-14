@@ -40,6 +40,7 @@ class ApiService {
           "designation": designation,
           "password": password,
           "group": group,
+          "shreni_id": "33",
         },
       );
 
@@ -62,8 +63,6 @@ class ApiService {
     }
   }
 
-
-  // Private constructor
   ApiService._privateConstructor();
 
   // The single instance of ApiService
@@ -76,14 +75,170 @@ class ApiService {
     return _instance;
   }
 
-  /*ApiService(){
-    dio = Dio();
-    var cookieJar = CookieJar();
-    dio.interceptors.add(CookieManager(cookieJar));
-    loadData();
-  }*/
+  Future<List<dynamic>> homePage() async{
+    try {
+      // Check if token is null or empty before making the request
+      if (token.isEmpty) {
+        print('Error: Authorization token is missing');
+        throw Exception('Failed: No Auth Token');
+      }
+      dio.options.headers['Authorization'] = 'Token $token';
+      // Send registration request to the server
+      final response = await dio.post(
+        '$baseUrl/callHandler/',
+        data: {
+          "action":"homePage",
+        },
+      );
+      // Handle server response status
+      if (response.statusCode == 200) {
+        print(response.data);
+        if (response.data is List<dynamic>) {
+          return response.data;
+        } else if (response.data is String) {
+          final parsedData = List<dynamic>.from(response.data);
+          return parsedData;
+        } else {
+          throw Exception('Expected a List, but got ${response.data.runtimeType}');
+        }
+      } else {
+        throw Exception('Failed to load tasks. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle unexpected errors such as network issues or invalid responses
+      print('Error: $e');
+      throw Exception('Failed to load tasks: $e');
+    }
+  }
 
-  // Initialize the Dio instance and add interceptors
+  Future<List<dynamic>> myInfluencer(int sCount,int eCount) async{
+    try {
+      // Check if token is null or empty before making the request
+      if (token.isEmpty) {
+        print('Error: Authorization token is missing');
+        throw Exception('Failed: No Auth Token');
+      }
+      dio.options.headers['Authorization'] = 'Token $token';
+      // Send registration request to the server
+      final response = await dio.post(
+        '$baseUrl/callHandler/',
+        data: {
+          "action":"myInfluencer",
+          'orderby':'date_approved',
+          'sCount':sCount,
+          'eCount':eCount,
+        },
+      );
+      // Handle server response status
+      if (response.statusCode == 200) {
+        print(response.data);
+        if (response.data is List<dynamic>) {
+          return response.data;
+        } else if (response.data is String) {
+          final parsedData = List<dynamic>.from(response.data);
+          return parsedData;
+        } else {
+          throw Exception('Expected a List, but got ${response.data.runtimeType}');
+        }
+      } else {
+        throw Exception('Failed to load tasks. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle unexpected errors such as network issues or invalid responses
+      print('Error: $e');
+      throw Exception('Failed to load tasks: $e');
+    }
+  }
+
+  Future<List<dynamic>> myTeam() async{
+    try {
+      // Check if token is null or empty before making the request
+      if (token.isEmpty) {
+        print('Error: Authorization token is missing');
+        throw Exception('Failed: No Auth Token');
+      }
+      dio.options.headers['Authorization'] = 'Token $token';
+      // Send registration request to the server
+      final response = await dio.post(
+        '$baseUrl/callHandler/',
+        data: {
+          "action":"myTeam",
+        },
+      );
+      // Handle server response status
+      if (response.statusCode == 200) {
+        print(response.data);
+        if (response.data is List<dynamic>) {
+          return response.data;
+        } else if (response.data is String) {
+          final parsedData = List<dynamic>.from(response.data);
+          return parsedData;
+        } else {
+          throw Exception('Expected a List, but got ${response.data.runtimeType}');
+        }
+      } else {
+        throw Exception('Failed to load tasks. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle unexpected errors such as network issues or invalid responses
+      print('Error: $e');
+      throw Exception('Failed to load tasks: $e');
+    }
+  }
+
+  Future<bool> CreateGanyaVyakthi() async {
+    try {
+      // Check if token is null or empty before making the request
+      if (token.isEmpty) {
+        print('Error: Authorization token is missing');
+        return false;
+      }
+      dio.options.headers['Authorization'] = 'Token $token';
+      // Send registration request to the server
+      final response = await dio.post(
+        '$baseUrl/callHandler/',
+        data: {
+          "action":"CreateGanyaVyakti",
+          "fname": "Chandan",
+          "lname": "Kumar",
+          "phone_number": "9876543214",
+          "assigned_karyakarta_phone_number": "1234567890",
+          "designation": "Leader",
+          "description": "Some description",
+          "hashtags": "tag1, tag2",
+          "organization": "Organization Name",
+          "email": "johndoe@example.com",
+          "impact_on_society": "Positive impact",
+          "interaction_level": "Samparka",
+          "address": {
+            "address_1": "123 Street Name",
+            "city_1": "City Name",
+            "state_1": "State Name",
+            "address_2": "Apt 4B",
+            "city_2": "Secondary City",
+            "state_2": "Secondary State"
+          }
+        },
+      );
+      // Handle server response status
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print("GanyaVyakthi registered successfully");
+        print("message: ${response.data['message']} user: ${response.data['user']}");
+        return true;
+      } else {
+        // Capture error message from the server response, if available
+        var errorData = response.data;
+        String errorMessage = errorData['message'] ?? 'Unknown error';
+        print('Registration failed: $errorMessage');
+        throw Exception('Registration failed: $errorMessage');
+      }
+    } catch (e) {
+      // Handle unexpected errors such as network issues or invalid responses
+      print('Error during registration: $e');
+      return false;
+    }
+  }
+
   Future<void> _initialize() async {
     dio = Dio();
     cookieJar = CookieJar();
@@ -91,14 +246,8 @@ class ApiService {
     await loadData();
 
     try {
-      //print(baseUrl.toString().substring(0, 40));
-      //final response = await dio.get('https://t6q7lj15-8000.inc1.devtunnels.ms');
       final response = await dio.get(baseUrl.toString().substring(0, baseUrl.length-4));
-      //final response = await dio.get(baseUrl.toString().substring(0, 40));
-      // Check the response status code
       if (response.statusCode == 200) {
-        //print(response.headers);
-        //print('Ping successful! Status Code: 200\nResponse: ${response.data.toString().substring(0, 100)}...');
         print('Ping successful! Status Code: 200');
       } else {
         print('Failed to ping. Status Code: ${response.statusCode}');
@@ -106,13 +255,8 @@ class ApiService {
     } catch (e) {
       print('Ping failed. Error: $e');
     }
-
     _isInitialized = true;
   }
-
-  /*Future<void> initialize() async {
-    loadData();
-  }*/
 
   Future<void> saveData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -132,23 +276,10 @@ class ApiService {
     print("DataLoaded - isAuthenticated: $isAuthenticated");
   }
 
-  /*Future<List<dynamic>> fetchTasks() async {
+  Future<List<dynamic>> fetchTasks() async {
     dio.options.headers['Authorization'] = 'Token $token';
 
-    final response = await dio.get('$baseUrl/tasks/');
-    if (response.statusCode == 200) {
-      print(response.data);
-      return response.data;
-    } else {
-      throw Exception('Failed to load tasks');
-    }
-  }*/
-
-  Future<List<dynamic>> fetchTasks() async {
-    //dio.options.headers['Authorization'] = 'Token $token';
-
     try {
-      //final response = await dio.get('$baseUrl/tasks/');
       final response = await dio.get('$baseUrl/tasks/');
       if (response.statusCode == 200) {
         print(response.data);
@@ -156,7 +287,7 @@ class ApiService {
           return response.data;
         } else if (response.data is String) {
           final parsedData = List<dynamic>.from(response.data);
-          return parsedData;  // Return the parsed data
+          return parsedData;
         } else {
           throw Exception('Expected a List, but got ${response.data.runtimeType}');
         }
@@ -207,7 +338,6 @@ class ApiService {
     }
   }
 
-
   Future<bool> addTask(String title) async {
     dio.options.headers['Authorization'] = 'Token $token';
 
@@ -230,7 +360,6 @@ class ApiService {
         data: {'action': 'get_otp', 'mail': mail, 'phone': phone},
       );
 
-      // Log the raw response body for debugging
       print('Response body: ${response.data}');
 
       // Check if the response status code indicates success (e.g., 200 or 201)
@@ -254,7 +383,6 @@ class ApiService {
     }
   }
 
-  // Function to log in with phone and OTP
   Future<bool> login(String phone, String otp) async {
     try {
       final response = await dio.post(
@@ -339,25 +467,6 @@ class ApiService {
 
   }
 
-  // Adding the token to the request headers
-  Future<Response> _getAuthenticatedResponse(String path, {Map<String, dynamic>? data}) async {
-    if (token == '') {
-      throw Exception("No authentication token found");
-    }
-
-    // Add token to the Authorization header
-    dio.options.headers['Authorization'] = 'Bearer $token';
-
-    // Make the API request
-    try {
-      final response = await dio.post(path, data: data);
-      return response;
-    } catch (e) {
-      throw Exception('Failed to load data: $e');
-    }
-  }
-
-  // Example method to make an authenticated request
   Future<void> userAuth() async {
     dio.options.headers['Authorization'] = 'Token $token';
 

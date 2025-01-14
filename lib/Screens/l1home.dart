@@ -48,14 +48,20 @@ class _InfluencersPageState extends State<InfluencersPage> {
   late bool isAuthenticated;
   late String token;
   late String currentUrl;
+  List<dynamic> influencers = [];
+  late List<dynamic> result;
+  bool loading = true;
   @override
   void initState() {
     super.initState();
+
     //handleButtonPress();
     username = apiService.userName;
     isAuthenticated = apiService.isAuthenticated;
     token = apiService.token;
     currentUrl = apiService.baseUrl;
+    fetchInfluencers();
+    loading = false;
   }
   // State variables for radio buttons
   String? selectedRadio = 'url1';
@@ -87,6 +93,22 @@ class _InfluencersPageState extends State<InfluencersPage> {
       ),
     );
   }
+
+  // Define a function to fetch data
+  Future<void> fetchInfluencers() async {
+    try {
+      // Call the apiService.homePage() and store the result
+      result = await apiService.homePage();
+      setState(() {
+        // Update the influencers list with the fetched data
+        influencers = result;
+      });
+    } catch (e) {
+      // Handle any errors here
+      print("Error fetching influencers: $e");
+    }
+  }
+
   /******************************************************/
 
   @override
@@ -361,46 +383,86 @@ class _InfluencersPageState extends State<InfluencersPage> {
                         ),
                         child: Column(
                           children: [
-                            SizedBox(
-                              child: ListView.builder(
-                                shrinkWrap: true, // Ensures ListView only takes as much space as needed
-                                padding: EdgeInsets.zero,  // Remove default padding
-                                itemCount: 2,
-                                itemBuilder: (context, index) {
-                                  return const Padding(
-                                    padding: EdgeInsets.only(left: 16,right: 16,top: 20),
-                                    child: InfluencerCard(),
-                                  );
-                                },
-                              ),
-                            ),
-                            // View All Influencers Button
-                            TextButton(
-                              onPressed: () {},
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Text(
-                                    'View all Influencers',
+                            // If the list is empty, show a message
+                            if (influencers.isEmpty)
+                              Container(
+                                padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'No Influencer Assigned',
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
                                   ),
-                                  const SizedBox(width: 4),
-                                  Image.asset(
-                                    'assets/icon/arrow.png',
+                                ),
+                              )
+
+                                /*Text(
+                                  'No Influencer Assigned',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
                                     color: Colors.white,
-                                    width: 12,
-                                    height: 12,
                                   ),
-                                ],
+                                ),*/
+                              //)
+                            // If the list is not empty, build a ListView of InfluencerCards
+                            else
+                              ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: influencers.length, // The number of items in your data list
+                                itemBuilder: (context, index) {
+                                  final influencer = influencers[index]; // Access the influencer data for each item
+                                  return Padding(
+                                    padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
+                                    child: InfluencerCard(
+                                      name: influencer['fname']!,
+                                      designation: influencer['designation']!,
+                                      description: influencer['description']!,
+                                      hashtags: influencer['hashtags']!,
+                                    ),
+                                  );
+                                },
                               ),
-                            ),
+                            if (influencers.isNotEmpty)
+                              // View All Influencers Button
+                              TextButton(
+                                onPressed: () async {
+                                  result = await apiService.myInfluencer(0, 10);
+                                  setState(() {
+                                    influencers = result;
+                                  });
+                                },
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Text(
+                                      'View all Influencers',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Image.asset(
+                                      'assets/icon/arrow.png',
+                                      color: Colors.white,
+                                      width: 12,
+                                      height: 12,
+                                    ),
+                                  ],
+                                ),
+                              ),
                           ],
                         ),
                       ),
+
                       const SizedBox(height: 20),
                       Container(
                         decoration: BoxDecoration(
@@ -553,8 +615,25 @@ class _InfluencersPageState extends State<InfluencersPage> {
 
 }
 
+
+
 class InfluencerCard extends StatelessWidget {
-  const InfluencerCard({super.key});
+  // Adding the required fields to the constructor
+  final String name;
+  final String designation;
+  final String description;
+  final String hashtags;
+  //final String imageUrl; // Optionally, if you want to accept a profile picture URL
+
+  // Constructor
+  const InfluencerCard({
+    super.key,
+    required this.name,
+    required this.designation,
+    required this.description,
+    required this.hashtags,
+    //required this.imageUrl, // Profile image URL
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -571,7 +650,7 @@ class InfluencerCard extends StatelessWidget {
           ),
         ],
       ),
-      child: const Row(
+      child: Row(
         children: [
           // Profile Picture
           CircleAvatar(
@@ -585,7 +664,7 @@ class InfluencerCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Name',
+                  name,
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
@@ -593,7 +672,7 @@ class InfluencerCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Designation',
+                  designation,
                   style: TextStyle(
                     fontSize: 14,
                     color: Color.fromRGBO(5, 50, 70, 1.0),
@@ -601,9 +680,9 @@ class InfluencerCard extends StatelessWidget {
                 ),
                 SizedBox(height: 1),
                 Text(
-                  'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                  description,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 14,
                     color: Color.fromRGBO(5, 50, 70, 1.0),
                   ),
                   maxLines: 2,
@@ -611,7 +690,7 @@ class InfluencerCard extends StatelessWidget {
                 ),
                 SizedBox(height: 1),
                 Text(
-                  '#hashtags  #hashtags',
+                  hashtags,
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.teal,

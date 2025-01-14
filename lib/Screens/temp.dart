@@ -6,187 +6,142 @@ class TempPage extends StatefulWidget {
 }
 
 class _HamburgerMenuPageState extends State<TempPage> {
-  // Text editing controllers for text fields
-  final TextEditingController usernameController = TextEditingController();
-  final TextEditingController tokenController = TextEditingController();
-  final TextEditingController urlController = TextEditingController();
-  final TextEditingController newUrlController = TextEditingController();
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Test'),
+      ),
+      body: InfluencerList(),
+    );
+  }
+}
 
-  // State variables for radio buttons
-  String? selectedRadio = 'url1';
-  String currentUrl = 'https://api.example.com';  // Default URL
+class InfluencerList extends StatelessWidget {
+  InfluencerList({super.key});
 
-  // Sample user data (can be fetched from an API service)
-  String username = 'JohnDoe';
-  bool isAuthenticated = true;
-  String token = 'abc123token';
+  // Sample data
+  final List<Map<String, String>> influencerData = [
+    {
+      'id': 'GV00000002',
+      'fname': 'Ravi',
+      'designation': 'Leader',
+      'description': 'Some description',
+      'hashtags': '#tag1 #tag2',
+    },
+    {
+      'id': 'GV00000003',
+      'fname': 'Sara',
+      'designation': 'Manager',
+      'description': 'Another description',
+      'hashtags': '#tag3 #tag4',
+    },
+    // Add more data as needed
+  ];
 
-  // Function to handle button press logic
-  void handleButtonPress() {
-    setState(() {
-      // For demonstration, update the URL based on the radio button selected
-      currentUrl = selectedRadio == 'url1' ? 'https://api.example1.com' : 'https://api.example2.com';
-    });
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: influencerData.length,
+      itemBuilder: (context, index) {
+        final influencer = influencerData[index];
+        print('name: ${influencer['fname']}');
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: InfluencerCard(
+            name: influencer['fname']!,
+            designation: influencer['designation']!,
+            description: influencer['description']!,
+            hashtags: influencer['hashtags']!,
+          ),
+        );
+      },
+    );
+  }
+}
 
-    // Logic for what should happen on button press
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text('Action Performed'),
-        content: Text('Current URL: $currentUrl'),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Close'),
+
+class InfluencerCard extends StatelessWidget {
+  final String name;
+  final String designation;
+  final String description;
+  final String hashtags;
+
+  const InfluencerCard({
+    super.key,
+    required this.name,
+    required this.designation,
+    required this.description,
+    required this.hashtags,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Profile Picture (placeholder)
+          CircleAvatar(
+            radius: 30,
+            backgroundColor: Colors.grey,
+          ),
+          SizedBox(width: 16),
+          // Influencer Details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name, // Dynamic name
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromRGBO(5, 50, 70, 1.0),
+                  ),
+                ),
+                Text(
+                  designation, // Dynamic designation
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color.fromRGBO(5, 50, 70, 1.0),
+                  ),
+                ),
+                SizedBox(height: 1),
+                Text(
+                  description, // Dynamic description
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color.fromRGBO(5, 50, 70, 1.0),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 1),
+                Text(
+                  hashtags, // Dynamic hashtags
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.teal,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Hamburger Menu Example'),
-      ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.blue,
-              ),
-              child: Text(
-                'Menu',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
-              ),
-            ),
-            ListTile(
-              title: Text('Username: $username'),
-            ),
-            ListTile(
-              title: Text('Is Authenticated: $isAuthenticated'),
-            ),
-            ListTile(
-              title: Text('Token: $token'),
-            ),
-            ListTile(
-              title: Text('API URL: $currentUrl'),
-            ),
-            Divider(),
-            // Submenu with radio buttons
-            ExpansionTile(
-              title: Text('Select API URL'),
-              children: [
-                ListTile(
-                  title: Row(
-                    children: [
-                      Radio<String>(
-                        value: 'url1',
-                        groupValue: selectedRadio,
-                        onChanged: (value) {
-                          setState(() {
-                            selectedRadio = value;
-                          });
-                        },
-                      ),
-                      Text('https://api.example1.com'),
-                    ],
-                  ),
-                ),
-                ListTile(
-                  title: Row(
-                    children: [
-                      Radio<String>(
-                        value: 'url2',
-                        groupValue: selectedRadio,
-                        onChanged: (value) {
-                          setState(() {
-                            selectedRadio = value;
-                          });
-                        },
-                      ),
-                      Text('https://api.example2.com'),
-                    ],
-                  ),
-                ),
-                ListTile(
-                  title: TextField(
-                    controller: newUrlController,
-                    decoration: InputDecoration(
-                      labelText: 'Enter a new URL',
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Divider(),
-            // Text fields for user input (with labels)
-            ListTile(
-              title: TextField(
-                controller: usernameController,
-                decoration: InputDecoration(labelText: 'Username'),
-              ),
-            ),
-            ListTile(
-              title: TextField(
-                controller: tokenController,
-                decoration: InputDecoration(labelText: 'Token'),
-              ),
-            ),
-            ListTile(
-              title: TextField(
-                controller: urlController,
-                decoration: InputDecoration(labelText: 'API URL'),
-              ),
-            ),
-            Divider(),
-            // Login button
-            ListTile(
-              title: ElevatedButton(
-                onPressed: () {
-                  // Navigate to the login page
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                  );
-                },
-                child: Text('Login'),
-              ),
-            ),
-            Divider(),
-            // Perform action button
-            ListTile(
-              title: ElevatedButton(
-                onPressed: handleButtonPress,
-                child: Text('Perform Action'),
-              ),
-            ),
-          ],
-        ),
-      ),
-      body: Center(
-        child: Text('Main Content Here'),
-      ),
-    );
-  }
 }
-
-// Dummy LoginPage for navigation (just for example purposes)
-class LoginPage extends StatelessWidget {
-  const LoginPage({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Login')),
-      body: Center(child: Text('Login Page')),
-    );
-  }
-}
-
