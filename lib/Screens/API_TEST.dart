@@ -41,6 +41,9 @@ class _ApiScreenState extends State<ApiScreen> {
 
   @override
   Widget build(BuildContext context) {
+    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
+    double largeFontSize = normFontSize+4; //20
+    double smallFontSize = normFontSize-2; //14
     return Scaffold(
       appBar: AppBar(title: const Text('API')),
       body: Column(

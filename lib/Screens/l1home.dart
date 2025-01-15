@@ -17,7 +17,7 @@ class InfluencersPage extends StatefulWidget {
 class _InfluencersPageState extends State<InfluencersPage> {
   // This keeps track of the selected index for the bottom navigation
   int _selectedIndex = 0;
-  final ApiService apiService = ApiService();
+  final apiService = ApiService();
 
   // Method to handle bottom navigation item tap
   void _onNavItemTapped(int index) {
@@ -121,6 +121,9 @@ class _InfluencersPageState extends State<InfluencersPage> {
 
   @override
   Widget build(BuildContext context) {
+    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
+    double largeFontSize = normFontSize+4; //20
+    double smallFontSize = normFontSize-2; //14
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(

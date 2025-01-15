@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../Service/api_service.dart';
+import 'API_TEST.dart';
+import 'gen_report.dart';
+import 'l1home.dart';
 
 class MyTeamPage extends StatefulWidget {
   const MyTeamPage({super.key});
@@ -10,17 +13,46 @@ class MyTeamPage extends StatefulWidget {
 }
 
 class _MyTeamPageState extends State<MyTeamPage> {
-  final ApiService apiService = ApiService();
+  final apiService = ApiService();
 
+  int _selectedIndex = 1;
   List<dynamic> TeamMembers = [];
   late List<dynamic> result;
   bool loading = true;
+
 
   @override
   void initState() {
     super.initState();
     fetchTeam();
     loading = false;
+  }
+
+  // Method to handle bottom navigation item tap
+  void _onNavItemTapped(int index) {
+    if (index == 4) {
+      // Navigate to AddInfluencerPage when index 1 is tapped
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ApiScreen()),
+      );
+    } else if (index == 3) {
+      // Navigate to AddInfluencerPage when index 1 is tapped
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const GenReportPage()),
+      );
+    } else if (index == 0) {
+      // Navigate to AddInfluencerPage when index 1 is tapped
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const InfluencersPage()),
+      );
+    } else {
+      setState(() {
+        _selectedIndex = index; // Update the selected index for other tabs
+      });
+    }
   }
 
   // Define a function to fetch data
@@ -40,6 +72,9 @@ class _MyTeamPageState extends State<MyTeamPage> {
 
   @override
   Widget build(BuildContext context) {
+    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
+    double largeFontSize = normFontSize+4; //20
+    double smallFontSize = normFontSize-2; //14
     return Scaffold(
       appBar: AppBar(
         title: Text('My Team'),
@@ -61,54 +96,110 @@ class _MyTeamPageState extends State<MyTeamPage> {
           );
         },
       ),
-    );
-  }
-}
-
-class InfluencerList extends StatelessWidget {
-  InfluencerList({super.key});
-
-  // Sample data
-  final List<Map<String, String>> influencerData = [
-    {
-      'id': 'GV00000002',
-      'fname': 'Ravi',
-      'designation': 'Leader',
-      'description': 'Some description',
-      'hashtags': '#tag1 #tag2',
-    },
-    {
-      'id': 'GV00000003',
-      'fname': 'Sara',
-      'designation': 'Manager',
-      'description': 'Another description',
-      'hashtags': '#tag3 #tag4',
-    },
-    // Add more data as needed
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: influencerData.length,
-      itemBuilder: (context, index) {
-        final influencer = influencerData[index];
-        print('name: ${influencer['fname']}');
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 20),
-          child: MemberCard(
-            name: influencer['fname']!,
-            designation: influencer['designation']!,
-            description: influencer['description']!,
-            hashtags: influencer['hashtags']!,
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.only(left: 16,right: 16,bottom: 16,top: 1),  // Add padding around the bottom navigation bar
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color.fromRGBO(10, 205, 165, 1.0),
+              borderRadius: BorderRadius.circular(25),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildBottomNavItem(
+                  label: "Add Influencer",
+                  iconPath: 'assets/icon/add influencer.png',  // Use the PNG file path
+                  isActive: _selectedIndex == 0,
+                  onPressed: () => _onNavItemTapped(0),
+                ),
+                _buildBottomNavItem(
+                  label: "Team",
+                  iconPath: 'assets/icon/team.png',  // Use the PNG file path
+                  isActive: _selectedIndex == 1,
+                  onPressed: () => _onNavItemTapped(1),
+                ),
+                _buildBottomNavItem(
+                  label: "Meeting",
+                  iconPath: 'assets/icon/meeting.png',  // Use the PNG file path
+                  isActive: _selectedIndex == 2,
+                  onPressed: () => _onNavItemTapped(2),
+                ),
+                _buildBottomNavItem(
+                  label: "Report",
+                  iconPath: 'assets/icon/report.png',  // Use the PNG file path
+                  isActive: _selectedIndex == 3,
+                  onPressed: () => _onNavItemTapped(3),
+                ),
+                /*_buildBottomNavItem(
+                  label: "API",
+                  iconPath: 'assets/icon/report.png',  // Use the PNG file path
+                  isActive: _selectedIndex == 4,
+                  onPressed: () => _onNavItemTapped(4),
+                ),*/
+              ],
+            ),
           ),
-        );
-      },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNavItem({
+    required String label,
+    required String iconPath,  // Change IconData to iconPath (a string representing the PNG path)
+    required bool isActive,
+    required VoidCallback onPressed,
+  }) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+            ),
+            child: Center(
+              child: Container(
+                width: 45, // Inner container size
+                height: 45, // Inner container size
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isActive
+                      ? const Color.fromRGBO(5, 50, 70, 1.0)
+                      : Colors.white, // Optional: Background color of the inner container
+                ),
+                child: Center(
+                  child: Image.asset(
+                    iconPath,
+                    color: isActive ? Colors.white : const Color.fromRGBO(5, 50, 70, 1.0),
+                    fit: BoxFit.contain, // Ensures image scales to fit within inner container
+                    width: 30, // Image width
+                    height: 30, // Image height
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: isActive ? Colors.white : const Color.fromRGBO(5, 50, 70, 1.0),
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
-
 
 class MemberCard extends StatelessWidget {
   final String name;

@@ -66,6 +66,7 @@ class ApiService {
   ApiService._privateConstructor();
 
   // The single instance of ApiService
+  //static final ApiService _instance = ApiService._privateConstructor();
   static final ApiService _instance = ApiService._privateConstructor();
 
   factory ApiService() {
@@ -473,6 +474,13 @@ class ApiService {
     try {
       final response = await dio.get('$baseUrl/callHandler/');
       print(response.data);
+
+      if (response.statusCode == 200) {
+        print(response.data);
+      } else {
+        throw Exception('Failed to check user auth. Status code: ${response.statusCode}');
+      }
+
     } catch (e) {
       print('Error: $e');
     }

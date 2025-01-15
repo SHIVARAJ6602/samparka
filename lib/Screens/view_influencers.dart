@@ -10,7 +10,7 @@ class ViewInfluencersPage extends StatefulWidget {
 }
 
 class _ViewInfluencersPageState extends State<ViewInfluencersPage> {
-  final ApiService apiService = ApiService();
+  final apiService = ApiService();
 
   List<dynamic> influencers = [];
   late List<dynamic> result;
@@ -40,6 +40,9 @@ class _ViewInfluencersPageState extends State<ViewInfluencersPage> {
 
   @override
   Widget build(BuildContext context) {
+    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
+    double largeFontSize = normFontSize+4; //20
+    double smallFontSize = normFontSize-2; //14
     return Scaffold(
       appBar: AppBar(
         title: Text('Influencers'),

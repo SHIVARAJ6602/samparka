@@ -68,6 +68,9 @@ class _GenReportPageState extends State<GenReportPage> {
 
   @override
   Widget build(BuildContext context) {
+    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
+    double largeFontSize = normFontSize+4; //20
+    double smallFontSize = normFontSize-2; //14
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -93,31 +96,32 @@ class _GenReportPageState extends State<GenReportPage> {
           children: [
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         "Generate",
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: largeFontSize,
                           fontWeight: FontWeight.w600,
-                          color: Color.fromRGBO(5, 50, 70, 1.0),
+                          color: const Color.fromRGBO(5, 50, 70, 1.0),
                         ),
                         textAlign: TextAlign.left,
                       ),
                       Text(
                         "Report",
                         style: TextStyle(
-                          fontSize: 40,
+                          fontSize: largeFontSize+20,
                           fontWeight: FontWeight.w600,
-                          color: Color.fromRGBO(5, 50, 70, 1.0),
+                          color: const Color.fromRGBO(5, 50, 70, 1.0),
                         ),
                       ),
                     ],
                   ),
                 ),
                 Container(
+                  width: MediaQuery.of(context).size.width*0.4,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(30),
                     gradient: const LinearGradient(
@@ -135,14 +139,14 @@ class _GenReportPageState extends State<GenReportPage> {
                       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
                             'Download PDF',
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: normFontSize,
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                             ),
@@ -185,7 +189,7 @@ class _GenReportPageState extends State<GenReportPage> {
                             selectedFromDate == null
                                 ? "From"
                                 : "${selectedFromDate!.toLocal()}".split(' ')[0],
-                            style: TextStyle(color: Colors.grey.shade600,fontSize: 16),
+                            style: TextStyle(color: Colors.grey.shade600,fontSize: normFontSize),
                           ),
                         ],
                       ),
@@ -221,7 +225,7 @@ class _GenReportPageState extends State<GenReportPage> {
                             selectedToDate == null
                                 ? "To"
                                 : "${selectedToDate!.toLocal()}".split(' ')[0],
-                            style: TextStyle(color: Colors.grey.shade600,fontSize: 16),
+                            style: TextStyle(color: Colors.grey.shade600,fontSize: normFontSize),
                           ),
                         ],
                       ),
@@ -237,10 +241,10 @@ class _GenReportPageState extends State<GenReportPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         "Influencer",
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: largeFontSize,
                           fontWeight: FontWeight.w600,
                           color: Color.fromRGBO(5, 50, 70, 1.0),
                         ),
@@ -275,18 +279,18 @@ class _GenReportPageState extends State<GenReportPage> {
                                     mainAxisAlignment: MainAxisAlignment.center, // Centering content
                                     crossAxisAlignment: CrossAxisAlignment.center, // Center horizontally
                                     children: [
-                                      const Text(
+                                      Text(
                                         "Total",
                                         style: TextStyle(
-                                          fontSize: 16,
+                                          fontSize: normFontSize,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.white,
                                         ),
                                       ),
                                       Text(
                                         influencerCount.toString(), // Replace with your 'total' variable
-                                        style: const TextStyle(
-                                          fontSize: 25,
+                                        style: TextStyle(
+                                          fontSize: largeFontSize+5,
                                           color: Colors.white,
                                         ),
                                       ),
@@ -306,18 +310,18 @@ class _GenReportPageState extends State<GenReportPage> {
                                     mainAxisAlignment: MainAxisAlignment.center, // Centering content
                                     crossAxisAlignment: CrossAxisAlignment.center, // Center horizontally
                                     children: [
-                                      const Text(
+                                      Text(
                                         "Met",
                                         style: TextStyle(
-                                          fontSize: 16,
+                                          fontSize: normFontSize,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.white,
                                         ),
                                       ),
                                       Text(
                                         influencerMet.toString(), // Replace with your 'met' variable
-                                        style: const TextStyle(
-                                          fontSize: 25,
+                                        style: TextStyle(
+                                          fontSize: largeFontSize+5,
                                           color: Colors.white,
                                         ),
                                       ),
@@ -332,17 +336,17 @@ class _GenReportPageState extends State<GenReportPage> {
                     ],
                   ),
                 ),
-                const SizedBox(width: 30),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const Text(
-                        "Team Member",
+                      Text(
+                        "Team",
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: largeFontSize,
                           fontWeight: FontWeight.w600,
-                          color: Color.fromRGBO(5, 50, 70, 1.0),
+                          color: const Color.fromRGBO(5, 50, 70, 1.0),
                         ),
                         //textAlign: TextAlign.left,
                       ),
@@ -376,18 +380,18 @@ class _GenReportPageState extends State<GenReportPage> {
                                     mainAxisAlignment: MainAxisAlignment.center, // Centering content
                                     crossAxisAlignment: CrossAxisAlignment.center, // Center horizontally
                                     children: [
-                                      const Text(
+                                      Text(
                                         "Active",
                                         style: TextStyle(
-                                          fontSize: 16,
+                                          fontSize: normFontSize,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.white,
                                         ),
                                       ),
                                       Text(
                                         activeTeamMembers.toString(), // Replace with your 'total' variable
-                                        style: const TextStyle(
-                                          fontSize: 25,
+                                        style: TextStyle(
+                                          fontSize: largeFontSize+5,
                                           color: Colors.white,
                                         ),
                                       ),
@@ -407,18 +411,18 @@ class _GenReportPageState extends State<GenReportPage> {
                                     mainAxisAlignment: MainAxisAlignment.center, // Centering content
                                     crossAxisAlignment: CrossAxisAlignment.center, // Center horizontally
                                     children: [
-                                      const Text(
+                                      Text(
                                         "Inactive",
                                         style: TextStyle(
-                                          fontSize: 16,
+                                          fontSize: normFontSize,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.white,
                                         ),
                                       ),
                                       Text(
                                         inactiveTeamMembers.toString(), // Replace with your 'met' variable
-                                        style: const TextStyle(
-                                          fontSize: 25,
+                                        style: TextStyle(
+                                          fontSize: largeFontSize+5,
                                           color: Colors.white,
                                         ),
                                       ),
@@ -448,26 +452,28 @@ class _GenReportPageState extends State<GenReportPage> {
                         children: [
                           TextButton(
                             onPressed: () {
-                              selectedMeetingType = "Meeting";
-                              setState((){});
+                              setState((){
+                                selectedMeetingType = "Meeting";
+                              });
                             },
                             child: Text(
                               "Meeting",
                               style: selectedMeetingType == "Meeting"
-                                  ? const TextStyle(color: Color.fromRGBO(5, 50, 70, 1.0),fontWeight: FontWeight.w600, fontSize: 20,decoration: TextDecoration.underline)
-                                  : TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600, fontSize: 20),
+                                  ? TextStyle(color: const Color.fromRGBO(5, 50, 70, 1.0),fontWeight: FontWeight.w600, fontSize: largeFontSize,decoration: TextDecoration.underline)
+                                  : TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600, fontSize: largeFontSize),
                             )
                           ),
                           TextButton(
                             onPressed: () {
-                              selectedMeetingType = "Baitak";
-                              setState((){});
+                              setState((){
+                                selectedMeetingType = "Baitak";
+                              });
                             },
                             child: Text(
                               "Baitak",
                               style: selectedMeetingType == "Baitak"
-                                  ? const TextStyle(color: Color.fromRGBO(5, 50, 70, 1.0),fontWeight: FontWeight.w600, fontSize: 20,decoration: TextDecoration.underline)
-                                  : TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600, fontSize: 20),
+                                  ? TextStyle(color: const Color.fromRGBO(5, 50, 70, 1.0),fontWeight: FontWeight.w600, fontSize: largeFontSize,decoration: TextDecoration.underline)
+                                  : TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600, fontSize: largeFontSize),
                             ),
                           ),
                         ],
@@ -477,17 +483,16 @@ class _GenReportPageState extends State<GenReportPage> {
                 ),
               ],
             ),
-            //meeting data
-            Row(
-              mainAxisSize: MainAxisSize.max,
+            //Meeting view
+            Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(16.0), // Padding around the container
+                  width: MediaQuery.of(context).size.width-20,
+                  padding: const EdgeInsets.all(10.0), // Padding around the container
                   decoration: BoxDecoration(
-                    color: const Color.fromRGBO(198, 198, 198, 1), // Background color
                     borderRadius: BorderRadius.circular(12), // Rounded corners for the border
                     border: Border.all(
-                      color: const Color.fromRGBO(198,198,198,1.0), // Border color
+                      color: Colors.grey.shade400,
                       width: 1, // Border width
                     ),
                     gradient: const LinearGradient(
@@ -499,179 +504,162 @@ class _GenReportPageState extends State<GenReportPage> {
                       ],
                     ),
                   ),
-                  //meeting data
-                  child: Column(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start, // Align text to the left
-                        children: [
-                          //Successful meeting count
-                          Column(
-                            children: [
-                              Text(
-                                successfullMeetings.toString(),
-                                style: const TextStyle(
-                                  fontSize: 60,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width*0.36,
+                        child: Column(
+                          children: [
+                            Text(
+                              successfullMeetings.toString(),
+                              style: TextStyle(
+                                fontSize: largeFontSize*3,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
-                              const Text(
-                                "Successful",
-                                style: TextStyle(
-                                  fontSize: 25,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const Text(
-                                "Meeting",
-                                style: TextStyle(
-                                  fontSize: 35,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(width: 40),
-                          //Meeting data
-                          Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 170,
-                                    padding: const EdgeInsets.all(5.0),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white, // Background color
-                                      borderRadius: BorderRadius.circular(12), // Rounded corners for the border
-                                      border: Border.all(
-                                        color: Colors.grey.shade400, // Border color
-                                        width: 1, // Border width
-                                      ),
-                                    ),
-                                    child: const Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Meeting Name",
-                                          style: TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Text(
-                                          "Date: DD/MM/YYYY",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Text(
-                                          "Time: HH:MM",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Text(
-                                          "Location: City, District",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 5),
-                              Row(
-                                children: [
-                                  Container(
-                                    width:170,
-                                    padding: const EdgeInsets.all(5.0),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white, // Background color
-                                      borderRadius: BorderRadius.circular(12), // Rounded corners for the border
-                                      border: Border.all(
-                                        color: Colors.grey.shade400, // Border color
-                                        width: 1, // Border width
-                                      ),
-                                    ),
-                                    child: const Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Meeting Name",
-                                          style: TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Text(
-                                          "Date: xx/xx/xxxx",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Text(
-                                          "Time: HH:MM",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Text(
-                                          "Location: City, District",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          TextButton(
-                            onPressed: () {},
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Text(
-                                  'View all meetings',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Image.asset(
-                                  'assets/icon/arrow.png',
-                                  color: Colors.white,
-                                  width: 12,
-                                  height: 12,
-                                ),
-                              ],
                             ),
-                          ),
-                        ],
+                            Text(
+                              "Successful",
+                              style: TextStyle(
+                                fontSize: largeFontSize+5,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              "Meeting",
+                              style: TextStyle(
+                                fontSize: largeFontSize+15,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width*0.5,
+                        child: Column(
+                          children: [
+                            Container(
+                              //width:170,
+                              padding: const EdgeInsets.all(0.0),
+                              decoration: BoxDecoration(
+                                //color: Colors.white, // Background color
+                                borderRadius: BorderRadius.circular(12), // Rounded corners for the border
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: MediaQuery.of(context).size.width*0.494,
+                                        padding: const EdgeInsets.all(6.0),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white, // Background color
+                                          borderRadius: BorderRadius.circular(12), // Rounded corners for the border
+                                          border: Border.all(
+                                            color: Colors.grey.shade400, // Border color
+                                            width: 1, // Border width
+                                          ),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "Meeting Name",
+                                              style: TextStyle(
+                                                fontSize: largeFontSize,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            Text(
+                                              "Date: DD/MM/YYYY",
+                                              style: TextStyle(
+                                                fontSize: smallFontSize,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            Text(
+                                              "Time: HH:MM",
+                                              style: TextStyle(
+                                                fontSize: smallFontSize,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            Text(
+                                              "Location: City, District",
+                                              style: TextStyle(
+                                                fontSize: smallFontSize,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: MediaQuery.of(context).size.width*0.494,
+                                        padding: const EdgeInsets.all(5.0),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white, // Background color
+                                          borderRadius: BorderRadius.circular(12), // Rounded corners for the border
+                                          border: Border.all(
+                                            color: Colors.grey.shade400, // Border color
+                                            width: 1, // Border width
+                                          ),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "Meeting Name",
+                                              style: TextStyle(
+                                                fontSize: largeFontSize,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            Text(
+                                              "Date: xx/xx/xxxx",
+                                              style: TextStyle(
+                                                fontSize: smallFontSize,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            Text(
+                                              "Time: HH:MM",
+                                              style: TextStyle(
+                                                fontSize: smallFontSize,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            Text(
+                                              "Location:City,District",
+                                              style: TextStyle(
+                                                fontSize: smallFontSize,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                ),
+                )
               ],
             ),
           ],
@@ -765,6 +753,7 @@ class _GenReportPageState extends State<GenReportPage> {
           Text(
             label,
             style: TextStyle(
+              overflow: TextOverflow.ellipsis,
               color: isActive ? Colors.white : const Color.fromRGBO(5, 50, 70, 1.0),
               fontSize: 12,
               fontWeight: FontWeight.bold,
