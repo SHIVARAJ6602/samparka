@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:samparka/Screens/my_team.dart';
 import 'add_influencer.dart';
 import 'gen_report.dart';
 import 'login.dart';
 import 'API_TEST.dart'; //TaskListScreen()
+import 'view_influencers.dart';
 import 'package:samparka/Service/api_service.dart';
 
 class InfluencersPage extends StatefulWidget {
@@ -30,6 +32,12 @@ class _InfluencersPageState extends State<InfluencersPage> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const GenReportPage()),
+      );
+    }else if (index == 1) {
+      // Navigate to AddInfluencerPage when index 1 is tapped
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const MyTeamPage()),
       );
     } else {
       setState(() {
@@ -295,6 +303,18 @@ class _InfluencersPageState extends State<InfluencersPage> {
                 child: Text('LogOut'),
               ),
             ),
+            ListTile(
+              title: ElevatedButton(
+                onPressed: () async {
+                  // Show confirmation dialog
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ApiScreen()),
+                  );
+                },
+                child: Text('API'),
+              ),
+            ),
           ],
         ),
       ),
@@ -433,10 +453,10 @@ class _InfluencersPageState extends State<InfluencersPage> {
                               // View All Influencers Button
                               TextButton(
                                 onPressed: () async {
-                                  result = await apiService.myInfluencer(0, 10);
-                                  setState(() {
-                                    influencers = result;
-                                  });
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const ViewInfluencersPage()),
+                                  );
                                 },
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -545,12 +565,12 @@ class _InfluencersPageState extends State<InfluencersPage> {
                   isActive: _selectedIndex == 3,
                   onPressed: () => _onNavItemTapped(3),
                 ),
-                _buildBottomNavItem(
+                /*_buildBottomNavItem(
                   label: "API",
                   iconPath: 'assets/icon/report.png',  // Use the PNG file path
                   isActive: _selectedIndex == 4,
                   onPressed: () => _onNavItemTapped(4),
-                ),
+                ),*/
               ],
             ),
           ),
