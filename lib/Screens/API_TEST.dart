@@ -140,7 +140,7 @@ class _ApiScreenState extends State<ApiScreen> {
                     children: [
                       TextButton(
                         onPressed: () {
-                          apiService.CreateGanyaVyakthi();
+                          //apiService.CreateGanyaVyakthi();
                           },
                           child: Text('Add GV')
                       )

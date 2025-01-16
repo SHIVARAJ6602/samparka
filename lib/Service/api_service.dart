@@ -187,7 +187,7 @@ class ApiService {
     }
   }
 
-  Future<bool> CreateGanyaVyakthi() async {
+  Future<bool> CreateGanyaVyakthi(List<dynamic> UserData) async {
     try {
       // Check if token is null or empty before making the request
       if (token.isEmpty) {
@@ -200,25 +200,25 @@ class ApiService {
         '$baseUrl/callHandler/',
         data: {
           "action":"CreateGanyaVyakti",
-          "fname": "Chandan",
-          "lname": "Kumar",
-          "phone_number": "9876543214",
-          "assigned_karyakarta_phone_number": "1234567890",
-          "designation": "Leader",
-          "description": "Some description",
-          "hashtags": "tag1, tag2",
-          "organization": "Organization Name",
-          "email": "johndoe@example.com",
-          "impact_on_society": "Positive impact",
-          "interaction_level": "Samparka",
-          "address": {
-            "address_1": "123 Street Name",
-            "city_1": "City Name",
-            "state_1": "State Name",
-            "address_2": "Apt 4B",
-            "city_2": "Secondary City",
-            "state_2": "Secondary State"
-          }
+          "fname": UserData[0]["fname"],
+          "lname": UserData[0]["lname"],
+          "phone_number": UserData[0]["phone_number"],
+          "assigned_karyakarta_phone_number": UserData[0]["assigned_karyakarta_phone_number"],
+          "designation": UserData[0]["designation"],
+          "description": UserData[0]["description"],
+          "hashtags": UserData[0]["hashtags"],
+          "organization": UserData[0]["organization"],
+          "email": UserData[0]["email"],
+          "impact_on_society": UserData[0]["impact_on_society"],
+          "interaction_level": UserData[0]["interaction_level"],
+          "address_1": UserData[0]["address_1"],
+          "city_1": UserData[0]["city_1"],
+          "district_1": UserData[0]["district_1"],
+          "state_1": UserData[0]["state_1"],
+          "address_2": UserData[0]["address_2"],
+          "city_2": UserData[0]["city_2"],
+          "district_2": UserData[0]["district_2"],
+          "state_2": UserData[0]["state_2"],
         },
       );
       // Handle server response status

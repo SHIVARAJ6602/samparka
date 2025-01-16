@@ -104,7 +104,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
   }
 
   // Define a function to fetch data
-  Future<void> fetchInfluencers() async {
+  Future<bool> fetchInfluencers() async {
     try {
       // Call the apiService.homePage() and store the result
       result = await apiService.homePage();
@@ -112,10 +112,12 @@ class _InfluencersPageState extends State<InfluencersPage> {
         // Update the influencers list with the fetched data
         influencers = result;
       });
+      return true;
     } catch (e) {
       // Handle any errors here
       print("Error fetching influencers: $e");
     }
+    return false;
   }
 
   /******************************************************/
@@ -408,51 +410,48 @@ class _InfluencersPageState extends State<InfluencersPage> {
                         child: Column(
                           children: [
                             // If the list is empty, show a message
-                            if (influencers.isEmpty)
-                              Container(
-                                padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    'No Influencer Assigned',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
+                            if (loading)
+                              Center(
+                                child: CircularProgressIndicator(
+                                  backgroundColor: Colors.blue,
                                 ),
                               )
-
-                                /*Text(
-                                  'No Influencer Assigned',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),*/
-                              //)
-                            // If the list is not empty, build a ListView of InfluencerCards
                             else
-                              ListView.builder(
-                                shrinkWrap: true,
-                                itemCount: influencers.length, // The number of items in your data list
-                                itemBuilder: (context, index) {
-                                  final influencer = influencers[index]; // Access the influencer data for each item
-                                  return Padding(
-                                    padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
-                                    child: InfluencerCard(
-                                      name: influencer['fname']!,
-                                      designation: influencer['designation']!,
-                                      description: influencer['description']!,
-                                      hashtags: influencer['hashtags']!,
+                              if (influencers.isEmpty)
+                                Container(
+                                  padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'No Influencer Assigned',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
                                     ),
-                                  );
-                                },
-                              ),
+                                  ),
+                                )
+                              else
+                                ListView.builder(
+                                  shrinkWrap: true,
+                                  itemCount: influencers.length, // The number of items in your data list
+                                  itemBuilder: (context, index) {
+                                    final influencer = influencers[index]; // Access the influencer data for each item
+                                    return Padding(
+                                      padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
+                                      child: InfluencerCard(
+                                        name: influencer['fname']!,
+                                        designation: influencer['designation']!,
+                                        description: influencer['description']!,
+                                        hashtags: influencer['hashtags']!,
+                                      ),
+                                    );
+                                  },
+                                ),
+
                             if (influencers.isNotEmpty)
                               // View All Influencers Button
                               TextButton(
