@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:samparka/Screens/team.dart';
 
 import '../Service/api_service.dart';
 import 'API_TEST.dart';
@@ -42,6 +43,12 @@ class _MyTeamPageState extends State<MyTeamPage> {
         context,
         MaterialPageRoute(builder: (context) => const GenReportPage()),
       );
+    } else if (index == 1) {
+      // Navigate to AddInfluencerPage when index 1 is tapped
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const TeamPage()),
+      );
     } else if (index == 0) {
       // Navigate to AddInfluencerPage when index 1 is tapped
       Navigator.push(
@@ -59,7 +66,7 @@ class _MyTeamPageState extends State<MyTeamPage> {
   Future<void> fetchTeam() async {
     try {
       // Call the apiService.homePage() and store the result
-      result = await apiService.myInfluencer(0, 100);
+      result = await apiService.myTeam(0, 100);
       setState(() {
         // Update the influencers list with the fetched data
         TeamMembers = result;
@@ -84,14 +91,14 @@ class _MyTeamPageState extends State<MyTeamPage> {
         itemCount: TeamMembers.length,
         itemBuilder: (context, index) {
           final teamMember = TeamMembers[index];
-          print('name: ${teamMember['fname']}');
+          print('name: ${teamMember['first_name']}');
           return Padding(
             padding: const EdgeInsets.only(bottom: 16),
             child: MemberCard(
-              name: teamMember['fname']!,
+              name: teamMember['first_name']!,
               designation: teamMember['designation']!,
-              description: teamMember['description']!,
-              hashtags: teamMember['hashtags']!,
+              //description: teamMember['description']!,
+              //hashtags: teamMember['hashtags']!,
             ),
           );
         },
@@ -204,15 +211,15 @@ class _MyTeamPageState extends State<MyTeamPage> {
 class MemberCard extends StatelessWidget {
   final String name;
   final String designation;
-  final String description;
-  final String hashtags;
+  //final String description;
+  //final String hashtags;
 
   const MemberCard({
     super.key,
     required this.name,
     required this.designation,
-    required this.description,
-    required this.hashtags,
+    //required this.description,
+    //required this.hashtags,
   });
 
   @override
@@ -259,7 +266,7 @@ class MemberCard extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 1),
-                Text(
+                /*Text(
                   description, // Dynamic description
                   style: TextStyle(
                     fontSize: 12,
@@ -275,7 +282,7 @@ class MemberCard extends StatelessWidget {
                     fontSize: 12,
                     color: Colors.teal,
                   ),
-                ),
+                ),*/
               ],
             ),
           ),

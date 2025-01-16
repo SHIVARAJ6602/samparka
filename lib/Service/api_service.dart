@@ -151,7 +151,7 @@ class ApiService {
     }
   }
 
-  Future<List<dynamic>> myTeam() async{
+  Future<List<dynamic>> myTeam(int sCount,int eCount) async{
     try {
       // Check if token is null or empty before making the request
       if (token.isEmpty) {

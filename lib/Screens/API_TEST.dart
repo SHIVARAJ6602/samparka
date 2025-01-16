@@ -164,7 +164,7 @@ class _ApiScreenState extends State<ApiScreen> {
                     children: [
                       TextButton(
                           onPressed: () {
-                            apiService.myTeam();
+                            apiService.myTeam(0,100);
                           },
                           child: Text('My Team')
                       )
