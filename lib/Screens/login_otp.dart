@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:samparka/Screens/l1home.dart';
+import 'package:samparka/Screens/home.dart';
 
 class LoginOTPPage extends StatelessWidget {
   const LoginOTPPage({super.key});

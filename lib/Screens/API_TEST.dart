@@ -204,6 +204,75 @@ class _ApiScreenState extends State<ApiScreen> {
           Expanded(
             child: Row(
               children: [
+                Expanded(
+                  child: Column(
+                    children: [
+                      TextButton(
+                          onPressed: () {
+                            apiService.Subordinates();
+                          },
+                          child: Text('view Subordinates')
+                      )
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      TextButton(
+                          onPressed: () {
+                            apiService.RecurSubordinates();
+                          },
+                          child: Text('view RecurSubordinates')
+                      )
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      TextButton(
+                          onPressed: () {
+                            apiService.myTeam(0,100);
+                          },
+                          child: Text('My Team')
+                      )
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      TextButton(
+                          onPressed: () {
+                            apiService.mySupervisor();
+                          },
+                          child: Text('My Supervisor')
+                      )
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => TempPage()),
+                            );
+                          },
+                          child: Text('Temp page')
+                      )
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Row(
+              children: [
                 TextButton(
                     onPressed: () {
                       apiService.getGroups();

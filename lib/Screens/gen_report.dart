@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:samparka/Screens/team.dart';
 import 'add_influencer.dart';
-import 'l1home.dart';
+import 'home.dart';
 
 class GenReportPage extends StatefulWidget {
   const GenReportPage({super.key});

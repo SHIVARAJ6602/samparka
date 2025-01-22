@@ -112,6 +112,7 @@ class ApiService {
     }
   }
 
+
   Future<List<dynamic>> myInfluencer(int sCount,int eCount) async{
     try {
       // Check if token is null or empty before making the request
@@ -352,76 +353,116 @@ class ApiService {
     return true;
   }
 
-  Future<bool> getOTP(String phone,String mail) async {
+  Future<int> getOTP(String phone, String mail) async {
     try {
-      print('$baseUrl - $phone');
+      print('$baseUrl - $phone'); // Debugging: Logs the URL and phone number.
 
+      // Making the POST request to get OTP
       final response = await dio.post(
         "$baseUrl/loginHandler/",
         data: {'action': 'get_otp', 'mail': mail, 'phone': phone},
       );
 
-      print('Response body: ${response.data}');
+      print('Response body: ${response.data}'); // Logs the server's response body.
 
       // Check if the response status code indicates success (e.g., 200 or 201)
       if (response.statusCode == 200 || response.statusCode == 201) {
-        if (response.data.isNotEmpty) {
-          // Directly use response.data (which should be a Map)
-          print('OTP sent: ${response.data['otp']}'); // Assuming the OTP is returned in the response
-          return true;
+        if (response.data != null && response.data.isNotEmpty) {
+          // Assuming the OTP is returned in the response as a key 'otp'
+          print('OTP sent: ${response.data['otp']}');
+          return 200; // Successfully sent OTP
         } else {
           print('Received empty response body');
           throw Exception('Empty response body');
         }
       } else {
         // If the status code is not 200 or 201, throw an error with the message from the response
-        var errorData = response.data; // Assuming the error response is also a Map
+        var errorData = response.data;
+        print('Error Data: $errorData'); // Log the error data for debugging
         throw Exception('Failed to get OTP: ${errorData['message'] ?? 'Unknown error'}');
       }
     } catch (e) {
-      print('Error getting OTP: $e');
-      return false;
+      print('Error getting OTP: $e'); // Catching errors from API request or response parsing
+
+      // If the error has a response, return its status code. Otherwise, return 400.
+      if (e is DioException && e.response != null) {
+        return e.response!.statusCode ?? 400; // Return the status code from the error response, or 400 as fallback
+      } else {
+        return 400; // Return 400 for generic failure
+      }
     }
   }
 
-  Future<bool> login(String phone, String otp) async {
+
+  Future<Response> login(String phone, String otp) async {
+    Response? response;
     try {
-      final response = await dio.post(
+      // Make the POST request
+      response = await dio.post(
         '$baseUrl/loginHandler/',
         data: {
-          'action': 'login',  // Specify the action as 'login'
+          'action': 'login',
           'phone': phone,
           'otp': otp,
         },
       );
+      print('data ${response.data}');
 
-      // Check if the login was successful (status code 200 or 201)
+      // Check for success status code
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // Directly access response.data since it's already a Map
         var responseData = response.data;
 
-        // Example: Assuming the server returns a token or user info upon successful login
-        token = responseData['token'];  // Adjust based on your backend response structure
-        userName = responseData['userName'];
+        // Ensure responseData is a Map and contains the expected keys
+        if (responseData is Map<String, dynamic>) {
+          token = responseData['token'];
+          userName = responseData['userName'];
 
-        if (token != null) {
-          print('Login successful. Token: $token UserName: ${responseData['userName']}');
-          isAuthenticated = true;
-          saveData();
-          return true;
+          if (token != null) {
+            print('Login successful. Token: $token UserName: $userName');
+            isAuthenticated = true;
+            saveData(); // Save the data as needed
+          } else {
+            throw Exception('Login failed: Token not received');
+          }
         } else {
-          throw Exception('Login failed: Token not received');
+          throw Exception('Unexpected response format');
+        }
+      }
+      return response;
+
+    } catch (e) {
+      if (e is DioException) {
+        // Check if the error is caused by a 401 Unauthorized error
+        if (e.response?.statusCode == 401) {
+          print('Login failed: Invalid OTP or authentication issue');
+          return Response(
+            requestOptions: RequestOptions(path: ''), // Dummy RequestOptions
+            statusCode: 401,
+            data: {'message': 'Invalid OTP or authentication issue'},
+          );
+        } else {
+          // For other Dio errors, handle them here
+          print('Dio error: ${e.message}');
+          return Response(
+            requestOptions: RequestOptions(path: ''), // Dummy RequestOptions
+            statusCode: 400,
+            data: {'message': e.message}, // Pass the Dio error message
+          );
         }
       } else {
-        // Handle login failure (incorrect OTP, phone not registered, etc.)
-        var errorData = response.data;
-        throw Exception('Login failed: ${errorData['message'] ?? 'Unknown error'}');
+        // Catch any other types of errors
+        print('Error during login: $e');
+        return Response(
+          requestOptions: RequestOptions(path: ''), // Dummy RequestOptions
+          statusCode: 400,
+          data: {'message': 'Unexpected error occurred: $e'},
+        );
       }
-    } catch (e) {
-      print('Error during login: $e');
-      return false;
     }
   }
+
+
+
 
   Future<bool> sendEmail(String eMail) async{
     dio.options.headers['Authorization'] = 'Token $token';
@@ -473,6 +514,70 @@ class ApiService {
 
     try {
       final response = await dio.get('$baseUrl/callHandler/');
+      print(response.data);
+
+      if (response.statusCode == 200) {
+        print(response.data);
+      } else {
+        throw Exception('Failed to check user auth. Status code: ${response.statusCode}');
+      }
+
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  Future<void> Subordinates() async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      final response = await dio.post('$baseUrl/callHandler/',data: {'action':'Subordinates'});
+      print(response.data);
+
+      if (response.statusCode == 200) {
+        print(response.data);
+      } else {
+        throw Exception('Failed to check user auth. Status code: ${response.statusCode}');
+      }
+
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  Future<List<dynamic>> mySupervisor() async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      final response = await dio.post('$baseUrl/callHandler/',data: {'action':'mySupervisor'});
+      print(response.data);
+
+      if (response.statusCode == 200) {
+        print('my supervisor ${response.data}');
+
+        if (response.data is List<dynamic>) {
+          return response.data;
+        } else if (response.data is Map<String, dynamic>) {
+          return [response.data];
+        } else {
+          throw Exception('Unexpected data type: ${response.data.runtimeType}');
+        }
+      } else {
+        throw Exception('Failed to load supervisor. Status code: ${response.statusCode}');
+      }
+
+
+    } catch (e) {
+      print('Error: $e');
+      throw Exception('Failed to load supervisor: $e');
+    }
+  }
+
+  Future<void> RecurSubordinates() async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      final response = await dio.post('$baseUrl/callHandler/',data: {'action':'RecursiveSubordinates'});
       print(response.data);
 
       if (response.statusCode == 200) {

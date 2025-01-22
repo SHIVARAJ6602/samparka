@@ -3,7 +3,7 @@ import 'package:samparka/Screens/my_team.dart';
 import 'package:samparka/Screens/register_user.dart';
 import 'add_influencer.dart';
 import 'gen_report.dart';
-import 'l1home.dart';
+import 'home.dart';
 import 'login.dart';
 import 'API_TEST.dart'; //TaskListScreen()
 import 'view_influencers.dart';
@@ -23,6 +23,7 @@ class _TeamPageState extends State<TeamPage> {
   final apiService = ApiService();
 
   List<dynamic> members = [];
+  List<dynamic> supervisor = [];
   late List<dynamic> result;
   bool loading = true;
 
@@ -56,10 +57,26 @@ class _TeamPageState extends State<TeamPage> {
   Future<void> fetchMembers() async {
     try {
       // Call the apiService.homePage() and store the result
-      result = await apiService.homePage();
+      result = await apiService.myTeam(0, 100);
       setState(() {
+        print('members $result');
         // Update the influencers list with the fetched data
         members = result;
+      });
+    } catch (e) {
+      // Handle any errors here
+      print("Error fetching influencers: $e");
+    }
+  }
+
+  Future<void> fetchSupervisor() async {
+    try {
+      // Call the apiService.homePage() and store the result
+      result = await apiService.mySupervisor();
+      //print('$result');
+      setState(() {
+        // Update the influencers list with the fetched data
+        supervisor = result;
       });
     } catch (e) {
       // Handle any errors here
@@ -71,6 +88,7 @@ class _TeamPageState extends State<TeamPage> {
   void initState() {
     super.initState();
 
+    fetchSupervisor();
     fetchMembers();
     loading = false;
   }
@@ -148,57 +166,106 @@ class _TeamPageState extends State<TeamPage> {
                         ),
                       ),
                       const SizedBox(height: 22),
-                      // approval & assign Influencers Title
+                      //My Supervisor
                       Text(
-                        'Approval & Assign',
+                        'My Supervisor',
                         style: TextStyle(
-                          fontSize: largeFontSize,
-                          fontWeight: FontWeight.bold,
-                          color: const Color.fromRGBO(5, 50, 70, 1.0),
-                        ),
-                      ),
-                      Text(
-                        'Influencers',
-                        style: TextStyle(
-                          fontSize: largeFontSize*2.5,
+                          fontSize: largeFontSize*1.5,
                           fontWeight: FontWeight.bold,
                           color: const Color.fromRGBO(5, 50, 70, 1.0),
                         ),
                       ),
                       const SizedBox(height: 1),
-                      // approval Cards
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal, // Horizontal scrolling
-                        child: Row(
-                          children: List.generate(members.length, (index) {
-                            final influencer = members[index]; // Access the influencer data for each item
-                            return Padding(
-                              padding: const EdgeInsets.only(left: 1,right: 8,top: 8,bottom: 8), // Adjust horizontal padding
-                              child: Container(
-                                width: MediaQuery.of(context).size.width*0.75,
+                      Container(
+                        decoration: BoxDecoration(
+                          //borderRadius: BorderRadius.circular(30),
+                          borderRadius: members.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
+                          gradient: const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Color.fromRGBO(60, 170, 145, 1.0),
+                              Color.fromRGBO(2, 40, 60, 1),
+                            ],
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            // If the list is empty, show a message
+                            if (supervisor.isEmpty)
+                              Container(
+                                padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(30),
-                                  gradient: const LinearGradient(
-                                    begin: Alignment.centerRight,
-                                    end: Alignment.centerLeft,
-                                    colors: [
-                                      Color.fromRGBO(60, 170, 145, 1.0),
-                                      Color.fromRGBO(2, 40, 60, 1),
-                                    ],
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'No Supervisor Assigned',
+                                    style: TextStyle(
+                                      fontSize: largeFontSize,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
-                                child: ApprovalCard(
-                                  name: influencer['fname']!,
-                                  designation: influencer['designation']!,
-                                  description: influencer['description']!,
-                                  hashtags: influencer['hashtags']!,
+                              )
+                            // If the list is not empty, build a ListView of InfluencerCards
+                            else
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // First Row: Profile Picture and Influencer Details
+                                    Row(
+                                      children: [
+                                        // Profile Picture (placeholder)
+                                        CircleAvatar(
+                                          radius: 30,
+                                          backgroundColor: Colors.grey[300],
+                                        ),
+                                        SizedBox(width: 16),
+                                        // Influencer Details
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                supervisor[0]['first_name'], // Dynamic name
+                                                style: TextStyle(
+                                                  fontSize: largeFontSize+6,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                              Text(
+                                                supervisor[0]['last_name'], // Dynamic designation
+                                                style: TextStyle(
+                                                  fontSize: smallFontSize,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                              SizedBox(height: 1),
+                                              Text(
+                                                supervisor[0]['designation'], // Dynamic description
+                                                style: TextStyle(
+                                                  fontSize: smallFontSize-2,
+                                                  color: Colors.white,
+                                                ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ]
                                 ),
                               ),
-                            );
-                          }),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 20),
                       //My team
                       Text(
                         'My Team',
@@ -252,10 +319,9 @@ class _TeamPageState extends State<TeamPage> {
                                   return Padding(
                                     padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
                                     child: MemberCard(
-                                      name: influencer['fname']!,
+                                      first_name: influencer['first_name']!,
+                                      last_name: influencer['last_name']!,
                                       designation: influencer['designation']!,
-                                      description: influencer['description']!,
-                                      hashtags: influencer['hashtags']!,
                                     ),
                                   );
                                 },
@@ -354,7 +420,7 @@ class _TeamPageState extends State<TeamPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildBottomNavItem(
-                  label: "Add Influencer",
+                  label: "Influencers",
                   iconPath: 'assets/icon/add influencer.png',  // Use the PNG file path
                   isActive: _selectedIndex == 0,
                   onPressed: () => _onNavItemTapped(0),
@@ -448,17 +514,16 @@ class _TeamPageState extends State<TeamPage> {
 }
 
 class MemberCard extends StatelessWidget {
-  final String name;
+  final String first_name;
+  final String last_name;
   final String designation;
-  final String description;
-  final String hashtags;
 
   const MemberCard({
     super.key,
-    required this.name,
+
+    required this.first_name,
+    required this.last_name,
     required this.designation,
-    required this.description,
-    required this.hashtags,
   });
 
   @override
@@ -490,7 +555,7 @@ class MemberCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  name, // Dynamic name
+                  '$first_name $last_name', // Dynamic name
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
@@ -505,23 +570,6 @@ class MemberCard extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 1),
-                Text(
-                  description, // Dynamic description
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color.fromRGBO(5, 50, 70, 1.0),
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 1),
-                Text(
-                  hashtags, // Dynamic hashtags
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.teal,
-                  ),
-                ),
               ],
             ),
           ),
@@ -529,130 +577,4 @@ class MemberCard extends StatelessWidget {
       ),
     );
   }
-}
-
-class ApprovalCard extends StatelessWidget {
-  final String name;
-  final String designation;
-  final String description;
-  final String hashtags;
-
-  const ApprovalCard({
-    super.key,
-    required this.name,
-    required this.designation,
-    required this.description,
-    required this.hashtags,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
-    double largeFontSize = normFontSize+4; //20
-    double smallFontSize = normFontSize-2; //14
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // First Row: Profile Picture and Influencer Details
-          Row(
-            children: [
-              // Profile Picture (placeholder)
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: Colors.grey[300],
-              ),
-              SizedBox(width: 16),
-              // Influencer Details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name, // Dynamic name
-                      style: TextStyle(
-                        fontSize: largeFontSize+6,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(
-                      designation, // Dynamic designation
-                      style: TextStyle(
-                        fontSize: smallFontSize,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 1),
-                    Text(
-                      description, // Dynamic description
-                      style: TextStyle(
-                        fontSize: smallFontSize-2,
-                        color: Colors.white,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 1),
-                    Text(
-                      hashtags, // Dynamic hashtags
-                      style: TextStyle(
-                        fontSize: smallFontSize-2,
-                        color: Colors.teal,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8), // Space between the two rows
-          // Second Row: Approval Button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center, // Align button to the end
-            children: [
-              Container(
-                width: MediaQuery.of(context).size.width*0.65,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  gradient: const LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      Color.fromRGBO(133, 1, 1, 1.0),
-                      Color.fromRGBO(237, 62, 62, 1.0),
-                    ],
-                  ),
-                ),
-                child: TextButton(
-                  onPressed: () {},
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.all(10),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Approve and Assign',
-                          style: TextStyle(
-                            fontSize: largeFontSize,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
 }

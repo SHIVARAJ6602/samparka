@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:samparka/Screens/l1home.dart'; //InfluencersPage()
+import 'package:samparka/Screens/home.dart'; //InfluencersPage()
 import 'package:samparka/Screens/login.dart'; //LoginPage()
 import 'package:samparka/Screens/error_page.dart'; //ErrorPage()
 import 'package:samparka/Screens/add_influencer.dart'; //AddInfluencerPage()

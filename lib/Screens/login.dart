@@ -1,5 +1,6 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:samparka/Screens/l1home.dart'; // Assuming InfluencersPage is the next screen
+import 'package:samparka/Screens/home.dart'; // Assuming InfluencersPage is the next screen
 import 'package:samparka/Service/api_service.dart';
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -11,6 +12,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final apiService = ApiService();
   bool _otpSent = false;  // Track whether OTP has been sent
+  bool _isLoading = false;  // Add a loading state to manage button disable/enable
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _otpController = TextEditingController();
 
@@ -36,6 +38,27 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  void show_Dialog(BuildContext context, String message) {
+    // Show the dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent user from closing it manually
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Samparka:'),
+          content: Text(message, style: TextStyle(color: Colors.red,fontSize: 18,),),
+        );
+      },
+    );
+
+    // Dismiss the dialog after 2 seconds
+    Future.delayed(Duration(seconds: 3), () {
+      Navigator.of(context).pop();
+    });
+  }
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,7 +81,8 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   TextField(
                     controller: _phoneController,
-                    focusNode: _phoneFocusNode,  // Attach the focus node for phone field
+                    focusNode: _phoneFocusNode,
+                    maxLength: 10,
                     decoration: InputDecoration(
                       hintText: 'Enter Phone Number',
                       filled: true,
@@ -73,6 +97,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     keyboardType: TextInputType.phone,
+                    style: TextStyle(color: _phoneNumber.length < 10 ? Colors.red : Colors.green,fontSize: 18),
                     enabled: !_otpSent,  // Disable phone input after OTP is sent
                     onChanged: (value) {
                       setState(() {
@@ -87,9 +112,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   if (_otpSent)
                     Positioned(
-                      right: 10,
-                      top: 10,
-                      bottom: 10,
+                      right: 5,
                       child: IconButton(
                         icon: const Icon(Icons.edit, color: Color.fromRGBO(10, 205, 165, 1.0)),
                         onPressed: () {
@@ -102,6 +125,7 @@ class _LoginPageState extends State<LoginPage> {
                 ],
               ),
               const SizedBox(height: 8),
+              /********** TEMP *************/
               TextField(
                 controller: _mailController,
                 focusNode: _mailFocusNode,  // Attach the focus node for phone field
@@ -130,8 +154,10 @@ class _LoginPageState extends State<LoginPage> {
                   FocusScope.of(context).requestFocus(_otpFocusNode);
                 },
               ),
+              /*************************/
               const SizedBox(height: 16),
               // Get OTP Button with Gradient
+
               if (!_otpSent) ...[
                 Container(
                   decoration: BoxDecoration(
@@ -142,10 +168,27 @@ class _LoginPageState extends State<LoginPage> {
                     borderRadius: BorderRadius.circular(15),
                   ),
                   child: ElevatedButton(
-                    onPressed: () async {
-                      await apiService.getOTP(_phoneNumber,_mail);
+                    onPressed: _isLoading
+                        ? null  // Disable button if loading
+                        : () async {
                       setState(() {
-                        _otpSent = true;  // Change state to show OTP field and login button
+                        _isLoading = true;  // Set loading to true to disable the button
+                      });
+
+                      // Call the apiService to get the OTP
+                      var response = await apiService.getOTP(_phoneNumber, _mail);
+
+                      if (response == 200){
+                        setState(() {
+                          _otpSent = true;  // Change state to show OTP field and login button
+                        });
+                      }else if(response == 400){
+                        show_Dialog(context, 'failed to send otp');
+                      }else if(response == 404){
+                        show_Dialog(context, 'Number not registered');
+                      }
+                      setState(() {
+                        _isLoading = false;
                       });
                     },
                     style: ElevatedButton.styleFrom(
@@ -153,12 +196,12 @@ class _LoginPageState extends State<LoginPage> {
                       backgroundColor: Colors.transparent, // Make background transparent
                       shadowColor: Colors.transparent, // Remove shadow
                     ),
-                    child: const Text(
+                    child: Text(
                       'Get OTP',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: _isLoading ? Colors.green : Colors.white,
                       ),
                     ),
                   ),
@@ -187,10 +230,6 @@ class _LoginPageState extends State<LoginPage> {
                   focusNode: _otpFocusNode,  // Link to the OTP field focus
                   onSubmitted: (_) async {
                     await apiService.login(_phoneNumber, _otpEntered);
-                    // Log the phone number and OTP entered
-                    print("Phone Number: $_phoneNumber");
-                    print("OTP Entered: $_otpEntered");
-                    // Handle login logic or navigate to home page
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -211,19 +250,33 @@ class _LoginPageState extends State<LoginPage> {
                     borderRadius: BorderRadius.circular(15),
                   ),
                   child: ElevatedButton(
-                    onPressed: () {
-                      apiService.login(_phoneNumber, _otpEntered);
+                    onPressed: () async {
+                      Response response = await apiService.login(_phoneNumber, _otpEntered);
+                      String message = '';
+                      print(response.statusCode);
+                      if (response.statusCode == 200) {
+                        setState(() {
+                          apiService.saveData();
+                          message = response.data['message'] ?? 'Successful';
+                        });
+                        // Handle login logic or navigate to home page
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const InfluencersPage(),
+                          ),
+                        );
+                      }
+                      else {
+                        message = response.data['message'] ?? 'Unauthorized access';
+                      }
+
+                      show_Dialog(context, message);
+
                       // Log the phone number and OTP entered
                       print("Phone Number: $_phoneNumber");
                       print("OTP Entered: $_otpEntered");
 
-                      // Handle login logic or navigate to home page
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const InfluencersPage(),
-                        ),
-                      );
                     },
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),

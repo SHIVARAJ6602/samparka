@@ -376,6 +376,58 @@ class _InfluencersPageState extends State<InfluencersPage> {
                         ),
                       ),
                       const SizedBox(height: 22),
+                      if (influencers.isNotEmpty)
+                        // approval & assign Influencers Title
+                        Text(
+                          'Approval & Assign',
+                          style: TextStyle(
+                            fontSize: largeFontSize,
+                            fontWeight: FontWeight.bold,
+                            color: const Color.fromRGBO(5, 50, 70, 1.0),
+                          ),
+                        ),
+                        Text( 
+                          'Influencers',
+                          style: TextStyle(
+                            fontSize: largeFontSize*2.5,
+                            fontWeight: FontWeight.bold,
+                            color: const Color.fromRGBO(5, 50, 70, 1.0),
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        // approval Cards
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal, // Horizontal scrolling
+                          child: Row(
+                            children: List.generate(influencers.length, (index) {
+                              final influencer = influencers[index]; // Access the influencer data for each item
+                              return Padding(
+                                padding: const EdgeInsets.only(left: 1,right: 8,top: 8,bottom: 8), // Adjust horizontal padding
+                                child: Container(
+                                  width: MediaQuery.of(context).size.width*0.75,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(30),
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.centerRight,
+                                      end: Alignment.centerLeft,
+                                      colors: [
+                                        Color.fromRGBO(60, 170, 145, 1.0),
+                                        Color.fromRGBO(2, 40, 60, 1),
+                                      ],
+                                    ),
+                                  ),
+                                  child: ApprovalCard(
+                                    name: influencer['fname']!,
+                                    designation: influencer['designation']!,
+                                    description: influencer['description']!,
+                                    hashtags: influencer['hashtags']!,
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                        ),
+                      const SizedBox(height: 20),
                       // Recently Assigned Influencers Title
                       const Text(
                         'Recently Assigned',
@@ -546,7 +598,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildBottomNavItem(
-                  label: "Add Influencer",
+                  label: "Influencer",
                   iconPath: 'assets/icon/add influencer.png',  // Use the PNG file path
                   isActive: _selectedIndex == 0,
                   onPressed: () => _onNavItemTapped(0),
@@ -727,4 +779,130 @@ class InfluencerCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class ApprovalCard extends StatelessWidget {
+  final String name;
+  final String designation;
+  final String description;
+  final String hashtags;
+
+  const ApprovalCard({
+    super.key,
+    required this.name,
+    required this.designation,
+    required this.description,
+    required this.hashtags,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
+    double largeFontSize = normFontSize+4; //20
+    double smallFontSize = normFontSize-2; //14
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // First Row: Profile Picture and Influencer Details
+          Row(
+            children: [
+              // Profile Picture (placeholder)
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: Colors.grey[300],
+              ),
+              SizedBox(width: 16),
+              // Influencer Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name, // Dynamic name
+                      style: TextStyle(
+                        fontSize: largeFontSize+6,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      designation, // Dynamic designation
+                      style: TextStyle(
+                        fontSize: smallFontSize,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 1),
+                    Text(
+                      description, // Dynamic description
+                      style: TextStyle(
+                        fontSize: smallFontSize-2,
+                        color: Colors.white,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 1),
+                    Text(
+                      hashtags, // Dynamic hashtags
+                      style: TextStyle(
+                        fontSize: smallFontSize-2,
+                        color: Colors.teal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8), // Space between the two rows
+          // Second Row: Approval Button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center, // Align button to the end
+            children: [
+              Container(
+                width: MediaQuery.of(context).size.width*0.65,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  gradient: const LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      Color.fromRGBO(133, 1, 1, 1.0),
+                      Color.fromRGBO(237, 62, 62, 1.0),
+                    ],
+                  ),
+                ),
+                child: TextButton(
+                  onPressed: () {},
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.all(10),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Approve and Assign',
+                          style: TextStyle(
+                            fontSize: largeFontSize,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
 }
