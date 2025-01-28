@@ -32,15 +32,47 @@ class _RegisterUserState extends State<RegisterUserPage> {
   String designation = '';
   String password = '';
   String? selectedGroupId;
+  String? selectedShreniId;
+
   List<dynamic> groups = [];
+  late List<dynamic> result;
+  List<dynamic> members = [];
+  List<dynamic> supervisor = [];
+
+  List<String> states = ['Karnataka', 'Maharashtra', 'Tamil Nadu'];
+  List<String> districts = []; // Will be populated based on the selected state
+  List<String> cities = [];
+
+  String? selectedState;
+  String? selectedDistrict;
+  String? selectedCity;
+
+  Map<String, List<String>> stateDistricts = {
+    'Karnataka': ['Bangalore', 'Mysore', 'Mangalore'],
+    'Maharashtra': ['Mumbai', 'Pune', 'Nagpur'],
+    'Tamil Nadu': ['Chennai', 'Coimbatore', 'Madurai'],
+  };
+
+  Map<String, List<String>> districtCities = {
+    'Bangalore': ['Whitefield', 'Koramangala', 'Electronic City'],
+    'Mysore': ['Vijayanagar', 'Nazarbad', 'Gokulam'],
+    'Mangalore': ['Pandeshwar', 'Bajpe', 'Kankanady'],
+    'Mumbai': ['Andheri', 'Bandra', 'Juhu'],
+    'Pune': ['Kothrud', 'Hinjewadi', 'Wakad'],
+    'Nagpur': ['Civil Lines', 'Gandhi Baug', 'Ajni'],
+    'Chennai': ['T Nagar', 'Adyar', 'Besant Nagar'],
+    'Coimbatore': ['R S', 'Peelamedu', 'Ganapathy'],
+    'Madurai': ['KK Nagar', 'Anna Nagar', 'Tallakulam'],
+  };
 
   @override
   void initState() {
     super.initState();
     fetchGroups();
+    fetchSupervisor();
+    //fetchMembers();
   }
 
-  // Function to fetch groups from the API
   Future<void> fetchGroups() async {
     try {
       final groupList = await apiService.getGroups();
@@ -52,6 +84,57 @@ class _RegisterUserState extends State<RegisterUserPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to load groups")),
       );
+    }
+  }
+
+  Future<void> fetchMembers() async {
+    try {
+      // Call the apiService.homePage() and store the result
+      result = await apiService.myTeam(0, 100);
+      if (result.isEmpty) {
+        setState(() {
+          selectedShreniId = apiService.UserId;
+        });
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Alert'),
+              content: Text('No ShreniPramuhk to assign \n defualting to self:${apiService.first_name}'),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('OK'),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      }
+      result.add({'id': apiService.UserId,'first_name': 'self(${apiService.first_name})','last_name': ''});
+      setState(() {
+        print('members $result');
+        members = result;
+      });
+    } catch (e) {
+      print("Error fetching influencers: $e");
+    }
+  }
+
+  Future<void> fetchSupervisor() async {
+    try {
+      result = await apiService.mySupervisor();
+      setState(() {
+        print('Supervisor $result');
+        supervisor = result;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to load Supervisor")),
+      );
+      print("Failed to load Supervisor: $e");
     }
   }
 
@@ -75,16 +158,22 @@ class _RegisterUserState extends State<RegisterUserPage> {
       designation = designationController.text;
       password = passwordController.text;
 
-      print("User registered with following data:");
-      print("Phone: $phoneNumber");
-      print("First Name: $firstName");
-      print("Last Name: $lastName");
-      print("Email: $email");
-      print("Designation: $designation");
-      print("Password: $password");
-      print("Group ID: $selectedGroupId");
+      List<dynamic> registrationData = [
+        phoneNumber,//0
+        firstName,//1
+        lastName,//2
+        email,//3
+        designation,//4
+        password,//5
+        selectedGroupId,//6
+        selectedShreniId,//7
+        _image!,//8
+      ];
 
-      apiService.registerUser(phoneNumber, firstName, lastName, email, designation, password,selectedGroupId!);
+      print("User registered with following data:");
+      print("$phoneNumber $firstName $lastName $email $designation $password $selectedShreniId $selectedGroupId");
+
+      apiService.registerUser(registrationData);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("User registered successfully!")),
       );
@@ -191,54 +280,92 @@ class _RegisterUserState extends State<RegisterUserPage> {
               ),
               // Phone Number
               const SizedBox(height: 16),
-              _buildTextField(hint: "Phone Number"),
+              _buildTextField(hint: "Phone Number", controller: phoneController),
               SizedBox(height: 10),
               // First Name
               Row(
                 children: [
                   Expanded(
-                    child: _buildTextField(hint: "First Name"),
+                    child: _buildTextField(hint: "First Name", controller: firstNameController),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _buildTextField(hint: "Last Name"),
+                    child: _buildTextField(hint: "Last Name", controller: lastNameController),
                   ),
                 ],
               ),
               // Email
               const SizedBox(height: 16),
-              _buildTextField(hint: "E-mail Address"),
+              _buildTextField(hint: "E-mail Address", controller: emailController),
               const SizedBox(height: 16),
-              _buildTextField(hint: "Designation"),
+              _buildTextField(hint: "Designation", controller: designationController),
               SizedBox(height: 20),
               // Group Dropdown
-              if (groups.isNotEmpty)
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[200], // Background color
+                  borderRadius: BorderRadius.circular(15), // Rounded corners
+                  border: Border.all(
+                    color: Colors.grey.shade400, // Border color when not focused
+                    width: 1.0, // Border width
+                  ),
+                ),
+                child: DropdownButton<String>(
+                  hint: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: Text(groups.isNotEmpty ? 'Select Group' : 'Loading groups..'),
+                  ),
+                  value: selectedGroupId,
+                  onChanged: (String? newValue) async {
+                    if (newValue == '1'){
+                      fetchMembers();
+                    }
+                    setState(() {
+                      selectedGroupId = newValue;
+                    });
+                  },
+                  items: groups.map<DropdownMenuItem<String>>((group) {
+                    return DropdownMenuItem<String>(
+                      value: group['id'].toString(),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(group['name']),
+                      ),
+                    );
+                  }).toList(),
+                  isExpanded: true, // Ensures the dropdown stretches to the full width
+                  underline: Container(), // Removes the default underline from the dropdown
+                ),
+              ),
+              if (selectedGroupId=='1')
+                SizedBox(height: 20),
+              if (selectedGroupId=='1')
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey[200], // Background color
-                    borderRadius: BorderRadius.circular(15), // Rounded corners
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(15),
                     border: Border.all(
-                      color: Colors.grey.shade400, // Border color when not focused
+                      color: Colors.grey.shade400,
                       width: 1.0, // Border width
                     ),
                   ),
                   child: DropdownButton<String>(
                     hint: Padding(
                       padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: Text('Select Group'),
+                      child: Text(members.isNotEmpty ? 'Select ShreniPramuhk' : 'Loading ShreniPramuhk..'),
                     ),
-                    value: selectedGroupId,
+                    value: selectedShreniId,
                     onChanged: (String? newValue) {
                       setState(() {
-                        selectedGroupId = newValue;
+                        selectedShreniId = newValue;
                       });
                     },
-                    items: groups.map<DropdownMenuItem<String>>((group) {
+                    items: members.map<DropdownMenuItem<String>>((member) {
                       return DropdownMenuItem<String>(
-                        value: group['id'].toString(),
+                        value: member['id'].toString(),
                         child: Padding(
                           padding: EdgeInsets.symmetric(horizontal: 10),
-                          child: Text(group['name']),
+                          child: Text('${member['first_name']} ${member['last_name']}'),
                         ),
                       );
                     }).toList(),
@@ -246,7 +373,116 @@ class _RegisterUserState extends State<RegisterUserPage> {
                     underline: Container(), // Removes the default underline from the dropdown
                   ),
                 ),
+
               SizedBox(height: 20),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: Colors.grey.shade400, width: 1.0),
+                ),
+                child: DropdownButton<String>(
+                  hint: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: Text('Select State'),
+                  ),
+                  value: selectedState,
+                  onChanged: (String? newState) {
+                    setState(() {
+                      selectedState = newState;
+                      selectedDistrict = null; // Reset district when state changes
+                      selectedCity = null; // Reset city when district changes
+                      districts = stateDistricts[selectedState] ?? [];
+                    });
+                  },
+                  items: states.map<DropdownMenuItem<String>>((state) {
+                    return DropdownMenuItem<String>(
+                      value: state,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(state),
+                      ),
+                    );
+                  }).toList(),
+                  isExpanded: true,
+                  underline: Container(),
+                ),
+              ),
+              SizedBox(height: 20),
+              if (selectedState != null)
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(color: Colors.grey.shade400, width: 1.0),
+                  ),
+                  child: DropdownButton<String>(
+                    hint: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: Text('Select District'),
+                    ),
+                    value: selectedDistrict,
+                    onChanged: (String? newDistrict) {
+                      setState(() {
+                        selectedDistrict = newDistrict;
+                        selectedCity = null; // Reset city when district changes
+                        cities = districtCities[newDistrict] ?? [];
+                      });
+                    },
+                    items: districts.map<DropdownMenuItem<String>>((district) {
+                      return DropdownMenuItem<String>(
+                        value: district,
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          child: Text(district),
+                        ),
+                      );
+                    }).toList(),
+                    isExpanded: true,
+                    underline: Container(),
+                  ),
+                ),
+              SizedBox(height: 20),
+              // City Dropdown (Depends on the selected district)
+              if (selectedDistrict != null)
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(color: Colors.grey.shade400, width: 1.0),
+                  ),
+                  child: DropdownButton<String>(
+                    hint: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: Text('Select City'),
+                    ),
+                    value: selectedCity,
+                    onChanged: (String? newCity) {
+                      setState(() {
+                        selectedCity = newCity;
+                      });
+                    },
+                    items: cities.map<DropdownMenuItem<String>>((city) {
+                      return DropdownMenuItem<String>(
+                        value: city,
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          child: Text(city),
+                        ),
+                      );
+                    }).toList(),
+                    isExpanded: true,
+                    underline: Container(),
+                  ),
+                ),
+              SizedBox(height: 20),
+              // Display selected values
+              if (selectedState != null && selectedDistrict != null && selectedCity != null)
+                Text(
+                  'Selected State: $selectedState\nSelected District: $selectedDistrict\nSelected City: $selectedCity',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               // Register Button
               Container(
                 decoration: BoxDecoration(
@@ -261,7 +497,9 @@ class _RegisterUserState extends State<RegisterUserPage> {
                   ),
                 ),
                 child: TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    registerUser();
+                  },
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.only(left: 0, right: 0, bottom: 10, top: 10), // Adjust padding
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap, // Adjust the tap target size
@@ -300,8 +538,9 @@ class _RegisterUserState extends State<RegisterUserPage> {
       ),
     );
   }
-  Widget _buildTextField({required String hint}) {
+  Widget _buildTextField({required String hint,required TextEditingController controller}) {
     return TextField(
+      controller: controller,
       decoration: InputDecoration(
         hintText: hint,
         filled: true,

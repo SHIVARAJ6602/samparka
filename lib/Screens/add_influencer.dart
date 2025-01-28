@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:samparka/Screens/home.dart';
 
+import '../Service/api_service.dart';
+
 class AddInfluencerPage extends StatefulWidget {
   const AddInfluencerPage({super.key});
 
@@ -13,6 +15,8 @@ class AddInfluencerPage extends StatefulWidget {
 class _AddInfluencerPageState extends State<AddInfluencerPage> {
   // This keeps track of the currently selected bottom navigation item.
   int _selectedIndex = 1;
+
+  final apiService = ApiService();
 
   File? _image;
   final ImagePicker _picker = ImagePicker();
@@ -48,6 +52,46 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
     }
   }
 
+  late List<dynamic> result;
+  List<dynamic> shreni = [];
+  String? selectedShreniId;
+
+  Future<void> fetchShreni() async {
+    try {
+      // Call the apiService.homePage() and store the result
+      result = await apiService.myTeam(0, 100);
+      if (result.isEmpty) {
+        setState(() {
+          selectedShreniId = apiService.UserId;
+        });
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Alert'),
+              content: Text('No ShreniPramuhk to assign \n defualting to self:${apiService.first_name}'),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('OK'),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      }
+      result.add({'id': apiService.UserId,'first_name': 'self(${apiService.first_name})','last_name': ''});
+      setState(() {
+        print('shreni\'s $result');
+        shreni = result;
+      });
+    } catch (e) {
+      print("Error fetching influencers: $e");
+    }
+  }
+
   void _onNavItemTapped(int index) {
     if (index == 0) {
       // Navigate to InfluencersPage when the 0th index is tapped
@@ -67,6 +111,9 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
   void initState() {
     super.initState();
 
+    if(apiService.lvl>2){
+      fetchShreni();
+    }
     // Initialize formData with default values if necessary
     Map<String, dynamic> formData = {
       "action": "CreateGanyaVyakti",
@@ -81,15 +128,43 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
       "email": "",
       "impact_on_society": "",
       "interaction_level": "",
-      "address_1": "",
-      "city_1": "",
-      "district_1": "",
-      "state_1": "",
+      "address": "",
+      "city": "",
+      "district": "",
+      "state": "",
       "address_2": "",
       "city_2": "",
       "district_2": "",
       "state_2": ""
     };
+  }
+
+  void registerInfluencer() {
+    setState(() {
+
+      List<dynamic> registrationData = [
+        phoneController.text,//0
+        fnameController.text,//1
+        lnameController.text,//2
+        emailController.text,//3
+        designationController.text,//4
+        descriptionController.text,//5
+        hashtagsController.text,//6
+        organizationController.text,//7
+        impactOnSocietyController.text,//8
+        interactionLevelController.text,//9
+        address1Controller.text,//10
+        city1Controller.text,//11
+        district1Controller.text,//12
+        state1Controller.text,//13
+        _image!,//14
+      ];
+
+      apiService.CreateGanyaVyakthi(registrationData);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("User registered successfully!")),
+      );
+    });
   }
 
   @override
@@ -290,7 +365,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
             ),
             const SizedBox(height: 16),
             _buildTextField(hint: "State", controller: state1Controller),
-            const SizedBox(height: 16),
+            /*const SizedBox(height: 16),
             _buildTextField(hint: "Address 2", controller: address2Controller),
             const SizedBox(height: 16),
             Row(
@@ -305,7 +380,49 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
               ],
             ),
             const SizedBox(height: 16),
-            _buildTextField(hint: "State", controller: state2Controller),
+            _buildTextField(hint: "State", controller: state2Controller),*/
+            //shreni
+            if(apiService.lvl>2)
+              Container(
+                child: Column(
+                  children: [
+                    SizedBox(height: 20),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(
+                          color: Colors.grey.shade400,
+                          width: 1.0, // Border width
+                        ),
+                      ),
+                      child: DropdownButton<String>(
+                        hint: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          child: Text(shreni.isNotEmpty ? 'Select ShreniPramuhk' : 'Loading ShreniPramuhk..'),
+                        ),
+                        value: selectedShreniId,
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            selectedShreniId = newValue;
+                          });
+                        },
+                        items: shreni.map<DropdownMenuItem<String>>((member) {
+                          return DropdownMenuItem<String>(
+                            value: member['id'].toString(),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 10),
+                              child: Text('${member['first_name']} ${member['last_name']}'),
+                            ),
+                          );
+                        }).toList(),
+                        isExpanded: true, // Ensures the dropdown stretches to the full width
+                        underline: Container(), // Removes the default underline from the dropdown
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             const SizedBox(height: 16),
             Container(
               decoration: BoxDecoration(
@@ -320,7 +437,9 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                 ),
               ),
               child: TextButton(
-                onPressed: () {},
+                onPressed: () {
+
+                },
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.only(left: 0, right: 0, bottom: 10, top: 10), // Adjust padding
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap, // Adjust the tap target size
@@ -330,7 +449,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                     mainAxisAlignment: MainAxisAlignment.center,  // Center the row content
                     children: [
                       const Text(
-                        'Continue',
+                        'Register',
                         style: TextStyle(
                           fontSize: 23,
                           color: Colors.white,

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:samparka/Screens/team.dart';
 
@@ -87,18 +89,19 @@ class _MyTeamPageState extends State<MyTeamPage> {
         title: Text('My Team'),
       ),
       body: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(1),
         itemCount: TeamMembers.length,
         itemBuilder: (context, index) {
-          final teamMember = TeamMembers[index];
-          print('name: ${teamMember['first_name']}');
+          final member = TeamMembers[index];
           return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
             child: MemberCard(
-              name: teamMember['first_name']!,
-              designation: teamMember['designation']!,
-              //description: teamMember['description']!,
-              //hashtags: teamMember['hashtags']!,
+              first_name: member['first_name']!,
+              last_name: member['last_name']!,
+              designation: member['designation']!,
+              profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
+                  ? apiService.baseUrl.substring(0,40)+member['profile_image']!
+                  : '',
             ),
           );
         },
@@ -209,23 +212,24 @@ class _MyTeamPageState extends State<MyTeamPage> {
 }
 
 class MemberCard extends StatelessWidget {
-  final String name;
+  final String first_name;
+  final String last_name;
   final String designation;
-  //final String description;
-  //final String hashtags;
+  final String profileImage;
 
   const MemberCard({
     super.key,
-    required this.name,
+
+    required this.first_name,
+    required this.last_name,
     required this.designation,
-    //required this.description,
-    //required this.hashtags,
+    required this.profileImage,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(0), // Container padding
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(25),
@@ -237,57 +241,62 @@ class MemberCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          // Profile Picture (placeholder)
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: Colors.grey,
+      child: TextButton(
+        onPressed: () {
+          print('object');
+        },
+        style: ButtonStyle(
+          shape: WidgetStateProperty.all(RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
+          )),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 16,top: 16), // Add padding to the content
+          child: Row(
+            children: [
+              // Profile Picture (placeholder)
+              CircleAvatar(
+                radius: MediaQuery.of(context).size.width * 0.08,
+                backgroundColor: Colors.grey[200],
+                backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null, // Use NetworkImage here
+                child: profileImage.isEmpty
+                    ? Icon(
+                  Icons.person,
+                  color: Colors.white,
+                  size: MediaQuery.of(context).size.width * 0.14,
+                )
+                    : null,
+              ),
+              SizedBox(width: 16),
+              // Influencer Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$first_name $last_name', // Dynamic name
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromRGBO(5, 50, 70, 1.0),
+                      ),
+                    ),
+                    Text(
+                      designation, // Dynamic designation
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color.fromRGBO(5, 50, 70, 1.0),
+                      ),
+                    ),
+                    SizedBox(height: 1),
+                  ],
+                ),
+              ),
+            ],
           ),
-          SizedBox(width: 16),
-          // Influencer Details
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name, // Dynamic name
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: Color.fromRGBO(5, 50, 70, 1.0),
-                  ),
-                ),
-                Text(
-                  designation, // Dynamic designation
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color.fromRGBO(5, 50, 70, 1.0),
-                  ),
-                ),
-                SizedBox(height: 1),
-                /*Text(
-                  description, // Dynamic description
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color.fromRGBO(5, 50, 70, 1.0),
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 1),
-                Text(
-                  hashtags, // Dynamic hashtags
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.teal,
-                  ),
-                ),*/
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
+
 }

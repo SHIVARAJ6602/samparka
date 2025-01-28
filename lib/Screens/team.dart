@@ -1,7 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:samparka/Screens/meeting.dart';
 import 'package:samparka/Screens/my_team.dart';
 import 'package:samparka/Screens/register_user.dart';
 import 'add_influencer.dart';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'gen_report.dart';
 import 'home.dart';
 import 'login.dart';
@@ -24,6 +29,7 @@ class _TeamPageState extends State<TeamPage> {
 
   List<dynamic> members = [];
   List<dynamic> supervisor = [];
+  List<dynamic> lead = [];
   late List<dynamic> result;
   bool loading = true;
 
@@ -41,7 +47,13 @@ class _TeamPageState extends State<TeamPage> {
         context,
         MaterialPageRoute(builder: (context) => const GenReportPage()),
       );
-    }else if (index == 0) {
+    } else if (index == 2) {
+      // Navigate to AddInfluencerPage when index 1 is tapped
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const MeetingPage()),
+      );
+    } else if (index == 0) {
       // Navigate to AddInfluencerPage when index 1 is tapped
       Navigator.push(
         context,
@@ -84,12 +96,32 @@ class _TeamPageState extends State<TeamPage> {
     }
   }
 
+  Future<void> fetchLead() async {
+    try {
+      // Call the apiService.homePage() and store the result
+      result = await apiService.myLead();
+      //print('$result');
+      setState(() {
+        // Update the influencers list with the fetched data
+        lead = result;
+      });
+    } catch (e) {
+      // Handle any errors here
+      print("Error fetching influencers: $e");
+    }
+  }
+
   @override
   void initState() {
     super.initState();
 
     fetchSupervisor();
-    fetchMembers();
+    if(apiService.lvl > 1) {
+      fetchMembers();
+    }
+    if(apiService.lvl == 1){
+      fetchLead();
+    }
     loading = false;
   }
 
@@ -179,7 +211,7 @@ class _TeamPageState extends State<TeamPage> {
                       Container(
                         decoration: BoxDecoration(
                           //borderRadius: BorderRadius.circular(30),
-                          borderRadius: members.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
+                          borderRadius: supervisor.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
                           gradient: const LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
@@ -221,8 +253,19 @@ class _TeamPageState extends State<TeamPage> {
                                       children: [
                                         // Profile Picture (placeholder)
                                         CircleAvatar(
-                                          radius: 30,
-                                          backgroundColor: Colors.grey[300],
+                                          radius: MediaQuery.of(context).size.width * 0.08,
+                                          backgroundColor: Colors.grey[200],
+                                          // Check if profile_image exists and is not empty before passing it to NetworkImage
+                                          backgroundImage: supervisor[0]['profile_image'] != null && supervisor[0]['profile_image']!.isNotEmpty
+                                              ? NetworkImage(apiService.baseUrl.substring(0, 40) + supervisor[0]['profile_image'])
+                                              : null,
+                                          child: supervisor[0]['profile_image'] == null || supervisor[0]['profile_image']!.isEmpty
+                                              ? Icon(
+                                            Icons.person,
+                                            color: Colors.white,
+                                            size: MediaQuery.of(context).size.width * 0.14,
+                                          )
+                                              : null,
                                         ),
                                         SizedBox(width: 16),
                                         // Influencer Details
@@ -266,135 +309,265 @@ class _TeamPageState extends State<TeamPage> {
                           ],
                         ),
                       ),
-                      //My team
-                      Text(
-                        'My Team',
-                        style: TextStyle(
-                          fontSize: largeFontSize*2.5,
-                          fontWeight: FontWeight.bold,
-                          color: const Color.fromRGBO(5, 50, 70, 1.0),
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                      Container(
-                        decoration: BoxDecoration(
-                          //borderRadius: BorderRadius.circular(30),
-                          borderRadius: members.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
-                          gradient: const LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Color.fromRGBO(60, 170, 145, 1.0),
-                              Color.fromRGBO(2, 40, 60, 1),
-                            ],
+                      //My Lead
+                      if(apiService.lvl<3)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'My Lead',
+                            style: TextStyle(
+                              fontSize: largeFontSize*1.5,
+                              fontWeight: FontWeight.bold,
+                              color: const Color.fromRGBO(5, 50, 70, 1.0),
+                            ),
                           ),
-                        ),
-                        child: Column(
-                          children: [
-                            // If the list is empty, show a message
-                            if (members.isEmpty)
-                              Container(
-                                padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    'No Members Assigned',
-                                    style: TextStyle(
-                                      fontSize: largeFontSize,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              )
-                            // If the list is not empty, build a ListView of InfluencerCards
-                            else
-                              ListView.builder(
-                                shrinkWrap: true,
-                                itemCount: members.length, // The number of items in your data list
-                                itemBuilder: (context, index) {
-                                  final influencer = members[index]; // Access the influencer data for each item
-                                  return Padding(
-                                    padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
-                                    child: MemberCard(
-                                      first_name: influencer['first_name']!,
-                                      last_name: influencer['last_name']!,
-                                      designation: influencer['designation']!,
-                                    ),
-                                  );
-                                },
+                          const SizedBox(height: 1),
+                          Container(
+                            decoration: BoxDecoration(
+                              //borderRadius: BorderRadius.circular(30),
+                              borderRadius: lead.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
+                              gradient: const LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Color.fromRGBO(60, 170, 145, 1.0),
+                                  Color.fromRGBO(2, 40, 60, 1),
+                                ],
                               ),
-                            if (members.isNotEmpty)
-                            // View All Influencers Button
-                              TextButton(
-                                onPressed: () async {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => const MyTeamPage()),
-                                  );
-                                },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      'View all Members',
-                                      style: TextStyle(
-                                        fontSize: largeFontSize,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
+                            ),
+                            child: Column(
+                              children: [
+                                // If the list is empty, show a message
+                                if (lead.isEmpty)
+                                  Container(
+                                    padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        'No lead Assigned',
+                                        style: TextStyle(
+                                          fontSize: largeFontSize,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
                                       ),
                                     ),
-                                    const SizedBox(width: 4),
-                                    Image.asset(
-                                      'assets/icon/arrow.png',
-                                      color: Colors.white,
-                                      width: 12,
-                                      height: 12,
+                                  )
+                                // If the list is not empty, build a ListView of InfluencerCards
+                                else
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          // First Row: Profile Picture and Influencer Details
+                                          Row(
+                                            children: [
+                                              CircleAvatar(
+                                                radius: MediaQuery.of(context).size.width * 0.08,
+                                                backgroundColor: Colors.grey[200],
+                                                // Check if profile_image exists and is not empty before passing it to NetworkImage
+                                                backgroundImage: lead[0]['profile_image'] != null && lead[0]['profile_image']!.isNotEmpty
+                                                    ? NetworkImage(apiService.baseUrl.substring(0, 40) + lead[0]['profile_image'])
+                                                    : null,
+                                                child: lead[0]['profile_image'] == null || lead[0]['profile_image']!.isEmpty
+                                                    ? Icon(
+                                                  Icons.person,
+                                                  color: Colors.white,
+                                                  size: MediaQuery.of(context).size.width * 0.14,
+                                                )
+                                                    : null,
+                                              ),
+                                              SizedBox(width: 16),
+                                              // Influencer Details
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      lead[0]['first_name'], // Dynamic name
+                                                      style: TextStyle(
+                                                        fontSize: largeFontSize+6,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      lead[0]['last_name'], // Dynamic designation
+                                                      style: TextStyle(
+                                                        fontSize: smallFontSize,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                    SizedBox(height: 1),
+                                                    Text(
+                                                      lead[0]['designation'], // Dynamic description
+                                                      style: TextStyle(
+                                                        fontSize: smallFontSize-2,
+                                                        color: Colors.white,
+                                                      ),
+                                                      maxLines: 2,
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ]
                                     ),
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 20),
-                      //add Member
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          gradient: const LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: [
-                              Color.fromRGBO(2, 40, 60, 1),
-                              Color.fromRGBO(60, 170, 145, 1.0)
-                            ],
+                      //My team
+                      if(apiService.lvl > 1)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'My Team',
+                            style: TextStyle(
+                              fontSize: largeFontSize*2.5,
+                              fontWeight: FontWeight.bold,
+                              color: const Color.fromRGBO(5, 50, 70, 1.0),
+                            ),
                           ),
-                        ),
-                        child: TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => RegisterUserPage()),
-                            );
-                          },
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.only(left: 0,right: 0, bottom: 10,top: 10), // Remove padding to fill the entire container
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap, // Adjust the tap target size
+                          const SizedBox(height: 1),
+                          Container(
+                            decoration: BoxDecoration(
+                              //borderRadius: BorderRadius.circular(30),
+                              borderRadius: members.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
+                              gradient: const LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Color.fromRGBO(60, 170, 145, 1.0),
+                                  Color.fromRGBO(2, 40, 60, 1),
+                                ],
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                // If the list is empty, show a message
+                                if (members.isEmpty)
+                                  Container(
+                                    padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        'No Members Assigned',
+                                        style: TextStyle(
+                                          fontSize: largeFontSize,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                // If the list is not empty, build a ListView of InfluencerCards
+                                else
+                                  ListView.builder(
+                                    shrinkWrap: true,
+                                    itemCount: members.length, // The number of items in your data list
+                                    itemBuilder: (context, index) {
+                                      final member = members[index]; // Access the influencer data for each item
+                                      return Padding(
+                                        padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
+                                        child: MemberCard(
+                                          first_name: member['first_name']!,
+                                          last_name: member['last_name']!,
+                                          designation: member['designation']!,
+                                          profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
+                                              ? apiService.baseUrl.substring(0,40)+member['profile_image']!
+                                              : '',
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                if (members.isNotEmpty)
+                                // View All Influencers Button
+                                  TextButton(
+                                    onPressed: () async {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (context) => const MyTeamPage()),
+                                      );
+                                    },
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          'View all Members',
+                                          style: TextStyle(
+                                            fontSize: largeFontSize,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Image.asset(
+                                          'assets/icon/arrow.png',
+                                          color: Colors.white,
+                                          width: 12,
+                                          height: 12,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
-                          child: Center(
-                            child: Text(
-                              'Add New Member',
-                              style: TextStyle(
-                                fontSize: largeFontSize,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                        ],
+                      ),
+                      //Add new members
+                      if(apiService.lvl > 2)
+                      Column(
+                        children: [
+                          const SizedBox(height: 20),
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              gradient: const LinearGradient(
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                                colors: [
+                                  Color.fromRGBO(2, 40, 60, 1),
+                                  Color.fromRGBO(60, 170, 145, 1.0)
+                                ],
+                              ),
+                            ),
+                            child: TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => RegisterUserPage()),
+                                );
+                              },
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.only(left: 0,right: 0, bottom: 10,top: 10), // Remove padding to fill the entire container
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap, // Adjust the tap target size
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'Add New Member',
+                                  style: TextStyle(
+                                    fontSize: largeFontSize,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
                       //const SizedBox(height: 16),
                     ],
@@ -517,6 +690,7 @@ class MemberCard extends StatelessWidget {
   final String first_name;
   final String last_name;
   final String designation;
+  final String profileImage;
 
   const MemberCard({
     super.key,
@@ -524,12 +698,13 @@ class MemberCard extends StatelessWidget {
     required this.first_name,
     required this.last_name,
     required this.designation,
+    required this.profileImage,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(0), // Container padding
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(25),
@@ -541,39 +716,60 @@ class MemberCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          // Profile Picture (placeholder)
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: Colors.grey[300],
-          ),
-          SizedBox(width: 16),
-          // Influencer Details
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$first_name $last_name', // Dynamic name
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: Color.fromRGBO(5, 50, 70, 1.0),
-                  ),
+      child: TextButton(
+        onPressed: () {
+          print('object');
+        },
+        style: ButtonStyle(
+          shape: WidgetStateProperty.all(RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
+          )),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(left: 0,right: 0,bottom: 8,top: 8), // Add padding to the content
+          child: Row(
+            children: [
+              // Profile Picture (placeholder)
+              CircleAvatar(
+                radius: MediaQuery.of(context).size.width * 0.08,
+                backgroundColor: Colors.grey[200],
+                backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null, // Use NetworkImage here
+                child: profileImage.isEmpty
+                    ? Icon(
+                  Icons.person,
+                  color: Colors.white,
+                  size: MediaQuery.of(context).size.width * 0.14,
+                )
+                    : null,
+              ),
+              SizedBox(width: 16),
+              // Influencer Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$first_name $last_name', // Dynamic name
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromRGBO(5, 50, 70, 1.0),
+                      ),
+                    ),
+                    Text(
+                      designation, // Dynamic designation
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color.fromRGBO(5, 50, 70, 1.0),
+                      ),
+                    ),
+                    SizedBox(height: 1),
+                  ],
                 ),
-                Text(
-                  designation, // Dynamic designation
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color.fromRGBO(5, 50, 70, 1.0),
-                  ),
-                ),
-                SizedBox(height: 1),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

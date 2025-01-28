@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:samparka/Service/api_service.dart';
+import 'Temp2.dart';
+import 'drop_down.dart';
 import 'register_user.dart';
 import 'temp.dart';
 
@@ -61,7 +63,6 @@ class _ApiScreenState extends State<ApiScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () async {
                     final title = _taskController.text.trim();
@@ -323,10 +324,59 @@ class _ApiScreenState extends State<ApiScreen> {
           Expanded(
             child: Row(
               children: [
+                Expanded(
+                  child: Column(
+                    children: [
+                      TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => CascadingDropdownExample()),
+                            );
+                          },
+                          child: Text('drop down')
+                      )
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => MultiImagePickerScreen()),
+                            );
+                          },
+                          child: Text('Multi image')
+                      )
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      TextButton(
+                          onPressed: () {
+                            apiService.getUser();
+                          },
+                          child: Text('User Data')
+                      )
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Row(
+              children: [
                 Text(apiService.txt)
               ],
             ),
           ),
+
           /*Expanded(
             child: Row(
               children: [

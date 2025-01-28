@@ -1,29 +1,27 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:samparka/Screens/meeting.dart';
-import 'package:samparka/Screens/my_team.dart';
+import 'package:samparka/Screens/home.dart';
+import 'package:samparka/Screens/schedule_meeting.dart';
+import 'package:samparka/Screens/submit_report.dart';
 import 'package:samparka/Screens/team.dart';
-import 'add_influencer.dart';
+import 'package:samparka/Screens/view_influencers.dart';
+
+import '../Service/api_service.dart';
+import 'API_TEST.dart';
 import 'gen_report.dart';
 import 'login.dart';
-import 'API_TEST.dart'; //TaskListScreen()
-import 'view_influencers.dart';
-import 'package:samparka/Service/api_service.dart';
 
-class InfluencersPage extends StatefulWidget {
-  const InfluencersPage({super.key});
-
+class MeetingPage extends StatefulWidget {
+  const MeetingPage({super.key});
   @override
-  _InfluencersPageState createState() => _InfluencersPageState();
+  _MeetingPageState createState() => _MeetingPageState();
 }
 
-class _InfluencersPageState extends State<InfluencersPage> {
-  // This keeps track of the selected index for the bottom navigation
-  int _selectedIndex = 0;
+class _MeetingPageState extends State<MeetingPage> {
+  int _selectedIndex = 2;
   final apiService = ApiService();
 
-  // Method to handle bottom navigation item tap
   void _onNavItemTapped(int index) {
     if (index == 4) {
       // Navigate to AddInfluencerPage when index 1 is tapped
@@ -37,17 +35,17 @@ class _InfluencersPageState extends State<InfluencersPage> {
         context,
         MaterialPageRoute(builder: (context) => const GenReportPage()),
       );
-    } else if (index == 2) {
-      // Navigate to AddInfluencerPage when index 1 is tapped
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const MeetingPage()),
-      );
     } else if (index == 1) {
       // Navigate to AddInfluencerPage when index 1 is tapped
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const TeamPage()),
+      );
+    }else if (index == 0) {
+      // Navigate to AddInfluencerPage when index 1 is tapped
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const InfluencersPage()),
       );
     } else {
       setState(() {
@@ -131,7 +129,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
     return false;
   }
 
-  /******************************************************/
+  /// ***************************************************
 
   @override
   Widget build(BuildContext context) {
@@ -211,22 +209,13 @@ class _InfluencersPageState extends State<InfluencersPage> {
               title: Text('Username: $username'),
             ),
             ListTile(
-              title: Text('City: ${apiService.city}'),
-            ),
-            ListTile(
-              title: Text('District: ${apiService.district}'),
-            ),
-            ListTile(
-              title: Text('State: ${apiService.state}'),
-            ),
-            ListTile(
               title: Text('Is Authenticated: $isAuthenticated'),
             ),
             ListTile(
-              title: Text('User level: $level'),
+              title: Text('Token: ${token.length > 20 ? token.substring(0, 20) : token}..'),
             ),
             ListTile(
-              title: Text('Token: ${token.length > 20 ? token.substring(0, 20) : token}..'),
+              title: Text('User level: $level'),
             ),
             Divider(),
             ListTile(
@@ -375,138 +364,130 @@ class _InfluencersPageState extends State<InfluencersPage> {
       /***************************menu end*************************************/
       body: Stack(
         children: [
-          // Main content inside a SingleChildScrollView
           Column(
             children: [
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 12,vertical: 10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      //const SizedBox(height: 50),
-                      // Search Bar
-                      TextField(
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: const Color.fromRGBO(217, 217, 217, 1.0),
-                          hintText: 'Search Influencer',
-                          hintStyle: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.normal,
-                            color: Color.fromRGBO(128, 128, 128, 1.0),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide.none,
-                          ),
-                          suffixIcon: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Color.fromRGBO(60, 245, 200, 1.0),
-                                    Color.fromRGBO(2, 40, 60, 1),
-                                  ],
-                                ),
-                              ),
-                              child: const Icon(Icons.search, color: Colors.white),
-                            ),
-                          ),
-                        ),
-                      ),
-                      //Approve and assign
-                      if(apiService.lvl > 2)
-                      Column(
+                      // + New Meeting
+                      Row(
                         children: [
-                          const SizedBox(height: 22),
-                          if (influencers.isNotEmpty)
-                            Column(
+                          Expanded(
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // approval & assign Influencers Title
                                 Text(
-                                  'Approval & Assign',
+                                  "My Team",
                                   style: TextStyle(
                                     fontSize: largeFontSize,
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w600,
                                     color: const Color.fromRGBO(5, 50, 70, 1.0),
                                   ),
+                                  textAlign: TextAlign.left,
                                 ),
                                 Text(
-                                  'Influencers',
+                                  "Meetings",
                                   style: TextStyle(
-                                    fontSize: largeFontSize*2.5,
-                                    fontWeight: FontWeight.bold,
+                                    fontSize: largeFontSize+20,
+                                    fontWeight: FontWeight.w600,
                                     color: const Color.fromRGBO(5, 50, 70, 1.0),
-                                  ),
-                                ),
-                                const SizedBox(height: 1),
-                                // approval Cards
-                                SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal, // Horizontal scrolling
-                                  child: Row(
-                                    children: List.generate(influencers.length, (index) {
-                                      final influencer = influencers[index]; // Access the influencer data for each item
-                                      return Padding(
-                                        padding: const EdgeInsets.only(left: 1,right: 8,top: 8,bottom: 8), // Adjust horizontal padding
-                                        child: Container(
-                                          width: MediaQuery.of(context).size.width*0.75,
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(30),
-                                            gradient: const LinearGradient(
-                                              begin: Alignment.centerRight,
-                                              end: Alignment.centerLeft,
-                                              colors: [
-                                                Color.fromRGBO(60, 170, 145, 1.0),
-                                                Color.fromRGBO(2, 40, 60, 1),
-                                              ],
-                                            ),
-                                          ),
-                                          child: ApprovalCard(
-                                            name: influencer['fname']!,
-                                            designation: influencer['designation']!,
-                                            description: influencer['description']!,
-                                            hashtags: influencer['hashtags']!,
-                                            imageUrl: influencer['profile_image'] != null && influencer['profile_image']!.isNotEmpty
-                                                ? apiService.baseUrl.substring(0,40)+influencer['profile_image']!
-                                                : '',
-                                          ),
-                                        ),
-                                      );
-                                    }),
                                   ),
                                 ),
                               ],
                             ),
+                          ),
+                          Container(
+                            width: MediaQuery.of(context).size.width*0.4,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(30),
+                              color: const Color.fromRGBO(5, 50, 70, 1.0),
+                            ),
+                            child: TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const ScheduleMeetingPage()),
+                                );
+                              },
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.all(1),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: Center(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      '+ New meeting',
+                                      style: TextStyle(
+                                        fontSize: largeFontSize,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
+                      //Approve and assign
+                      if(apiService.lvl > 2)
+                        Column(
+                          children: [
+                            const SizedBox(height: 20),
+                            if (influencers.isEmpty)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 1),
+                                  // approval Cards
+                                  SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal, // Horizontal scrolling
+                                    child: Row(
+                                      children: List.generate(2, (index) {
+                                        //final influencer = influencers[index]; // Access the influencer data for each item
+                                        return Padding(
+                                          padding: const EdgeInsets.only(left: 1,right: 8,top: 8,bottom: 8), // Adjust horizontal padding
+                                          child: Container(
+                                            width: MediaQuery.of(context).size.width*0.75,
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(30),
+                                              gradient: const LinearGradient(
+                                                begin: Alignment.centerRight,
+                                                end: Alignment.centerLeft,
+                                                colors: [
+                                                  Color.fromRGBO(60, 170, 145, 1.0),
+                                                  Color.fromRGBO(2, 40, 60, 1),
+                                                ],
+                                              ),
+                                            ),
+                                            child: ActionCard(
+                                              name: 'Meeting Name',
+                                              date: 'xx/xx/xxxx',
+                                              time: 'xx:xx:xx',
+                                              location: 'Location,Location',
+                                            ),
+                                          ),
+                                        );
+                                      }),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
                       const SizedBox(height: 20),
-                      // Recently Assigned Influencers Title
-                      const Text(
-                        'Recently Assigned',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color.fromRGBO(5, 50, 70, 1.0),
-                        ),
-                      ),
-                      const Text(
-                        'Influencers',
-                        style: TextStyle(
-                          fontSize: 45,
-                          fontWeight: FontWeight.bold,
-                          color: Color.fromRGBO(5, 50, 70, 1.0),
-                        ),
-                      ),
+                      //scheduled Meeting Title
+                      Row(children: [Text('Scheduled',style: TextStyle(fontSize: largeFontSize,color: const Color.fromRGBO(5, 50, 70, 1.0),fontWeight: FontWeight.w600))],),
+                      Row(children: [Text("Meetings",style: TextStyle(fontSize: largeFontSize+20,fontWeight: FontWeight.w600,color: const Color.fromRGBO(5, 50, 70, 1.0),),),],),
+                      //scheduled meetings
                       const SizedBox(height: 1),
-                      // Influencer Cards
+                      // meeting Cards
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(30),
@@ -537,7 +518,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                   ),
                                   child: Center(
                                     child: Text(
-                                      'No Influencer Assigned',
+                                      'No Meeting Scheduled',
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
@@ -554,7 +535,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                     final influencer = influencers[index]; // Access the influencer data for each item
                                     return Padding(
                                       padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
-                                      child: InfluencerCard(
+                                      child: MeetingCard(
                                         name: influencer['fname']!,
                                         designation: influencer['designation']!,
                                         description: influencer['description']!,
@@ -568,7 +549,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                 ),
 
                             if (influencers.isNotEmpty)
-                              // View All Influencers Button
+                            // View All Influencers Button
                               TextButton(
                                 onPressed: () async {
                                   Navigator.push(
@@ -600,50 +581,12 @@ class _InfluencersPageState extends State<InfluencersPage> {
                           ],
                         ),
                       ),
-
-                      const SizedBox(height: 20),
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          gradient: const LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: [
-                              Color.fromRGBO(2, 40, 60, 1),
-                              Color.fromRGBO(60, 170, 145, 1.0)
-                            ],
-                          ),
-                        ),
-                        child: TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const AddInfluencerPage()),
-                            );
-                          },
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.only(left: 0,right: 0, bottom: 10,top: 10), // Remove padding to fill the entire container
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap, // Adjust the tap target size
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'Add New Influencer',
-                              style: TextStyle(
-                                fontSize: 23,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      //const SizedBox(height: 16),
                     ],
                   ),
                 ),
               ),
             ],
-          ),
+          )
         ],
       ),
 
@@ -751,19 +694,174 @@ class _InfluencersPageState extends State<InfluencersPage> {
       ),
     );
   }
+}
+
+class ActionCard extends StatelessWidget {
+  final String name;
+  final String date;
+  final String time;
+  final String location;
+
+  const ActionCard({
+    super.key,
+    required this.name,
+    required this.date,
+    required this.time,
+    required this.location,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
+    double largeFontSize = normFontSize+4; //20
+    double smallFontSize = normFontSize-2; //14
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Container(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // First Column: meeting details
+            Container(
+              width: MediaQuery.of(context).size.width * 0.40,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,  // Dynamic name
+                    style: TextStyle(
+                      fontSize: largeFontSize + 6,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    date,  // Dynamic designation
+                    style: TextStyle(
+                      fontSize: smallFontSize,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(height: 1),
+                  Text(
+                    time,  // Dynamic description
+                    style: TextStyle(
+                      fontSize: smallFontSize - 2,
+                      color: Colors.white,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 1),
+                  Text(
+                    location,  // Dynamic hashtags
+                    style: TextStyle(
+                      fontSize: smallFontSize - 2,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 5),
+            // Second Column: buttons
+            Container(
+              //width: MediaQuery.of(context).size.width ,
+              child: Column(
+                children: [
+                  Container(
+                    width: MediaQuery.of(context).size.width*0.25,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: const Color.fromRGBO(5, 50, 70, 1.0),
+                    ),
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const SubmitReportPage()),
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.all(10),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Submit Report',
+                              style: TextStyle(
+                                fontSize: smallFontSize-2,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Container(
+                    width: MediaQuery.of(context).size.width*0.25,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      gradient: const LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          Color.fromRGBO(133, 1, 1, 1.0),
+                          Color.fromRGBO(237, 62, 62, 1.0),
+                        ],
+                      ),
+                    ),
+                    child: TextButton(
+                      onPressed: () {},
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.all(10),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Cancel Meeting',
+                              style: TextStyle(
+                                fontSize: smallFontSize-2,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Space between the two rows
+          ],
+        ),
+      ),
+
+
+    );
+  }
 
 }
 
-
-
-class InfluencerCard extends StatelessWidget {
+class MeetingCard extends StatelessWidget {
   final String name;
   final String designation;
   final String description;
   final String hashtags;
   final String profileImage;
 
-  const InfluencerCard({
+  const MeetingCard({
     super.key,
     required this.name,
     required this.designation,
@@ -857,139 +955,4 @@ class InfluencerCard extends StatelessWidget {
       ),
     );
   }
-}
-
-class ApprovalCard extends StatelessWidget {
-  final String name;
-  final String designation;
-  final String description;
-  final String hashtags;
-  final String imageUrl;
-
-  const ApprovalCard({
-    super.key,
-    required this.name,
-    required this.designation,
-    required this.description,
-    required this.hashtags, required this.imageUrl,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
-    double largeFontSize = normFontSize+4; //20
-    double smallFontSize = normFontSize-2; //14
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // First Row: Profile Picture and Influencer Details
-          Row(
-            children: [
-              // Profile Picture (placeholder)
-              CircleAvatar(
-                radius: MediaQuery.of(context).size.width * 0.08,
-                backgroundColor: Colors.grey[200],
-                backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null, // Use NetworkImage here
-                child: imageUrl.isEmpty
-                    ? Icon(
-                  Icons.person,
-                  color: Colors.white,
-                  size: MediaQuery.of(context).size.width * 0.14,
-                )
-                    : null,
-              ),
-              SizedBox(width: 16),
-              // Influencer Details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name, // Dynamic name
-                      style: TextStyle(
-                        fontSize: largeFontSize+6,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(
-                      designation, // Dynamic designation
-                      style: TextStyle(
-                        fontSize: smallFontSize,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 1),
-                    Text(
-                      description, // Dynamic description
-                      style: TextStyle(
-                        fontSize: smallFontSize-2,
-                        color: Colors.white,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 1),
-                    Text(
-                      hashtags, // Dynamic hashtags
-                      style: TextStyle(
-                        fontSize: smallFontSize-2,
-                        color: Colors.teal,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8), // Space between the two rows
-          // Second Row: Approval Button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center, // Align button to the end
-            children: [
-              Container(
-                width: MediaQuery.of(context).size.width*0.65,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  gradient: const LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      Color.fromRGBO(133, 1, 1, 1.0),
-                      Color.fromRGBO(237, 62, 62, 1.0),
-                    ],
-                  ),
-                ),
-                child: TextButton(
-                  onPressed: () {},
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.all(10),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Approve and Assign',
-                          style: TextStyle(
-                            fontSize: largeFontSize,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
 }

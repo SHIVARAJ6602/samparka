@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:samparka/Screens/meeting.dart';
 import 'package:samparka/Screens/team.dart';
 import 'add_influencer.dart';
 import 'home.dart';
@@ -36,6 +37,12 @@ class _GenReportPageState extends State<GenReportPage> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const TeamPage()),
+      );
+    } else if (index == 2) {
+      // Navigate to AddInfluencerPage when index 1 is tapped
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const MeetingPage()),
       );
     } else if (index == 4) {
       Navigator.push(

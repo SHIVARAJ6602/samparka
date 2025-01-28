@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 import '../Service/api_service.dart';
@@ -60,6 +62,9 @@ class _ViewInfluencersPageState extends State<ViewInfluencersPage> {
               designation: influencer['designation']!,
               description: influencer['description']!,
               hashtags: influencer['hashtags']!,
+              profileImage: influencer['profile_image'] != null && influencer['profile_image']!.isNotEmpty
+                  ? apiService.baseUrl.substring(0,40)+influencer['profile_image']!
+                  : '',
             ),
           );
         },
@@ -105,6 +110,9 @@ class InfluencerList extends StatelessWidget {
             designation: influencer['designation']!,
             description: influencer['description']!,
             hashtags: influencer['hashtags']!,
+            profileImage: influencer['profile_image'] != null && influencer['profile_image']!.isNotEmpty
+                ?influencer['profile_image']!
+                : '',
           ),
         );
       },
@@ -118,19 +126,20 @@ class InfluencerCard extends StatelessWidget {
   final String designation;
   final String description;
   final String hashtags;
+  final String profileImage;
 
   const InfluencerCard({
     super.key,
     required this.name,
     required this.designation,
     required this.description,
-    required this.hashtags,
+    required this.hashtags, required this.profileImage,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(0), // Container padding
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(25),
@@ -142,56 +151,74 @@ class InfluencerCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          // Profile Picture (placeholder)
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: Colors.grey,
+      child: TextButton(
+        onPressed: () {
+          print('object');
+        },
+        style: ButtonStyle(
+          shape: WidgetStateProperty.all(RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
+          )),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(left: 0,right: 0,bottom: 8,top: 8), // Add padding to the content
+          child: Row(
+            children: [
+              // Profile Picture (placeholder)
+              CircleAvatar(
+                radius: MediaQuery.of(context).size.width * 0.08,
+                backgroundColor: Colors.grey[200],
+                backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null, // Use NetworkImage here
+                child: profileImage.isEmpty
+                    ? Icon(
+                  Icons.person,
+                  color: Colors.white,
+                  size: MediaQuery.of(context).size.width * 0.14,
+                )
+                    : null,
+              ),
+              SizedBox(width: 16),
+              // Influencer Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name, // Dynamic name
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromRGBO(5, 50, 70, 1.0),
+                      ),
+                    ),
+                    Text(
+                      designation, // Dynamic designation
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color.fromRGBO(5, 50, 70, 1.0),
+                      ),
+                    ),
+                    Text(
+                      description, // Dynamic designation
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color.fromRGBO(5, 50, 70, 1.0),
+                      ),
+                    ),
+                    Text(
+                      hashtags, // Dynamic designation
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.teal,
+                      ),
+                    ),
+                    SizedBox(height: 1),
+                  ],
+                ),
+              ),
+            ],
           ),
-          SizedBox(width: 16),
-          // Influencer Details
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name, // Dynamic name
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: Color.fromRGBO(5, 50, 70, 1.0),
-                  ),
-                ),
-                Text(
-                  designation, // Dynamic designation
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color.fromRGBO(5, 50, 70, 1.0),
-                  ),
-                ),
-                SizedBox(height: 1),
-                Text(
-                  description, // Dynamic description
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color.fromRGBO(5, 50, 70, 1.0),
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 1),
-                Text(
-                  hashtags, // Dynamic hashtags
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.teal,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
