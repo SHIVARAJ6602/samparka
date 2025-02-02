@@ -237,7 +237,7 @@ class _MeetingPageState extends State<MeetingPage> {
                           });
                         },
                       ),
-                      Text(apiService.baseUrl1.substring(8,30)),
+                      Text(apiService.baseUrl1.substring(8,24)),
                     ],
                   ),
                 ),
@@ -254,6 +254,22 @@ class _MeetingPageState extends State<MeetingPage> {
                         },
                       ),
                       Text(apiService.baseUrl2.substring(8,32)),
+                    ],
+                  ),
+                ),
+                ListTile(
+                  title: Row(
+                    children: [
+                      Radio<String>(
+                        value: 'url3',
+                        groupValue: selectedRadio,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedRadio = value;
+                          });
+                        },
+                      ),
+                      Text(apiService.baseUrl3.substring(8,30)),
                     ],
                   ),
                 ),

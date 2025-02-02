@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:samparka/Screens/home.dart';
 
 import '../Service/api_service.dart';
 
-class AddInfluencerPage extends StatefulWidget {
-  const AddInfluencerPage({super.key});
+class AddInfluencer1Page extends StatefulWidget {
+  const AddInfluencer1Page({super.key});
 
   @override
-  _AddInfluencerPageState createState() => _AddInfluencerPageState();
+  _AddInfluencer1PageState createState() => _AddInfluencer1PageState();
 }
 
-class _AddInfluencerPageState extends State<AddInfluencerPage> {
+class _AddInfluencer1PageState extends State<AddInfluencer1Page> {
   // This keeps track of the currently selected bottom navigation item.
   int _selectedIndex = 1;
 
@@ -42,6 +43,12 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
   final TextEditingController district2Controller = TextEditingController();
   final TextEditingController state2Controller = TextEditingController();
 
+  /// Regex for validation
+  final RegExp nameRegex = RegExp(r'^[A-Za-z]{1,50}$');
+  final RegExp designationRegex = RegExp(r'^[A-Za-z., ]{1,50}$');
+  final RegExp emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+  final RegExp phoneRegex = RegExp(r'^\d{10}$');
+
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await _picker.pickImage(source: source);
 
@@ -69,7 +76,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
           builder: (BuildContext context) {
             return AlertDialog(
               title: Text('Alert'),
-              content: Text('No ShreniPramuhk to assign \n defualting to self:${apiService.first_name}'),
+              content: Text('No ShreniPramukh to assign \n defualting to self:${apiService.first_name}'),
               actions: <Widget>[
                 TextButton(
                   child: Text('OK'),
@@ -298,20 +305,33 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
             Row(
               children: [
                 Expanded(
-                  child: _buildTextField(hint: "First Name", controller: fnameController),
+                  child: _buildTextField(hint: "First Name",
+                      controller: fnameController ,
+                      regex: nameRegex,
+                      errorMessage: "Only alphabets allowed (Max 50 chars)" ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: _buildTextField(hint: "Last Name", controller: lnameController),
+                  child: _buildTextField(hint: "Last Name",
+                      controller: lnameController,
+                      regex: nameRegex,
+                      errorMessage: "Only alphabets allowed (Max 50 chars)" ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            _buildTextField(hint: "Designation", controller: designationController),
+            _buildTextField(hint: "Designation", controller: designationController,
+                regex: designationRegex,
+                errorMessage: "Invalid Designation" ),
             const SizedBox(height: 16),
-            _buildTextField(hint: "E-mail Address", controller: emailController),
+            _buildTextField(hint: "E-mail (example@gmail.com) ", controller: emailController,
+                regex: emailRegex,
+                errorMessage: "Invalid E-mail format"),
             const SizedBox(height: 16),
-            _buildTextField(hint: "Phone Number", controller: phoneController),
+            _buildTextField(hint: "+91 | Phone Number", controller: phoneController,
+                regex: phoneRegex,
+                errorMessage: "Enter a valid 10-digit phone number",
+                maxLength: 10),
             const SizedBox(height: 16),
             // Hashtag Section
             SingleChildScrollView(
@@ -350,7 +370,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
               ),
             ),
             const SizedBox(height: 24),
-            _buildTextField(hint: "Address 1", controller: address1Controller),
+            _buildTextField(hint: "Address", controller: address1Controller, regex: nameRegex),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -383,48 +403,45 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
             _buildTextField(hint: "State", controller: state2Controller),*/
             //shreni
             if(apiService.lvl>2)
-              Container(
-                child: Column(
-                  children: [
-                    SizedBox(height: 20),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(
-                          color: Colors.grey.shade400,
-                          width: 1.0, // Border width
-                        ),
-                      ),
-                      child: DropdownButton<String>(
-                        hint: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 10),
-                          child: Text(shreni.isNotEmpty ? 'Select ShreniPramuhk' : 'Loading ShreniPramuhk..'),
-                        ),
-                        value: selectedShreniId,
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            selectedShreniId = newValue;
-                          });
-                        },
-                        items: shreni.map<DropdownMenuItem<String>>((member) {
-                          return DropdownMenuItem<String>(
-                            value: member['id'].toString(),
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 10),
-                              child: Text('${member['first_name']} ${member['last_name']}'),
-                            ),
-                          );
-                        }).toList(),
-                        isExpanded: true, // Ensures the dropdown stretches to the full width
-                        underline: Container(), // Removes the default underline from the dropdown
+              Column(
+                children: [
+                  SizedBox(height: 20),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                        color: Colors.grey.shade400,
+                        width: 1.0, // Border width
                       ),
                     ),
-                  ],
-                ),
+                    child: DropdownButton<String>(
+                      hint: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(shreni.isNotEmpty ? 'Select ShreniPramukh' : 'Loading ShreniPramukh..'),
+                      ),
+                      value: selectedShreniId,
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          selectedShreniId = newValue;
+                        });
+                      },
+                      items: shreni.map<DropdownMenuItem<String>>((member) {
+                        return DropdownMenuItem<String>(
+                          value: member['id'].toString(),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10),
+                            child: Text('${member['first_name']} ${member['last_name']}'),
+                          ),
+                        );
+                      }).toList(),
+                      isExpanded: true, // Ensures the dropdown stretches to the full width
+                      underline: Container(), // Removes the default underline from the dropdown
+                    ),
+                  ),
+                ],
               ),
             const SizedBox(height: 16),
-            //Register Button
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
@@ -439,7 +456,6 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
               ),
               child: TextButton(
                 onPressed: () {
-                  registerInfluencer();
 
                 },
                 style: TextButton.styleFrom(
@@ -481,8 +497,8 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
     );
   }
 
-  Widget _buildTextField({required String hint, required TextEditingController controller}) {
-    return TextField(
+  Widget _buildTextField({required String hint, required TextEditingController controller, RegExp? regex, String? errorMessage, int? maxLength}) {
+    return TextFormField(
       controller: controller, // Assign the dynamic controller
       decoration: InputDecoration(
         hintText: hint,
@@ -510,6 +526,19 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
           ),
         ),
       ),
+      keyboardType: hint == "Phone Number" ? TextInputType.number : TextInputType.text,
+      inputFormatters: [
+        if (hint == "Phone Number") ...[
+          FilteringTextInputFormatter.digitsOnly, // Restrict to numbers
+          LengthLimitingTextInputFormatter(maxLength), // Restrict length
+        ],
+      ],
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      validator: (value) {
+        if (value == null || value.isEmpty) return "Field cannot be empty";
+        if (regex != null && !regex.hasMatch(value)) return errorMessage;
+        return null;
+      },
     );
   }
 }

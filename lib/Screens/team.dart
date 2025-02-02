@@ -290,7 +290,7 @@ class _TeamPageState extends State<TeamPage> {
                                               ),
                                               SizedBox(height: 1),
                                               Text(
-                                                supervisor[0]['designation'], // Dynamic description
+                                                supervisor[0]['designation']??"", // Dynamic description
                                                 style: TextStyle(
                                                   fontSize: smallFontSize-2,
                                                   color: Colors.white,
@@ -310,7 +310,7 @@ class _TeamPageState extends State<TeamPage> {
                         ),
                       ),
                       //My Lead
-                      if(apiService.lvl<3)
+                      if(apiService.lvl<2)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

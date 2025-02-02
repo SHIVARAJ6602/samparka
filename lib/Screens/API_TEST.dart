@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:samparka/Screens/influencer_profile.dart';
 import 'package:samparka/Service/api_service.dart';
 import 'Temp2.dart';
+import 'add_inf.dart';
 import 'drop_down.dart';
 import 'register_user.dart';
 import 'temp.dart';
@@ -141,9 +143,9 @@ class _ApiScreenState extends State<ApiScreen> {
                     children: [
                       TextButton(
                         onPressed: () {
-                          //apiService.CreateGanyaVyakthi();
+                          apiService.get_unapproved_profiles();
                           },
-                          child: Text('Add GV')
+                          child: Text('get Uaprv GV')
                       )
                     ],
                   ),
@@ -234,9 +236,9 @@ class _ApiScreenState extends State<ApiScreen> {
                     children: [
                       TextButton(
                           onPressed: () {
-                            apiService.myTeam(0,100);
+                            apiService.approveGanyavyakthi('0','0');
                           },
-                          child: Text('My Team')
+                          child: Text('aprv gv')
                       )
                     ],
                   ),
@@ -359,9 +361,39 @@ class _ApiScreenState extends State<ApiScreen> {
                     children: [
                       TextButton(
                           onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => AddInfluencer1Page()),
+                            );
+                          },
+                          child: Text('Add inf 1')
+                      )
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      TextButton(
+                          onPressed: () {
                             apiService.getUser();
                           },
                           child: Text('User Data')
+                      )
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => InfluencerProfilePage()),
+                            );
+                          },
+                          child: Text('Inf profile')
                       )
                     ],
                   ),

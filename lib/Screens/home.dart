@@ -68,8 +68,17 @@ class _InfluencersPageState extends State<InfluencersPage> {
   late int level;
   late String currentUrl;
   List<dynamic> influencers = [];
+  List<dynamic> unApprovedInfluencers = [];
   late List<dynamic> result;
   bool loading = true;
+  bool assign = false;
+
+  List<dynamic> TeamMembers = [];
+  //List<dynamic> ApproveMember = [];
+  Map<String, dynamic> ApproveMember = {};
+  int selectedMemberIndex = -1;
+  int? selectedIndex;
+
   @override
   void initState() {
     super.initState();
@@ -81,6 +90,9 @@ class _InfluencersPageState extends State<InfluencersPage> {
     level = apiService.lvl;
     currentUrl = apiService.baseUrl;
     fetchInfluencers();
+    getUnapprovedProfile();
+    fetchTeam();
+    setState(() {});
     loading = false;
   }
   // State variables for radio buttons
@@ -129,6 +141,46 @@ class _InfluencersPageState extends State<InfluencersPage> {
       print("Error fetching influencers: $e");
     }
     return false;
+  }
+
+  Future<bool> getUnapprovedProfile() async {
+    try {
+      // Call the apiService.homePage() and store the result
+      result = await apiService.get_unapproved_profiles();
+      if (result.isNotEmpty) {
+        setState(() {
+          // Update the influencers list with the fetched data
+          unApprovedInfluencers = result;
+        });
+      } else {
+        setState(() {
+          unApprovedInfluencers = [];  // Clear the list if result is empty
+        });
+      }
+
+
+      return true;
+    } catch (e) {
+      unApprovedInfluencers = [];
+      // Handle any errors here
+      print("Error fetching influencers: $e");
+    }
+    setState(() {});
+    return false;
+  }
+
+  Future<void> fetchTeam() async {
+    try {
+      // Call the apiService.homePage() and store the result
+      result = await apiService.myTeam(0, 100);
+      setState(() {
+        // Update the influencers list with the fetched data
+        TeamMembers = result;
+      });
+    } catch (e) {
+      // Handle any errors here
+      print("Error fetching influencers: $e");
+    }
   }
 
   /******************************************************/
@@ -187,25 +239,37 @@ class _InfluencersPageState extends State<InfluencersPage> {
               decoration: BoxDecoration(
                 color: Color.fromRGBO(60, 245, 200, 1.0),
               ),
-              child: Text(
-                'Menu',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
+              child: Container(
+                child: Column(
+                  children: [
+                    Container(
+                      child: Row(
+                        children: [
+                          Text(
+                            'Settings:',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    CircleAvatar(
+                      radius: MediaQuery.of(context).size.width * 0.13,
+                      backgroundColor: Colors.grey[400],
+                      backgroundImage: apiService.profile_image.isNotEmpty ? MemoryImage(base64Decode(apiService.profile_image.split(',')[1])) : null, // Use NetworkImage here
+                      child: apiService.profile_image.isEmpty
+                          ? Icon(
+                        Icons.person,
+                        color: Colors.white,
+                        size: MediaQuery.of(context).size.width * 0.14,
+                      )
+                          : null,
+                    ),
+                  ],
                 ),
-              ),
-            ),
-            CircleAvatar(
-              radius: MediaQuery.of(context).size.width * 0.15,
-              backgroundColor: Colors.grey[200],
-              backgroundImage: apiService.profile_image.isNotEmpty ? MemoryImage(base64Decode(apiService.profile_image.split(',')[1])) : null, // Use NetworkImage here
-              child: apiService.profile_image.isEmpty
-                  ? Icon(
-                Icons.person,
-                color: Colors.white,
-                size: MediaQuery.of(context).size.width * 0.14,
               )
-                  : null,
             ),
             ListTile(
               title: Text('Username: $username'),
@@ -230,7 +294,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
             ),
             Divider(),
             ListTile(
-              title: Text('API URL: ${currentUrl.length>28 ? currentUrl.substring(8,30): currentUrl}..'),
+              title: Text('API URL: ${currentUrl}..'),
             ),
             // Submenu with radio buttons
             ExpansionTile(
@@ -248,7 +312,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                           });
                         },
                       ),
-                      Text(apiService.baseUrl1.substring(8,30)),
+                      Text(apiService.baseUrl1.substring(8,24)),
                     ],
                   ),
                 ),
@@ -265,6 +329,22 @@ class _InfluencersPageState extends State<InfluencersPage> {
                         },
                       ),
                       Text(apiService.baseUrl2.substring(8,32)),
+                    ],
+                  ),
+                ),
+                ListTile(
+                  title: Row(
+                    children: [
+                      Radio<String>(
+                        value: 'url3',
+                        groupValue: selectedRadio,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedRadio = value;
+                          });
+                        },
+                      ),
+                      Text(apiService.baseUrl3.substring(8,30)),
                     ],
                   ),
                 ),
@@ -426,7 +506,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                       Column(
                         children: [
                           const SizedBox(height: 22),
-                          if (influencers.isNotEmpty)
+                          if (unApprovedInfluencers.isNotEmpty)
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -452,12 +532,12 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                 SingleChildScrollView(
                                   scrollDirection: Axis.horizontal, // Horizontal scrolling
                                   child: Row(
-                                    children: List.generate(influencers.length, (index) {
-                                      final influencer = influencers[index]; // Access the influencer data for each item
+                                    children: List.generate(unApprovedInfluencers.length, (index) {
+                                      final influencer = unApprovedInfluencers[index]; // Access the influencer data for each item
                                       return Padding(
-                                        padding: const EdgeInsets.only(left: 1,right: 8,top: 8,bottom: 8), // Adjust horizontal padding
+                                        padding: const EdgeInsets.only(left: 1, right: 8, top: 8, bottom: 8), // Adjust horizontal padding
                                         child: Container(
-                                          width: MediaQuery.of(context).size.width*0.75,
+                                          width: MediaQuery.of(context).size.width * 0.75,
                                           decoration: BoxDecoration(
                                             borderRadius: BorderRadius.circular(30),
                                             gradient: const LinearGradient(
@@ -475,8 +555,17 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                             description: influencer['description']!,
                                             hashtags: influencer['hashtags']!,
                                             imageUrl: influencer['profile_image'] != null && influencer['profile_image']!.isNotEmpty
-                                                ? apiService.baseUrl.substring(0,40)+influencer['profile_image']!
+                                                ? apiService.baseUrl.substring(0, 40) + influencer['profile_image']!
                                                 : '',
+                                            onPress: () {
+                                              setState(() {
+                                                selectedIndex = index;
+                                                ApproveMember = unApprovedInfluencers[index];
+                                                print(ApproveMember);
+                                                assign = true;
+                                              });
+                                              print('Selected index: $selectedIndex'); // Print selected index
+                                            },
                                           ),
                                         ),
                                       );
@@ -644,6 +733,267 @@ class _InfluencersPageState extends State<InfluencersPage> {
               ),
             ],
           ),
+          if(assign)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.5),
+                child: Center(
+                  child: Container(
+                    height: MediaQuery.of(context).size.height * 0.65,
+                    width: MediaQuery.of(context).size.width * 0.9,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(30),
+                      gradient: const LinearGradient(
+                        begin: Alignment.centerRight,
+                        end: Alignment.centerLeft,
+                        colors: [
+                          Color.fromRGBO(60, 170, 145, 1.0),
+                          Color.fromRGBO(2, 40, 60, 1),
+                        ],
+                      ),
+                    ),
+                    child: Stack(
+                      children: [
+                        // Main content here (Profile, button, etc.)
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // First Row: Profile Picture and Influencer Details
+                              Row(
+                                children: [
+                                  // Profile Picture (placeholder)
+                                  CircleAvatar(
+                                    radius: MediaQuery.of(context).size.width * 0.10,
+                                    backgroundColor: Colors.grey[200],
+                                    child: unApprovedInfluencers.isEmpty
+                                        ? Icon(
+                                      Icons.person,
+                                      color: Colors.white,
+                                      size: MediaQuery.of(context).size.width * 0.14,
+                                    )
+                                        : null,
+                                  ),
+                                  SizedBox(width: 16),
+                                  // Influencer Details
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          ApproveMember['fname']??'', // Dynamic name
+                                          style: TextStyle(
+                                            fontSize: largeFontSize + 6,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              ApproveMember['designation']??'', // Dynamic designation
+                                              style: TextStyle(
+                                                fontSize: smallFontSize,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            SizedBox(width: 5),
+                                            SizedBox(
+                                                width: 2,
+                                                child: Container(
+                                                  width: 1,
+                                                  height: smallFontSize,
+                                                  color: Colors.white,
+                                                )),
+                                            SizedBox(width: 5),
+                                            Text(
+                                              'shreni', // Dynamic designation
+                                              style: TextStyle(
+                                                fontSize: smallFontSize,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 1),
+                                        Text(
+                                          ApproveMember['description']??'', // Dynamic description
+                                          style: TextStyle(
+                                            fontSize: smallFontSize - 2,
+                                            color: Colors.white,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        SizedBox(height: 1),
+                                        Text(
+                                          'hashtags', // Dynamic hashtags
+                                          style: TextStyle(
+                                            fontSize: smallFontSize - 2,
+                                            color: Colors.teal,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 8),
+
+                              // List of Team Members (Selectable)
+                              Center(
+                                child: Container(
+                                  height: MediaQuery.of(context).size.height * 0.38,
+                                  width: MediaQuery.of(context).size.width * 0.85,
+                                  child: ListView.builder(
+                                    padding: const EdgeInsets.all(1),
+                                    itemCount: TeamMembers.length,
+                                    itemBuilder: (context, index) {
+                                      final member = TeamMembers[index];
+                                      bool isSelected = selectedMemberIndex == index; // Check if this member is selected
+                                      return Padding(
+                                        padding: const EdgeInsets.only(top: 5),
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              selectedMemberIndex = isSelected ? -1 : index; // Toggle selection
+                                            });
+                                          },
+                                          child: MemberCard(
+                                            first_name: member['first_name']!,
+                                            last_name: member['last_name']!,
+                                            designation: member['designation']!,
+                                            profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
+                                                ? apiService.baseUrl.substring(0, 40) + member['profile_image']!
+                                                : '',
+                                            isSelected: isSelected,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                              // Spacer to push the button to the bottom
+                              Expanded(child: SizedBox()),
+
+                              // Second Row: Approval Button
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 10), // 10px margin from bottom
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center, // Align button to the center
+                                  children: [
+                                    Container(
+                                      width: MediaQuery.of(context).size.width * 0.8,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        gradient: const LinearGradient(
+                                          begin: Alignment.centerLeft,
+                                          end: Alignment.centerRight,
+                                          colors: [
+                                            Color.fromRGBO(133, 1, 1, 1.0),
+                                            Color.fromRGBO(237, 62, 62, 1.0),
+                                          ],
+                                        ),
+                                      ),
+                                      child: TextButton(
+                                        onPressed: () async {
+                                          // Handle the approval logic here
+                                          print('Selected Member Index: $selectedMemberIndex');
+                                          if(selectedMemberIndex>-1) {
+                                            print(ApproveMember['id']);
+                                            print(TeamMembers[selectedMemberIndex]['id']);
+                                            await apiService.approveGanyavyakthi(ApproveMember['id'],TeamMembers[selectedMemberIndex]['id']);
+                                            await getUnapprovedProfile();
+                                            setState((){
+                                              assign = false;
+                                            });
+                                          }
+
+                                        },
+                                        style: TextButton.styleFrom(
+                                          padding: const EdgeInsets.all(10),
+                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        child: Center(
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                'Approve and Assign',
+                                                style: TextStyle(
+                                                  fontSize: largeFontSize,
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Circular "L" at the top right
+                        Positioned(
+                          top: 15,
+                          right: 15,
+                          child: Container(
+                            width: 30,  // Diameter of the circle
+                            height: 30,
+                            decoration: BoxDecoration(
+                              color: Colors.blue,  // Blue background color
+                              shape: BoxShape.circle,  // Make it a circle
+                            ),
+                            child: Center(
+                              child: Text(
+                                'L1',  // The letter inside the circle
+                                style: TextStyle(
+                                  fontSize: smallFontSize,  // Font size for "L"
+                                  color: Colors.white,  // White color for the letter
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          if(loading)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.5), // Semi-transparent overlay
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(
+                        color: Colors.white,
+                      ),
+                      const SizedBox(height: 10), // Space between the indicator and text
+                      const Text(
+                        'Loading...',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
 
@@ -788,7 +1138,10 @@ class InfluencerCard extends StatelessWidget {
       ),
       child: TextButton(
         onPressed: () {
-          print('object');
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const InfluencersPage()),
+          );
         },
         style: ButtonStyle(
           shape: WidgetStateProperty.all(RoundedRectangleBorder(
@@ -865,8 +1218,146 @@ class ApprovalCard extends StatelessWidget {
   final String description;
   final String hashtags;
   final String imageUrl;
+  final VoidCallback onPress; // Callback to handle button press
 
   const ApprovalCard({
+    super.key,
+    required this.name,
+    required this.designation,
+    required this.description,
+    required this.hashtags,
+    required this.imageUrl,
+    required this.onPress, // Handle button press in parent
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
+    double largeFontSize = normFontSize + 4; //20
+    double smallFontSize = normFontSize - 2; //14
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // First Row: Profile Picture and Influencer Details
+          Row(
+            children: [
+              // Profile Picture (placeholder)
+              CircleAvatar(
+                radius: MediaQuery.of(context).size.width * 0.08,
+                backgroundColor: Colors.grey[200],
+                backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
+                child: imageUrl.isEmpty
+                    ? Icon(
+                  Icons.person,
+                  color: Colors.white,
+                  size: MediaQuery.of(context).size.width * 0.14,
+                )
+                    : null,
+              ),
+              SizedBox(width: 16),
+              // Influencer Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name, // Dynamic name
+                      style: TextStyle(
+                        fontSize: largeFontSize + 6,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      designation, // Dynamic designation
+                      style: TextStyle(
+                        fontSize: smallFontSize,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 1),
+                    Text(
+                      description, // Dynamic description
+                      style: TextStyle(
+                        fontSize: smallFontSize - 2,
+                        color: Colors.white,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 1),
+                    Text(
+                      hashtags, // Dynamic hashtags
+                      style: TextStyle(
+                        fontSize: smallFontSize - 2,
+                        color: Colors.teal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8), // Space between the two rows
+          // Second Row: Approval Button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center, // Align button to the end
+            children: [
+              Container(
+                width: MediaQuery.of(context).size.width * 0.65,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  gradient: const LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      Color.fromRGBO(133, 1, 1, 1.0),
+                      Color.fromRGBO(237, 62, 62, 1.0),
+                    ],
+                  ),
+                ),
+                child: TextButton(
+                  onPressed: onPress, // Trigger the parent function
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.all(10),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Approve and Assign',
+                          style: TextStyle(
+                            fontSize: largeFontSize,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class AssignCard extends StatelessWidget {
+  final String name;
+  final String designation;
+  final String description;
+  final String hashtags;
+  final String imageUrl;
+
+  const AssignCard({
     super.key,
     required this.name,
     required this.designation,
@@ -993,3 +1484,90 @@ class ApprovalCard extends StatelessWidget {
   }
 
 }
+
+class MemberCard extends StatelessWidget {
+  final String first_name;
+  final String last_name;
+  final String designation;
+  final String profileImage;
+  final bool isSelected;
+
+  const MemberCard({
+    super.key,
+
+    required this.first_name,
+    required this.last_name,
+    required this.designation,
+    required this.profileImage,
+    required this.isSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: isSelected ? Colors.green[200] : Colors.white,
+      elevation: 3,
+      child: Container(
+        padding: const EdgeInsets.all(0), // Container padding
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.green[200] : Colors.white,
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 16,top: 16,left: 8,right: 8), // Add padding to the content
+          child: Row(
+            children: [
+              // Profile Picture (placeholder)
+              CircleAvatar(
+                radius: MediaQuery.of(context).size.width * 0.08,
+                backgroundColor: Colors.grey[200],
+                backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null, // Use NetworkImage here
+                child: profileImage.isEmpty
+                    ? Icon(
+                  Icons.person,
+                  color: Colors.white,
+                  size: MediaQuery.of(context).size.width * 0.14,
+                )
+                    : null,
+              ),
+              SizedBox(width: 16),
+              // Influencer Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$first_name $last_name', // Dynamic name
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromRGBO(5, 50, 70, 1.0),
+                      ),
+                    ),
+                    Text(
+                      designation, // Dynamic designation
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color.fromRGBO(5, 50, 70, 1.0),
+                      ),
+                    ),
+                    SizedBox(height: 1),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+}
+

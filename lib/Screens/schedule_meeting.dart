@@ -185,9 +185,6 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
                               ),
                               SizedBox(height: 16),
 
-
-
-
                               // schedule Button
                               Container(
                                 decoration: BoxDecoration(

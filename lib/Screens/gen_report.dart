@@ -134,6 +134,7 @@ class _GenReportPageState extends State<GenReportPage> {
                     ],
                   ),
                 ),
+                //Download Button
                 Container(
                   width: MediaQuery.of(context).size.width*0.4,
                   decoration: BoxDecoration(

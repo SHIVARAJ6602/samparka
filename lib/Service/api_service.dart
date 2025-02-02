@@ -10,8 +10,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   late String baseUrl0 = "http://127.0.0.1:8000/api";
-  late String baseUrl1 = "https://t6q7lj15-8000.inc1.devtunnels.ms/api";
-  late String baseUrl2 = "https://llama-curious-adequately.ngrok-free.app/api";
+  late String baseUrl1 = "https://samparka.org/api";
+  late String baseUrl2 = "https://t6q7lj15-8000.inc1.devtunnels.ms/api";
+  late String baseUrl3 = "https://llama-curious-adequately.ngrok-free.app/api";
   late String baseUrl;
   late String token;
   late int lvl;
@@ -81,6 +82,9 @@ class ApiService {
           resizedImageBytes,
           filename: data[8].path.split('/').last, // Optional: set file name
         ),
+        "city": data[9],
+        "district": data[10],
+        "state": data[11],
       });
       dio.options.headers['Authorization'] = 'Token $token';
 
@@ -225,6 +229,40 @@ class ApiService {
       // Handle unexpected errors such as network issues or invalid responses
       print('Error: $e');
       throw Exception('Failed to load tasks: $e');
+    }
+  }
+
+  Future<List<dynamic>> get_unapproved_profiles() async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      final response = await dio.post('$baseUrl/callHandler/',data: {'action':'get_unapproved_profiles'});
+      //print(response.data);
+
+      if (response.statusCode == 200) {
+        //print('my supervisor ${response.data}');
+
+        if (response.statusCode == 200) {
+          print(response.data);
+          if (response.data is List<dynamic>) {
+            return response.data;
+          } else if (response.data is String) {
+            final parsedData = List<dynamic>.from(response.data);
+            return parsedData;
+          } else {
+            throw Exception('Expected a List, but got ${response.data.runtimeType}');
+          }
+        } else {
+          throw Exception('Failed to load Unapproved Influencer. Status code: ${response.statusCode}');
+        }
+      } else {
+        throw Exception('Failed to load supervisor. Status code: ${response.statusCode}');
+      }
+
+
+    } catch (e) {
+      print('Error: $e');
+      throw Exception('Failed to load supervisor: $e');
     }
   }
 
@@ -518,7 +556,7 @@ class ApiService {
         if (responseData is Map<String, dynamic>) {
           token = responseData['token'];
           first_name = responseData['userName'];
-          lvl = responseData['level'];
+          lvl = responseData['level']??1;
           profile_image = responseData["profile_image"];
 
           if (token != null) {
@@ -693,6 +731,36 @@ class ApiService {
         }
       } else {
         throw Exception('Failed to load lead. Status code: ${response.statusCode}');
+      }
+
+
+    } catch (e) {
+      print('Error: $e');
+      throw Exception('Failed to load supervisor: $e');
+    }
+  }
+
+  Future<List<dynamic>> approveGanyavyakthi(String GV_id,String KR_id) async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      final response = await dio.post('$baseUrl/callHandler/',
+          data: {'action':'ApproveGanyaVyakti','GV_id':GV_id,'KR_id':KR_id}
+      );
+      //print(response.data);
+
+      if (response.statusCode == 200) {
+        //print('my supervisor ${response.data}');
+
+        if (response.data is List<dynamic>) {
+          return response.data;
+        } else if (response.data is Map<String, dynamic>) {
+          return [response.data];
+        } else {
+          throw Exception('Unexpected data type: ${response.data.runtimeType}');
+        }
+      } else {
+        throw Exception('Failed to load supervisor. Status code: ${response.statusCode}');
       }
 
 

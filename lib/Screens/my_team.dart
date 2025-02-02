@@ -28,7 +28,7 @@ class _MyTeamPageState extends State<MyTeamPage> {
   void initState() {
     super.initState();
     fetchTeam();
-    loading = false;
+    Future.delayed(const Duration(milliseconds: 10000));
   }
 
   // Method to handle bottom navigation item tap
@@ -73,6 +73,7 @@ class _MyTeamPageState extends State<MyTeamPage> {
         // Update the influencers list with the fetched data
         TeamMembers = result;
       });
+      loading = false;
     } catch (e) {
       // Handle any errors here
       print("Error fetching influencers: $e");
@@ -88,24 +89,54 @@ class _MyTeamPageState extends State<MyTeamPage> {
       appBar: AppBar(
         title: Text('My Team'),
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(1),
-        itemCount: TeamMembers.length,
-        itemBuilder: (context, index) {
-          final member = TeamMembers[index];
-          return Padding(
-            padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
-            child: MemberCard(
-              first_name: member['first_name']!,
-              last_name: member['last_name']!,
-              designation: member['designation']!,
-              profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
-                  ? apiService.baseUrl.substring(0,40)+member['profile_image']!
-                  : '',
+      body: Stack(
+        children: [
+          ListView.builder(
+            padding: const EdgeInsets.all(1),
+            itemCount: TeamMembers.length,
+            itemBuilder: (context, index) {
+              final member = TeamMembers[index];
+              return Padding(
+                padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
+                child: MemberCard(
+                  first_name: member['first_name']!,
+                  last_name: member['last_name']!,
+                  designation: member['designation']!,
+                  profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
+                      ? apiService.baseUrl.substring(0,40)+member['profile_image']!
+                      : '',
+                ),
+              );
+            },
+          ),
+          if(loading)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.5), // Semi-transparent overlay
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(
+                        color: Colors.white,
+                      ),
+                      const SizedBox(height: 10), // Space between the indicator and text
+                      const Text(
+                        'Loading...',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          );
-        },
+        ],
       ),
+
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.only(left: 16,right: 16,bottom: 16,top: 1),  // Add padding around the bottom navigation bar
