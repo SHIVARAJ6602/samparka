@@ -17,9 +17,10 @@ class ApiService {
   late String token;
   late int lvl;
   late var profile_image = '';
-  late String UserId = '';
+  late String UserId = 'KR00000001';
   late String first_name = '';
   late String last_name = '';
+  late String designation = '';
   late String city = '';
   late String district = '';
   late String state = '';
@@ -322,9 +323,9 @@ class ApiService {
       FormData formData = FormData.fromMap({
         "action":"CreateGanyaVyakti",
         "fname": UserData[1],
-        "lname": UserData[1],
+        "lname": UserData[2],
         "phone_number": UserData[0],
-        "assigned_karyakarta_phone_number": UserData[0],
+        "assigned_karyakarta_id": UserData[15],
         "designation": UserData[4],
         "description": UserData[5],
         "hashtags": UserData[6],
@@ -740,6 +741,34 @@ class ApiService {
     }
   }
 
+  Future<List<dynamic>> getGanyavyakthi(String GV_id) async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      final response = await dio.post('$baseUrl/callHandler/',data: {'action':'getGanyavyakthi','GV_id':GV_id});
+      //print(response.data);
+
+      if (response.statusCode == 200) {
+        print('GV ${response.data[0]}');
+
+        if (response.data is List<dynamic>) {
+          return response.data;
+        } else if (response.data is Map<String, dynamic>) {
+          return [response.data];
+        } else {
+          throw Exception('Unexpected data type: ${response.data.runtimeType}');
+        }
+      } else {
+        throw Exception('Failed to load lead. Status code: ${response.statusCode}');
+      }
+
+
+    } catch (e) {
+      print('Error: $e');
+      throw Exception('Failed to load supervisor: $e');
+    }
+  }
+
   Future<List<dynamic>> approveGanyavyakthi(String GV_id,String KR_id) async {
     dio.options.headers['Authorization'] = 'Token $token';
 
@@ -785,6 +814,87 @@ class ApiService {
 
     } catch (e) {
       print('Error: $e');
+    }
+  }
+
+  Future<bool> createTask(String gv_id, String title) async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      final response = await dio.post(
+        '$baseUrl/callHandler/',
+        data: {'action': 'create_task','GV_id': gv_id,'task_name': title,},
+      );
+
+      // Check if the response is successful (status code 200)
+      if (response.statusCode == 201) {
+        return true;
+      } else {
+        // Log and throw exception if status code is not 200
+        print('Failed to create task: ${response.statusCode}');
+        return false;
+        throw Exception('Failed to create task. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Print the error and rethrow it
+      print('Error: $e');
+      throw Exception('Failed to create task: $e');
+    }
+
+    // Return false if for any reason the task could not be created
+    return false;
+  }
+
+  Future<List<dynamic>> getTasks(String GV_id) async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      final response = await dio.post('$baseUrl/callHandler/',data: {'action':'get_task','GV_id':GV_id});
+      //print(response.data);
+
+      if (response.statusCode == 200) {
+        //print('TS ${response.data}');
+
+        if (response.data is List<dynamic>) {
+          return response.data;
+        } else if (response.data is Map<String, dynamic>) {
+          return [response.data];
+        } else {
+          throw Exception('Unexpected data type: ${response.data.runtimeType}');
+        }
+      } else {
+        throw Exception('Failed to load lead. Status code: ${response.statusCode}');
+      }
+
+
+    } catch (e) {
+      print('Error: $e');
+      throw Exception('Failed to load supervisor: $e');
+    }
+  }
+
+  Future<bool> markTaskComplete(task_id) async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      final response = await dio.post(
+        '$baseUrl/callHandler/',
+        data: {'action': 'set_task_status','task_id': task_id},
+      );
+
+      // Check if the response is successful (status code 200)
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        // Log and throw exception if status code is not 200
+        print('Failed to create task: ${response.statusCode}');
+        return false;
+        throw Exception('Failed to create task. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Print the error and rethrow it
+      print('Error: $e');
+      throw Exception('Failed to create task: $e');
     }
   }
 

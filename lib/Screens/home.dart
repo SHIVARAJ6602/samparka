@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:samparka/Screens/meeting.dart';
@@ -6,6 +7,7 @@ import 'package:samparka/Screens/my_team.dart';
 import 'package:samparka/Screens/team.dart';
 import 'add_influencer.dart';
 import 'gen_report.dart';
+import 'influencer_profile.dart';
 import 'login.dart';
 import 'API_TEST.dart'; //TaskListScreen()
 import 'view_influencers.dart';
@@ -176,6 +178,8 @@ class _InfluencersPageState extends State<InfluencersPage> {
       setState(() {
         // Update the influencers list with the fetched data
         TeamMembers = result;
+        TeamMembers.add({'id':apiService.UserId,'first_name':'${apiService.first_name}(self)','last_name':apiService.last_name,'designation':apiService.designation,'profileImage':apiService.profile_image});
+
       });
     } catch (e) {
       // Handle any errors here
@@ -644,6 +648,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                     return Padding(
                                       padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
                                       child: InfluencerCard(
+                                        id: influencer['id']!,
                                         name: influencer['fname']!,
                                         designation: influencer['designation']!,
                                         description: influencer['description']!,
@@ -756,7 +761,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                       children: [
                         // Main content here (Profile, button, etc.)
                         Padding(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.only(left: 16,right: 16,top: 16,bottom: 1),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -764,17 +769,18 @@ class _InfluencersPageState extends State<InfluencersPage> {
                               Row(
                                 children: [
                                   // Profile Picture (placeholder)
-                                  CircleAvatar(
+                                  /*CircleAvatar(
                                     radius: MediaQuery.of(context).size.width * 0.10,
                                     backgroundColor: Colors.grey[200],
-                                    child: unApprovedInfluencers.isEmpty
+                                    backgroundImage: ApproveMember.isNotEmpty? FileImage(File(ApproveMember['profile_image'])): null,
+                                    child: ApproveMember.isEmpty
                                         ? Icon(
                                       Icons.person,
                                       color: Colors.white,
                                       size: MediaQuery.of(context).size.width * 0.14,
                                     )
                                         : null,
-                                  ),
+                                  ),*/
                                   SizedBox(width: 16),
                                   // Influencer Details
                                   Expanded(
@@ -880,8 +886,8 @@ class _InfluencersPageState extends State<InfluencersPage> {
 
                               // Second Row: Approval Button
                               Padding(
-                                padding: const EdgeInsets.only(bottom: 10), // 10px margin from bottom
-                                child: Row(
+                                padding: const EdgeInsets.only(bottom: 0), // 10px margin from bottom
+                                child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center, // Align button to the center
                                   children: [
                                     Container(
@@ -917,7 +923,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                         ),
                                         child: Center(
-                                          child: Row(
+                                          child: Column(
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
                                               Text(
@@ -936,10 +942,49 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                   ],
                                 ),
                               ),
+                              //assign cancel cutton
+                              TextButton(
+                                onPressed: () async {
+                                  setState((){
+                                    assign = false;
+                                    selectedMemberIndex = -1;
+                                  });
+                                },
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.all(1),
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center, // Center align the row content
+                                        children: [
+                                          // Text and Icon Row
+                                          Text(
+                                            'Cancel', // The cancel text
+                                            style: TextStyle(
+                                              fontSize: smallFontSize,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          SizedBox(width: 8), // A small gap between the text and the icon
+                                          Icon(
+                                            Icons.cancel, // Cancel icon
+                                            color: Colors.white, // Set the icon color to white
+                                            size: smallFontSize, // You can adjust the size of the icon here
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
-
                         // Circular "L" at the top right
                         Positioned(
                           top: 15,
@@ -1107,6 +1152,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
 
 
 class InfluencerCard extends StatelessWidget {
+  final String id;
   final String name;
   final String designation;
   final String description;
@@ -1118,7 +1164,9 @@ class InfluencerCard extends StatelessWidget {
     required this.name,
     required this.designation,
     required this.description,
-    required this.hashtags, required this.profileImage,
+    required this.hashtags,
+    required this.profileImage,
+    required this.id,
   });
 
   @override
@@ -1140,7 +1188,7 @@ class InfluencerCard extends StatelessWidget {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const InfluencersPage()),
+            MaterialPageRoute(builder: (context) => InfluencerProfilePage(id)),
           );
         },
         style: ButtonStyle(
@@ -1156,7 +1204,8 @@ class InfluencerCard extends StatelessWidget {
               CircleAvatar(
                 radius: MediaQuery.of(context).size.width * 0.08,
                 backgroundColor: Colors.grey[200],
-                backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null, // Use NetworkImage here
+                backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null,
+                //backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null, // Use NetworkImage here
                 child: profileImage.isEmpty
                     ? Icon(
                   Icons.person,
@@ -1248,7 +1297,7 @@ class ApprovalCard extends StatelessWidget {
               CircleAvatar(
                 radius: MediaQuery.of(context).size.width * 0.08,
                 backgroundColor: Colors.grey[200],
-                backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
+                backgroundImage: imageUrl.isNotEmpty ? MemoryImage(base64Decode(imageUrl.split(',')[1])) : null,
                 child: imageUrl.isEmpty
                     ? Icon(
                   Icons.person,
@@ -1378,7 +1427,7 @@ class AssignCard extends StatelessWidget {
           // First Row: Profile Picture and Influencer Details
           Row(
             children: [
-              // Profile Picture (placeholder)
+              // Profile Picture
               CircleAvatar(
                 radius: MediaQuery.of(context).size.width * 0.08,
                 backgroundColor: Colors.grey[200],

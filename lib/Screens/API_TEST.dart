@@ -4,6 +4,7 @@ import 'package:samparka/Service/api_service.dart';
 import 'Temp2.dart';
 import 'add_inf.dart';
 import 'drop_down.dart';
+import 'loginPM.dart';
 import 'register_user.dart';
 import 'temp.dart';
 
@@ -236,9 +237,9 @@ class _ApiScreenState extends State<ApiScreen> {
                     children: [
                       TextButton(
                           onPressed: () {
-                            apiService.approveGanyavyakthi('0','0');
+                            apiService.getGanyavyakthi('getGanyavyakthi');
                           },
-                          child: Text('aprv gv')
+                          child: Text('get gv')
                       )
                     ],
                   ),
@@ -346,12 +347,8 @@ class _ApiScreenState extends State<ApiScreen> {
                     children: [
                       TextButton(
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => MultiImagePickerScreen()),
-                            );
                           },
-                          child: Text('Multi image')
+                          child: Text('WebViewScreen')
                       )
                     ],
                   ),
@@ -390,7 +387,7 @@ class _ApiScreenState extends State<ApiScreen> {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => InfluencerProfilePage()),
+                              MaterialPageRoute(builder: (context) => InfluencerProfilePage('GV00000001')),
                             );
                           },
                           child: Text('Inf profile')

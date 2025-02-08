@@ -11,6 +11,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final apiService = ApiService();
+  //PhoneEmail.initializeApp(clientId: '14349191896196900482');
   bool _otpSent = false;  // Track whether OTP has been sent
   bool _isLoading = false;  // Add a loading state to manage button disable/enable
   final TextEditingController _phoneController = TextEditingController();

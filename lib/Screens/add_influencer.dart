@@ -158,7 +158,9 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
         district1Controller.text,//12
         state1Controller.text,//13
         _image!,//14
+        selectedShreniId,//15
       ];
+      print(_image);
 
       apiService.CreateGanyaVyakthi(registrationData);
       ScaffoldMessenger.of(context).showSnackBar(

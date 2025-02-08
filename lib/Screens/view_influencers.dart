@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import '../Service/api_service.dart';
+import 'influencer_profile.dart';
 
 class ViewInfluencersPage extends StatefulWidget {
   const ViewInfluencersPage({super.key});
@@ -58,6 +59,7 @@ class _ViewInfluencersPageState extends State<ViewInfluencersPage> {
           return Padding(
             padding: const EdgeInsets.only(bottom: 20),
             child: InfluencerCard(
+              id: influencer['id']!,
               name: influencer['fname']!,
               designation: influencer['designation']!,
               description: influencer['description']!,
@@ -106,6 +108,7 @@ class InfluencerList extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.only(bottom: 20),
           child: InfluencerCard(
+            id: influencer['id']!,
             name: influencer['fname']!,
             designation: influencer['designation']!,
             description: influencer['description']!,
@@ -122,6 +125,7 @@ class InfluencerList extends StatelessWidget {
 
 
 class InfluencerCard extends StatelessWidget {
+  final String id;
   final String name;
   final String designation;
   final String description;
@@ -133,7 +137,9 @@ class InfluencerCard extends StatelessWidget {
     required this.name,
     required this.designation,
     required this.description,
-    required this.hashtags, required this.profileImage,
+    required this.hashtags,
+    required this.profileImage,
+    required this.id,
   });
 
   @override
@@ -153,7 +159,10 @@ class InfluencerCard extends StatelessWidget {
       ),
       child: TextButton(
         onPressed: () {
-          print('object');
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => InfluencerProfilePage(id)),
+          );
         },
         style: ButtonStyle(
           shape: WidgetStateProperty.all(RoundedRectangleBorder(
