@@ -3,12 +3,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:samparka/Screens/home.dart';
 import 'package:samparka/Screens/schedule_meeting.dart';
+import 'package:samparka/Screens/settings.dart';
 import 'package:samparka/Screens/submit_report.dart';
 import 'package:samparka/Screens/team.dart';
 import 'package:samparka/Screens/view_influencers.dart';
 
 import '../Service/api_service.dart';
 import 'API_TEST.dart';
+import 'Temp2.dart';
 import 'gen_report.dart';
 import 'login.dart';
 
@@ -33,6 +35,7 @@ class _MeetingPageState extends State<MeetingPage> {
       // Navigate to AddInfluencerPage when index 1 is tapped
       Navigator.push(
         context,
+        //MaterialPageRoute(builder: (context) => const TempPage2()),
         MaterialPageRoute(builder: (context) => const GenReportPage()),
       );
     } else if (index == 1) {
@@ -78,7 +81,7 @@ class _MeetingPageState extends State<MeetingPage> {
     token = apiService.token;
     level = apiService.lvl;
     currentUrl = apiService.baseUrl;
-    fetchInfluencers();
+    //fetchInfluencers();
     loading = false;
   }
   // State variables for radio buttons
@@ -139,32 +142,18 @@ class _MeetingPageState extends State<MeetingPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.settings, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SettingsPage()),
+            );
+          },
+        ),
         backgroundColor: Colors.transparent, // Make the app bar background transparent
         elevation: 0, // Remove the app bar shadow
-        title: Text(apiService.first_name),
-        /*leading: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.login, color: Color.fromRGBO(5, 50, 70, 1.0)), // Back button icon
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginPage()),
-                );
-              },
-            ),
-            /*Text(
-              'name: ${apiService.userName}', // Display the name after the login button
-              style: const TextStyle(
-                color: Color.fromRGBO(5, 50, 70, 1.0),
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),*/
-          ],
-        ),*/
+        title: Text('Samparka',style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           // Add the notification icon to the right side of the app bar
           IconButton(
@@ -452,7 +441,7 @@ class _MeetingPageState extends State<MeetingPage> {
                         ],
                       ),
                       //Approve and assign
-                      if(apiService.lvl > 2)
+                      if(apiService.lvl > 11)
                         Column(
                           children: [
                             const SizedBox(height: 20),

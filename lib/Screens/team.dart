@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:samparka/Screens/meeting.dart';
 import 'package:samparka/Screens/my_team.dart';
 import 'package:samparka/Screens/register_user.dart';
+import 'package:samparka/Screens/settings.dart';
+import 'Temp2.dart';
 import 'add_influencer.dart';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -30,7 +32,7 @@ class _TeamPageState extends State<TeamPage> {
   List<dynamic> members = [];
   List<dynamic> supervisor = [];
   List<dynamic> lead = [];
-  late List<dynamic> result;
+  late List<dynamic> result = [];
   bool loading = true;
 
   // Method to handle bottom navigation item tap
@@ -45,6 +47,7 @@ class _TeamPageState extends State<TeamPage> {
       // Navigate to AddInfluencerPage when index 1 is tapped
       Navigator.push(
         context,
+        //MaterialPageRoute(builder: (context) => const TempPage2()),
         MaterialPageRoute(builder: (context) => const GenReportPage()),
       );
     } else if (index == 2) {
@@ -133,16 +136,24 @@ class _TeamPageState extends State<TeamPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.person, color: Color.fromRGBO(5, 50, 70, 1.0)),
-          onPressed: () {},
+          icon: const Icon(Icons.settings, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SettingsPage()),
+            );
+          },
         ),
+        backgroundColor: Colors.transparent, // Make the app bar background transparent
+        elevation: 0, // Remove the app bar shadow
+        title: Text('Samparka',style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
+          // Add the notification icon to the right side of the app bar
           IconButton(
-            icon: const Icon(Icons.notifications, color: Color.fromRGBO(5, 50, 70, 1.0)),
+            icon: const Icon(Icons.notifications, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
             onPressed: () {
+              // Handle the notification icon tap here (you can add navigation or other actions)
               print('Notifications tapped');
             },
           ),
@@ -257,7 +268,8 @@ class _TeamPageState extends State<TeamPage> {
                                           backgroundColor: Colors.grey[200],
                                           // Check if profile_image exists and is not empty before passing it to NetworkImage
                                           backgroundImage: supervisor[0]['profile_image'] != null && supervisor[0]['profile_image']!.isNotEmpty
-                                              ? NetworkImage(apiService.baseUrl.substring(0, 40) + supervisor[0]['profile_image'])
+                                              ? MemoryImage(base64Decode(supervisor[0]['profile_image'].split(',')[1]))
+                                              //? NetworkImage(apiService.baseUrl.substring(0, 40) + supervisor[0]['profile_image'])
                                               : null,
                                           child: supervisor[0]['profile_image'] == null || supervisor[0]['profile_image']!.isEmpty
                                               ? Icon(
@@ -274,7 +286,7 @@ class _TeamPageState extends State<TeamPage> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                supervisor[0]['first_name'], // Dynamic name
+                                                supervisor[0]['first_name']!, // Dynamic name
                                                 style: TextStyle(
                                                   fontSize: largeFontSize+6,
                                                   fontWeight: FontWeight.bold,
@@ -371,7 +383,8 @@ class _TeamPageState extends State<TeamPage> {
                                                 backgroundColor: Colors.grey[200],
                                                 // Check if profile_image exists and is not empty before passing it to NetworkImage
                                                 backgroundImage: lead[0]['profile_image'] != null && lead[0]['profile_image']!.isNotEmpty
-                                                    ? NetworkImage(apiService.baseUrl.substring(0, 40) + lead[0]['profile_image'])
+                                                    ? MemoryImage(base64Decode(lead[0]['profile_image'].split(',')[1]))
+                                                    //? NetworkImage(apiService.baseUrl.substring(0, 40) + lead[0]['profile_image'])
                                                     : null,
                                                 child: lead[0]['profile_image'] == null || lead[0]['profile_image']!.isEmpty
                                                     ? Icon(
@@ -486,7 +499,8 @@ class _TeamPageState extends State<TeamPage> {
                                           last_name: member['last_name']!,
                                           designation: member['designation']!,
                                           profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
-                                              ? apiService.baseUrl.substring(0,40)+member['profile_image']!
+                                              ? member['profile_image']!
+                                              //? apiService.baseUrl.substring(0,40)+member['profile_image']!
                                               : '',
                                         ),
                                       );

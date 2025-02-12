@@ -103,7 +103,8 @@ class _MyTeamPageState extends State<MyTeamPage> {
                   last_name: member['last_name']!,
                   designation: member['designation']!,
                   profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
-                      ? apiService.baseUrl.substring(0,40)+member['profile_image']!
+                      ? member['profile_image']!
+                      //? apiService.baseUrl.substring(0,40)+member['profile_image']!
                       : '',
                 ),
               );

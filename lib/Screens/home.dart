@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:samparka/Screens/meeting.dart';
 import 'package:samparka/Screens/my_team.dart';
+import 'package:samparka/Screens/settings.dart';
 import 'package:samparka/Screens/team.dart';
+import 'Temp2.dart';
 import 'add_influencer.dart';
 import 'gen_report.dart';
 import 'influencer_profile.dart';
@@ -37,6 +39,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
       // Navigate to AddInfluencerPage when index 1 is tapped
       Navigator.push(
         context,
+        //MaterialPageRoute(builder: (context) => const TempPage2()),
         MaterialPageRoute(builder: (context) => const GenReportPage()),
       );
     } else if (index == 2) {
@@ -197,32 +200,18 @@ class _InfluencersPageState extends State<InfluencersPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        /*leading: IconButton(
+          icon: const Icon(Icons.settings, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SettingsPage()),
+            );
+          },
+        ),*/
         backgroundColor: Colors.transparent, // Make the app bar background transparent
         elevation: 0, // Remove the app bar shadow
-        title: Text(apiService.first_name),
-        /*leading: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.login, color: Color.fromRGBO(5, 50, 70, 1.0)), // Back button icon
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginPage()),
-                );
-              },
-            ),
-            /*Text(
-              'name: ${apiService.userName}', // Display the name after the login button
-              style: const TextStyle(
-                color: Color.fromRGBO(5, 50, 70, 1.0),
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),*/
-          ],
-        ),*/
+        title: Text('Samparka',style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           // Add the notification icon to the right side of the app bar
           IconButton(
@@ -243,37 +232,17 @@ class _InfluencersPageState extends State<InfluencersPage> {
               decoration: BoxDecoration(
                 color: Color.fromRGBO(60, 245, 200, 1.0),
               ),
-              child: Container(
-                child: Column(
-                  children: [
-                    Container(
-                      child: Row(
-                        children: [
-                          Text(
-                            'Settings:',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                            ),
-                          ),
-                        ],
-                      ),
+              child: Row(
+                children: [
+                  Text(
+                    'Samparka',
+                    style: TextStyle(
+                      color: Colors.black54,
+                      fontSize: 24,
                     ),
-                    CircleAvatar(
-                      radius: MediaQuery.of(context).size.width * 0.13,
-                      backgroundColor: Colors.grey[400],
-                      backgroundImage: apiService.profile_image.isNotEmpty ? MemoryImage(base64Decode(apiService.profile_image.split(',')[1])) : null, // Use NetworkImage here
-                      child: apiService.profile_image.isEmpty
-                          ? Icon(
-                        Icons.person,
-                        color: Colors.white,
-                        size: MediaQuery.of(context).size.width * 0.14,
-                      )
-                          : null,
-                    ),
-                  ],
-                ),
-              )
+                  ),
+                ],
+              ),
             ),
             ListTile(
               title: Text('Username: $username'),
@@ -383,6 +352,31 @@ class _InfluencersPageState extends State<InfluencersPage> {
                   );
                 },
                 child: Text('Login'),
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.grey, // Border color
+                  width: 2,           // Border width
+                ),
+                borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+              ),
+              child: TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => SettingsPage()),
+                  );
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min, // This will make the row wrap its content
+                  children: [
+                    Text('Settings'),
+                    SizedBox(width: 8), // Add some space between the text and the icon
+                    Icon(Icons.settings), // Gear icon
+                  ],
+                ),
               ),
             ),
             ListTile(
@@ -871,7 +865,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                             last_name: member['last_name']!,
                                             designation: member['designation']!,
                                             profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
-                                                ? apiService.baseUrl.substring(0, 40) + member['profile_image']!
+                                                ? member['profile_image']!
                                                 : '',
                                             isSelected: isSelected,
                                           ),

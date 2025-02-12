@@ -7,15 +7,17 @@ import 'package:dio/dio.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image/image.dart' as img; // Make sure to import the 'image' package
+import 'dart:typed_data';
 
 class ApiService {
-  late String baseUrl0 = "http://127.0.0.1:8000/api";
+  late String baseUrl0 = "https://samparka.org/api";
   late String baseUrl1 = "https://samparka.org/api";
   late String baseUrl2 = "https://t6q7lj15-8000.inc1.devtunnels.ms/api";
   late String baseUrl3 = "https://llama-curious-adequately.ngrok-free.app/api";
-  late String baseUrl;
-  late String token;
-  late int lvl;
+  late String baseUrl = '';
+  late String token='8dd529c0df4ca79b2b85e786088af9daa614cccf';
+  late int lvl = 0;
   late var profile_image = '';
   late String UserId = 'KR00000001';
   late String first_name = '';
@@ -24,11 +26,60 @@ class ApiService {
   late String city = '';
   late String district = '';
   late String state = '';
-  late bool isAuthenticated = true;
+  late bool isAuthenticated = false;
   late Dio dio;
   late CookieJar cookieJar;
   late bool _isInitialized = false;
   late String txt = '...';
+
+  Future<void> _initialize() async {
+    dio = Dio();
+    cookieJar = CookieJar();
+    dio.interceptors.add(CookieManager(cookieJar));
+    await loadData();
+
+    try {
+      final response = await dio.get(baseUrl.toString().substring(0, baseUrl.length-4));
+      if (response.statusCode == 200) {
+        print('Ping successful! Status Code: 200');
+      } else {
+        print('Failed to ping. Status Code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Ping failed. Error: $e');
+    }
+    _isInitialized = true;
+  }
+
+  Future<void> saveData() async {
+    print('Token: $token');
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('baseUrl', baseUrl??'');
+    await prefs.setString("token", token??'');
+    await prefs.setBool("isAuthenticated", isAuthenticated??false);
+    await prefs.setString("userName", first_name??'');
+    await prefs.setInt("level", lvl??1);
+    await prefs.setString("city", city??'');
+    await prefs.setString("district", district??'');
+    await prefs.setString("state", state??'');
+    await prefs.setString("profile_image", profile_image??'');
+
+    print("DataSaved");
+  }
+
+  Future<void> loadData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    baseUrl = prefs.getString('baseUrl') ?? baseUrl1;
+    token = prefs.getString("token") ?? '';
+    first_name = prefs.getString("userName") ?? '';
+    lvl = prefs.getInt("level")??1;
+    isAuthenticated = prefs.getBool("isAuthenticated") ?? isAuthenticated;
+    profile_image = prefs.getString("profile_image") ?? profile_image;
+    city = prefs.getString('city') ?? city;
+    district = prefs.getString('district') ?? district;
+    state = prefs.getString('state') ?? state;
+    print("DataLoaded - isAuthenticated: $isAuthenticated id $UserId token: $token");
+  }
 
   Future<Uint8List> resizeImage(Uint8List imageBytes) async {
     // Decode the image (supports JPEG, PNG, etc.)
@@ -38,15 +89,26 @@ class ApiService {
       throw Exception("Unable to decode the image");
     }
 
-    // Resize the image to 600x600px
-    img.Image resizedImage = img.copyResize(image, width: 600, height: 600);
+    // Get the current width and height of the image
+    int width = image.width;
+    int height = image.height;
 
-    print('image: $resizedImage');
-    // Encode the resized image back to bytes
+    // Determine the resizing factor based on the larger dimension
+    double factor = 600.0 / (width > height ? width : height);
+
+    // Calculate the new dimensions to maintain the aspect ratio
+    int newWidth = (width * factor).round();
+    int newHeight = (height * factor).round();
+
+    // Resize the image proportionally
+    img.Image resizedImage = img.copyResize(image, width: newWidth, height: newHeight);
+
+    // Encode the resized image to JPEG format
     Uint8List resizedImageBytes = Uint8List.fromList(img.encodeJpg(resizedImage));
 
     return resizedImageBytes;
   }
+
 
   Future<bool> registerUser(List<dynamic> data) async {
     try {
@@ -78,6 +140,7 @@ class ApiService {
         "password": data[5],
         "group": data[6],
         "supervisor": UserId,
+        "supervisor": 'AD00000001',
         "shreni_id": data[7],
         "profile_image": MultipartFile.fromBytes(
           resizedImageBytes,
@@ -163,7 +226,7 @@ class ApiService {
     }
   }
 
-  Future<bool> getUser() async {
+  Future<bool> getUser() async  {
     dio.options.headers['Authorization'] = 'Token $token';
 
     try {
@@ -174,14 +237,16 @@ class ApiService {
         // Assuming the response data contains a list of user data.
         var userData = response.data['data']; // Assuming 'data' holds the user info
         print(userData);
-        first_name = userData['first_name'];
-        last_name = userData['last_name'];
-        lvl  = userData['level'];
-        city = userData['city'];
-        district = userData['district'];
-        state = userData['state'];
-        saveData();
-        loadData();
+        UserId = userData['id']??'';
+        first_name = userData['first_name']??'';
+        last_name = userData['last_name'??''];
+        lvl  = userData['level'??1];
+        city = userData['city'??''];
+        district = userData['district']??'';
+        state = userData['state']??'';
+        designation = userData['designation']??'None';
+        await saveData();
+        await loadData();
 
         return true;
       } else {
@@ -372,53 +437,6 @@ class ApiService {
     }
   }
 
-  Future<void> _initialize() async {
-    dio = Dio();
-    cookieJar = CookieJar();
-    dio.interceptors.add(CookieManager(cookieJar));
-    await loadData();
-
-    try {
-      final response = await dio.get(baseUrl.toString().substring(0, baseUrl.length-4));
-      if (response.statusCode == 200) {
-        print('Ping successful! Status Code: 200');
-      } else {
-        print('Failed to ping. Status Code: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Ping failed. Error: $e');
-    }
-    _isInitialized = true;
-  }
-
-  Future<void> saveData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('baseUrl', baseUrl);
-    await prefs.setString("token", token);
-    await prefs.setBool("isAuthenticated", isAuthenticated);
-    await prefs.setString("userName", first_name);
-    await prefs.setInt("level", lvl);
-    await prefs.setString("city", city);
-    await prefs.setString("district", district);
-    await prefs.setString("state", state);
-    await prefs.setString("profile_image", profile_image);
-
-    print("DataSaved");
-  }
-
-  Future<void> loadData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    baseUrl = prefs.getString('baseUrl') ?? baseUrl1;
-    token = prefs.getString("token") ?? '';
-    first_name = prefs.getString("userName") ?? '';
-    lvl = prefs.getInt("level")??0;
-    isAuthenticated = prefs.getBool("isAuthenticated") ?? isAuthenticated;
-    profile_image = prefs.getString("profile_image") ?? profile_image;
-    city = prefs.getString('city') ?? city;
-    district = prefs.getString('district') ?? district;
-    state = prefs.getString('state') ?? state;
-    print("DataLoaded - isAuthenticated: $isAuthenticated id $UserId");
-  }
 
   Future<List<dynamic>> fetchTasks() async {
     dio.options.headers['Authorization'] = 'Token $token';
@@ -558,12 +576,13 @@ class ApiService {
           token = responseData['token'];
           first_name = responseData['userName'];
           lvl = responseData['level']??1;
-          profile_image = responseData["profile_image"];
+          //profile_image = responseData["profile_image"]??'';
 
-          if (token != null) {
+          if (responseData['token'] != null) {
             print('Login successful. Token: $token UserName: $first_name');
             isAuthenticated = true;
-            saveData(); // Save the data as needed
+            await saveData(); // Save the data as needed
+            await loadData();
           } else {
             throw Exception('Login failed: Token not received');
           }
@@ -845,11 +864,167 @@ class ApiService {
     return false;
   }
 
+  Future<bool> createInteraction(List<dynamic> data) async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      final response = await dio.post(
+        '$baseUrl/callHandler/',
+        data: {
+          'action': 'addInteraction',
+          'created_by': this.UserId,
+          'ganya_vyakti': data[8],
+          'title': data[0],
+          'description': data[4],
+          'discussion_points': data[7],
+          'materials_distributed': data[5],
+          'status': data[3],
+          'virtual_meeting_link': data[6],
+          'meeting_place': data[1],
+          'meeting_datetime': data[2],
+        },
+      );
+
+      // Check if the response is successful (status code 200)
+      if (response.statusCode == 201) {
+        return true;
+      } else {
+        // Log and throw exception if status code is not 200
+        print('Failed to create task: ${response.statusCode}');
+        return false;
+        throw Exception('Failed to create task. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Print the error and rethrow it
+      print('Error: $e');
+      throw Exception('Failed to create task: $e');
+    }
+
+    // Return false if for any reason the task could not be created
+    return false;
+  }
+  Future<bool> createMeeting(List<dynamic> data) async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      final response = await dio.post(
+        '$baseUrl/callHandler/',
+        data: {
+          'action': 'addBaitek',
+          'title': data[1],
+          'description': data[2],
+          'venue':data[3],
+          'participants': data[5],
+          'organizers': data[5],
+          'status': data[7],
+          'meeting_datetime': data[4],
+        },
+      );
+
+      // Check if the response is successful (status code 200)
+      if (response.statusCode == 201) {
+        return true;
+      } else {
+        // Log and throw exception if status code is not 200
+        print('Failed to create task: ${response.statusCode}');
+        return false;
+        throw Exception('Failed to create task. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Print the error and rethrow it
+      print('Error: $e');
+      throw Exception('Failed to create task: $e');
+    }
+
+    // Return false if for any reason the task could not be created
+    return false;
+  }
+
   Future<List<dynamic>> getTasks(String GV_id) async {
     dio.options.headers['Authorization'] = 'Token $token';
 
     try {
       final response = await dio.post('$baseUrl/callHandler/',data: {'action':'get_task','GV_id':GV_id});
+      //print(response.data);
+
+      if (response.statusCode == 200) {
+        //print('TS ${response.data}');
+
+        if (response.data is List<dynamic>) {
+          return response.data;
+        } else if (response.data is Map<String, dynamic>) {
+          return [response.data];
+        } else {
+          throw Exception('Unexpected data type: ${response.data.runtimeType}');
+        }
+      } else {
+        throw Exception('Failed to load lead. Status code: ${response.statusCode}');
+      }
+
+
+    } catch (e) {
+      print('Error: $e');
+      throw Exception('Failed to load supervisor: $e');
+    }
+  }
+
+  Future<bool> addUsers() async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      final response = await dio.post('$baseUrl/callHandler/',data: {'action':'add_users'});
+      //print(response.data);
+
+      if (response.statusCode == 200) {
+        //print('TS ${response.data}');
+
+        return true;
+      } else {
+        throw Exception('Failed to load lead. Status code: ${response.statusCode}');
+      }
+
+
+    } catch (e) {
+      print('Error: $e');
+      throw Exception('Failed to load supervisor: $e');
+    }
+  }
+
+  Future<List<dynamic>> getInteractionByID(String IR_id) async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      print(IR_id);
+      final response = await dio.post('$baseUrl/callHandler/',data: {'action':'get_interaction_by_id','id':IR_id});
+      //print(response.data);
+
+      if (response.statusCode == 200) {
+        //print('TS ${response.data}');
+
+        if (response.data is List<dynamic>) {
+          return response.data;
+        } else if (response.data is Map<String, dynamic>) {
+          return [response.data];
+        } else {
+          throw Exception('Unexpected data type: ${response.data.runtimeType}');
+        }
+      } else {
+        throw Exception('Failed to load lead. Status code: ${response.statusCode}');
+      }
+
+
+    } catch (e) {
+      print('Error: $e');
+      throw Exception('Failed to load supervisor: $e');
+    }
+  }
+
+  Future<List<dynamic>> getInteraction(String GV_id) async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      print(GV_id);
+      final response = await dio.post('$baseUrl/callHandler/',data: {'action':'get_interaction','GV_id':GV_id});
       //print(response.data);
 
       if (response.statusCode == 200) {

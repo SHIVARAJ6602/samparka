@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:samparka/Screens/influencer_profile.dart';
+import 'package:samparka/Screens/settings.dart';
 import 'package:samparka/Service/api_service.dart';
 import 'Temp2.dart';
 import 'add_inf.dart';
 import 'drop_down.dart';
-import 'loginPM.dart';
 import 'register_user.dart';
 import 'temp.dart';
 
@@ -128,10 +128,10 @@ class _ApiScreenState extends State<ApiScreen> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => RegisterUserPage()),
+                        MaterialPageRoute(builder: (context) => SettingsPage()),
                       );
                     },
-                    child: Text('RegisterUSer')
+                    child: Text('SettingsPage')
                 )
               ],
             ),
@@ -279,9 +279,9 @@ class _ApiScreenState extends State<ApiScreen> {
               children: [
                 TextButton(
                     onPressed: () {
-                      apiService.getGroups();
+                      apiService.getInteractionByID("IR00000001");
                     },
-                    child: Text('Get Groups')
+                    child: Text('Get interaction')
                 )
               ],
             ),
@@ -401,7 +401,12 @@ class _ApiScreenState extends State<ApiScreen> {
           Expanded(
             child: Row(
               children: [
-                Text(apiService.txt)
+                TextButton(
+                    onPressed: () {
+                      apiService.addUsers();
+                    },
+                    child: Text('add users')
+                )
               ],
             ),
           ),

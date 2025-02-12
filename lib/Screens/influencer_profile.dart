@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:samparka/Screens/schedule_interaction.dart';
+import 'package:samparka/Screens/view_influencers.dart';
+import 'package:samparka/Screens/view_interaction.dart';
 
 import '../Service/api_service.dart';
 
@@ -20,9 +22,10 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
 
   final apiService = ApiService();
 
-  List<dynamic> meetings = [{"id":"MT00001","name":"meet1","description":"adadad"},{"id":"MT00002","name":"meet2","description":"adadad"}];
+  List<dynamic> meetings = [{"id":"MT00001","title":"meet1","description":"adadad"},{"id":"MT00002","title":"meet2","description":"adadad"}];
   late List<dynamic> result;
   List<dynamic> tasks = [];
+  List<dynamic> interactions = [];
 
   late String name = '';
   late String designation = '';
@@ -43,6 +46,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
     print(GV_id[0][0]);
     getGanyavyakthi();
     fetchTasks(GV_id);
+    fetchInteraction(GV_id);
     setState(() {});
     Future.delayed(Duration(seconds: 2), () {
       setState(() {
@@ -87,6 +91,21 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
       });
     } catch (e) {
       // Handle any errors here
+      print("Error fetching interactions: $e");
+    }
+  }
+
+  Future<void> fetchInteraction(GV_id) async {
+    try {
+      // Call the apiService.homePage() and store the result
+      result = await apiService.getInteraction(GV_id);
+      setState(() {
+        // Update the influencers list with the fetched data
+        meetings = result;
+        print('interactions: $meetings');
+      });
+    } catch (e) {
+      // Handle any errors here
       print("Error fetching influencers: $e");
     }
   }
@@ -110,6 +129,8 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
   @override
   Widget build(BuildContext context) {
     String GV_id = widget.id;
+    print(GV_id);
+    print(widget.id);
     double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
     double largeFontSize = normFontSize+4; //20
     double smallFontSize = normFontSize-2;
@@ -405,9 +426,9 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                         ),
                         SizedBox(height: 16),
                         if(tasks.isNotEmpty)
-                          if(tasks.length>5)
+                          if(tasks.length>3)
                             Container(
-                            height: 300,
+                            height: 240,
                             child: Row(
                               children: [
                                 Expanded(
@@ -448,22 +469,19 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                               ],
                             ),
                           ),
-                          if(tasks.length<=5)
+                          if(tasks.length<=3)
                             Container(
                               child: Row(
                                 children: [
                                   Expanded(
-                                    child: ListView.builder(
-                                      itemCount: tasks.length,  // The length of your tasks array
-                                      itemBuilder: (context, index) {
-                                        var task = tasks[index];  // Get the task at the current index
+                                    child: Column(
+                                      children: tasks.map<Widget>((task) {
                                         return Card(
                                           margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                                           child: ListTile(
                                             title: Text(task['title']),  // Display the task title
                                             trailing: IconButton(
-                                              icon: Icon(Icons.check_circle_outline,color: task['completed'] ? Colors.green : Colors.red,),
-
+                                              icon: Icon(Icons.check_circle_outline, color: task['completed'] ? Colors.green : Colors.red,),
                                               onPressed: () async {
                                                 // Call API to mark task as complete
                                                 bool isTaskCompleted = await apiService.markTaskComplete(task['id']);
@@ -484,13 +502,13 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                                             ),
                                           ),
                                         );
-                                      },
+                                      }).toList(),
                                     ),
+
                                   ),
                                 ],
                               ),
                             ),
-
                         if(tasks.isEmpty)
                           Center(
                             child: Text("No tasks created",style: TextStyle(fontSize: largeFontSize,fontWeight: FontWeight.bold),),
@@ -513,7 +531,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                                 onPressed: () {
                                     Navigator.push(
                                       context,
-                                      MaterialPageRoute(builder: (context) => AddInteractionPage()),
+                                      MaterialPageRoute(builder: (context) => AddInteractionPage(GV_id)),
                                     );
                                   },
                                 style: TextButton.styleFrom(
@@ -574,13 +592,13 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                                     shrinkWrap: true,
                                     itemCount: meetings.length, // The number of items in your data list
                                     itemBuilder: (context, index) {
-                                      final influencer = meetings[index]; // Access the influencer data for each item
+                                      final meeting = meetings[index]; // Access the influencer data for each item
                                       return Padding(
                                         padding: const EdgeInsets.only(left: 8, right: 8, top: 12),
                                         child: meetingCard(
-                                          name: influencer['name']!,
-                                          description: influencer['description']!,
-                                          id: influencer['id']!,
+                                          title: meeting['title']!,
+                                          description: meeting['description']!,
+                                          id: meeting['id']!,
                                         ),
                                       );
                                     },
@@ -658,13 +676,13 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
 }
 
 class meetingCard extends StatelessWidget {
-  final String name;
+  final String title;
   final String description;
   final String id;
 
   const meetingCard({
     super.key,
-    required this.name,
+    required this.title,
     required this.description,
     required this.id,
   });
@@ -690,7 +708,7 @@ class meetingCard extends StatelessWidget {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => InfluencerProfilePage('GV0000001')),
+            MaterialPageRoute(builder: (context) => ViewInteractionPage(id)),
           );
         },
         style: ButtonStyle(
@@ -711,14 +729,14 @@ class meetingCard extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 2.0), // Space between text
                       child: Text(
-                        name,
+                        title,
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: largeFontSize),
                       ),
                     ),
                     Padding(
                       padding: const EdgeInsets.only(bottom: 2.0),
                       child: Text(
-                        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore',
+                        description,
                         style: TextStyle(fontSize: smallFontSize),
                       ),
                     ),

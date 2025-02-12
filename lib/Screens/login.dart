@@ -127,7 +127,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 8),
               /********** TEMP *************/
-              TextField(
+              /*TextField(
                 controller: _mailController,
                 focusNode: _mailFocusNode,  // Attach the focus node for phone field
                 decoration: InputDecoration(
@@ -154,7 +154,7 @@ class _LoginPageState extends State<LoginPage> {
                   // When "Next" is pressed on the phone number field, move focus to OTP field
                   FocusScope.of(context).requestFocus(_otpFocusNode);
                 },
-              ),
+              ),*/
               /*************************/
               const SizedBox(height: 16),
               // Get OTP Button with Gradient
@@ -177,16 +177,30 @@ class _LoginPageState extends State<LoginPage> {
                       });
 
                       // Call the apiService to get the OTP
-                      var response = await apiService.getOTP(_phoneNumber, _mail);
-
-                      if (response == 200){
+                      var response = await apiService.login(_phoneNumber, '');
+                      print('respomnse: ${response.statusCode}');
+                      String message = '';
+                      if (response.statusCode == 200){
                         setState(() {
-                          _otpSent = true;  // Change state to show OTP field and login button
+                          _otpSent = true;
+                          apiService.saveData();
+                          apiService.loadData();
+                          message = response.data['message'] ?? 'Successful';
+
+                          // Handle login logic or navigate to home page
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const InfluencersPage(),
+                            ),
+                          );
                         });
                       }else if(response == 400){
                         show_Dialog(context, 'failed to send otp');
                       }else if(response == 404){
                         show_Dialog(context, 'Number not registered');
+                      }else if(response==500){
+                        show_Dialog(context, 'Internal Server Error');
                       }
                       setState(() {
                         _isLoading = false;
@@ -198,7 +212,8 @@ class _LoginPageState extends State<LoginPage> {
                       shadowColor: Colors.transparent, // Remove shadow
                     ),
                     child: Text(
-                      'Get OTP',
+                      'Login',
+                      //'Get OTP',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -258,6 +273,7 @@ class _LoginPageState extends State<LoginPage> {
                       if (response.statusCode == 200) {
                         setState(() {
                           apiService.saveData();
+                          apiService.loadData();
                           message = response.data['message'] ?? 'Successful';
                         });
                         // Handle login logic or navigate to home page
@@ -297,15 +313,38 @@ class _LoginPageState extends State<LoginPage> {
                 // Resend OTP Button centered
                 Center(
                   child: TextButton(
-                    onPressed: () {
-                      // Handle OTP resend logic here
-                      // Show temporary popup
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('OTP has been resent!'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
+                    onPressed: _isLoading
+                        ? null  // Disable button if loading
+                        : () async {
+                      setState(() {
+                        _isLoading = true;  // Set loading to true to disable the button
+                      });
+
+                      // Call the apiService to get the OTP
+                      var response = await apiService.getOTP(_phoneNumber, _mail);
+                      print(response);
+
+                      if (response == 200){
+                        setState(() {
+                          _otpSent = true;  // Change state to show OTP field and login button
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('OTP has been resent!'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }else if(response == 400){
+                        print(response);
+                        show_Dialog(context, 'failed to send otp ${response}');
+                      }else if(response == 404){
+                        show_Dialog(context, 'Number not registered');
+                      }else if(response==500){
+                        show_Dialog(context, 'Internal Server Error');
+                      }
+                      setState(() {
+                        _isLoading = false;
+                      });
                     },
                     child: const Text(
                       'Resend OTP',

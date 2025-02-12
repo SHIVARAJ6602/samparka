@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:samparka/Screens/meeting.dart';
+import 'package:samparka/Screens/settings.dart';
 import 'package:samparka/Screens/team.dart';
+import '../Service/api_service.dart';
 import 'add_influencer.dart';
 import 'home.dart';
 
@@ -12,6 +14,9 @@ class GenReportPage extends StatefulWidget {
 }
 
 class _GenReportPageState extends State<GenReportPage> {
+
+  final apiService = ApiService();
+
   int _selectedIndex = 3;
   DateTime? selectedFromDate;
   DateTime? selectedToDate;
@@ -88,16 +93,24 @@ class _GenReportPageState extends State<GenReportPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.person, color: Color.fromRGBO(5, 50, 70, 1.0)),
-          onPressed: () {},
+          icon: const Icon(Icons.settings, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SettingsPage()),
+            );
+          },
         ),
+        backgroundColor: Colors.transparent, // Make the app bar background transparent
+        elevation: 0, // Remove the app bar shadow
+        title: Text('Samparka',style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
+          // Add the notification icon to the right side of the app bar
           IconButton(
-            icon: const Icon(Icons.notifications, color: Color.fromRGBO(5, 50, 70, 1.0)),
+            icon: const Icon(Icons.notifications, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
             onPressed: () {
+              // Handle the notification icon tap here (you can add navigation or other actions)
               print('Notifications tapped');
             },
           ),

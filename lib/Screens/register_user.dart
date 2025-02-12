@@ -39,25 +39,25 @@ class _RegisterUserState extends State<RegisterUserPage> {
   List<dynamic> members = [];
   List<dynamic> supervisor = [];
 
-  List<String> states = ['Karnataka', 'Maharashtra', 'Tamil Nadu'];
+  List<String> states = ['Karnataka South', 'Maharashtra', 'Tamil Nadu'];
   List<String> districts = []; // Will be populated based on the selected state
   List<String> cities = [];
 
   String? selectedState;
   String? selectedDistrict;
-  String? selectedCity;
+  String? selectedCity = 'None';
 
   bool isLoading = false;
 
   Map<String, List<String>> stateDistricts = {
-    'Karnataka': ['Bangalore', 'Mysore', 'Mangalore'],
+    'Karnataka South': ['Bangalore Mahanagara', 'Mysuru Mahanagara'],
     'Maharashtra': ['Mumbai', 'Pune', 'Nagpur'],
     'Tamil Nadu': ['Chennai', 'Coimbatore', 'Madurai'],
   };
 
   Map<String, List<String>> districtCities = {
     'Bangalore': ['Whitefield', 'Koramangala', 'Electronic City'],
-    'Mysore': ['Vijayanagar', 'Nazarbad', 'Gokulam'],
+    'Mysuru Mahanagara': ['Vijayanagar', 'Nazarbad', 'Gokulam'],
     'Mangalore': ['Pandeshwar', 'Bajpe', 'Kankanady'],
     'Mumbai': ['Andheri', 'Bandra', 'Juhu'],
     'Pune': ['Kothrud', 'Hinjewadi', 'Wakad'],
@@ -452,6 +452,7 @@ class _RegisterUserState extends State<RegisterUserPage> {
                     ),
                   SizedBox(height: 20),
                   // City Dropdown (Depends on the selected district)
+                  /*
                   if (selectedDistrict != null)
                     Container(
                       decoration: BoxDecoration(
@@ -482,7 +483,7 @@ class _RegisterUserState extends State<RegisterUserPage> {
                         isExpanded: true,
                         underline: Container(),
                       ),
-                    ),
+                    ),*/
                   SizedBox(height: 20),
                   // Display selected values
                   if (selectedState != null && selectedDistrict != null && selectedCity != null)
