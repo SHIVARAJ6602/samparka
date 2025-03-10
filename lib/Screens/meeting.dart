@@ -15,6 +15,7 @@ import 'API_TEST.dart';
 import 'Temp2.dart';
 import 'gen_report.dart';
 import 'login.dart';
+import 'notifications.dart';
 
 class MeetingPage extends StatefulWidget {
   const MeetingPage({super.key});
@@ -174,7 +175,7 @@ class _MeetingPageState extends State<MeetingPage> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.settings, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
+          icon: const Icon(Icons.person, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
           onPressed: () {
             Navigator.push(
               context,
@@ -190,8 +191,10 @@ class _MeetingPageState extends State<MeetingPage> {
           IconButton(
             icon: const Icon(Icons.notifications, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
             onPressed: () {
-              // Handle the notification icon tap here (you can add navigation or other actions)
-              print('Notifications tapped');
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NotificationsPage()),
+              );
             },
           ),
         ],

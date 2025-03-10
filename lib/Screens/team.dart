@@ -14,6 +14,7 @@ import 'gen_report.dart';
 import 'home.dart';
 import 'login.dart';
 import 'API_TEST.dart'; //TaskListScreen()
+import 'notifications.dart';
 import 'view_influencers.dart';
 import 'package:samparka/Service/api_service.dart';
 
@@ -31,10 +32,12 @@ class _TeamPageState extends State<TeamPage> {
   final apiService = ApiService();
 
   List<dynamic> members = [];
+  List<dynamic> membersSearched = [];
   List<dynamic> supervisor = [];
   List<dynamic> lead = [];
   late List<dynamic> result = [];
   bool loading = true;
+  bool isSearching = true;
 
   // Method to handle bottom navigation item tap
   void _onNavItemTapped(int index) {
@@ -115,6 +118,30 @@ class _TeamPageState extends State<TeamPage> {
     }
   }
 
+  Future<void> search(String str) async {
+    try {
+      // Call the API service with the search query
+      var mem = await apiService.searchGV(str);
+      if (mem is List) {  // Check if inf is a List (data returned)
+        setState(() {
+          print("searched before assign:");
+          membersSearched = [];
+          print("result: $mem");
+          membersSearched = mem;  // Assign the list data to membersSearched
+          print("search: ");
+        });
+        setState(() {});
+      } else if (mem == false) {  // If inf is false (no content or error)
+        setState(() {
+          membersSearched = [];  // Clear the list since no results were found
+        });
+      }
+    } catch (e) {
+      // Handle any errors here
+      print("Error fetching influencers: $e");
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -134,516 +161,545 @@ class _TeamPageState extends State<TeamPage> {
     double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
     double largeFontSize = normFontSize+4; //20
     double smallFontSize = normFontSize-2; //14
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.settings, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SettingsPage()),
-            );
-          },
-        ),
-        backgroundColor: Colors.transparent, // Make the app bar background transparent
-        elevation: 0, // Remove the app bar shadow
-        title: Text('Samparka',style: TextStyle(fontWeight: FontWeight.bold)),
-        actions: [
-          // Add the notification icon to the right side of the app bar
-          IconButton(
-            icon: const Icon(Icons.notifications, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
-            onPressed: () {
-              // Handle the notification icon tap here (you can add navigation or other actions)
-              print('Notifications tapped');
-            },
+    return WillPopScope(
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.person, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SettingsPage()),
+                );
+              },
+            ),
+            backgroundColor: Colors.transparent, // Make the app bar background transparent
+            elevation: 0, // Remove the app bar shadow
+            title: Text('Samparka',style: TextStyle(fontWeight: FontWeight.bold)),
+            actions: [
+              // Add the notification icon to the right side of the app bar
+              IconButton(
+                icon: const Icon(Icons.notifications, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => NotificationsPage()),
+                  );
+                },
+              ),
+            ],
           ),
-        ],
-      ),
 
-      body: Stack(
-        children: [
-          // Main content inside a SingleChildScrollView
-          Column(
+          body: Stack(
             children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      //const SizedBox(height: 50),
-                      // Search Bar
-                      TextField(
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: const Color.fromRGBO(217, 217, 217, 1.0),
-                          hintText: 'Search Member',
-                          hintStyle: TextStyle(
-                            fontSize: normFontSize,
-                            fontWeight: FontWeight.normal,
-                            color: const Color.fromRGBO(128, 128, 128, 1.0),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide.none,
-                          ),
-                          suffixIcon: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Color.fromRGBO(60, 245, 200, 1.0),
-                                    Color.fromRGBO(2, 40, 60, 1),
-                                  ],
-                                ),
+              // Main content inside a SingleChildScrollView
+              Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          //const SizedBox(height: 50),
+                          // Search Bar
+                          TextField(
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: const Color.fromRGBO(217, 217, 217, 1.0),
+                              hintText: 'Search Member',
+                              hintStyle: TextStyle(
+                                fontSize: normFontSize,
+                                fontWeight: FontWeight.normal,
+                                color: const Color.fromRGBO(128, 128, 128, 1.0),
                               ),
-                              child: const Icon(Icons.search, color: Colors.white),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 22),
-                      //My Supervisor
-                      Text(
-                        'My Pramukh',
-                        style: TextStyle(
-                          fontSize: largeFontSize*1.5,
-                          fontWeight: FontWeight.bold,
-                          color: const Color.fromRGBO(5, 50, 70, 1.0),
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                      Container(
-                        decoration: BoxDecoration(
-                          //borderRadius: BorderRadius.circular(30),
-                          borderRadius: supervisor.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
-                          gradient: const LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Color.fromRGBO(60, 170, 145, 1.0),
-                              Color.fromRGBO(2, 40, 60, 1),
-                            ],
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            // If the list is empty, show a message
-                            if (supervisor.isEmpty)
-                              Container(
-                                padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    'No Supervisor Assigned',
-                                    style: TextStyle(
-                                      fontSize: largeFontSize,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30),
+                                borderSide: BorderSide.none,
+                              ),
+                              suffixIcon: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Color.fromRGBO(60, 245, 200, 1.0),
+                                        Color.fromRGBO(2, 40, 60, 1),
+                                      ],
                                     ),
                                   ),
+                                  child: const Icon(Icons.search, color: Colors.white),
                                 ),
-                              )
-                            // If the list is not empty, build a ListView of InfluencerCards
-                            else
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // First Row: Profile Picture and Influencer Details
-                                    Row(
-                                      children: [
-                                        // Profile Picture (placeholder)
-                                        CircleAvatar(
-                                          radius: MediaQuery.of(context).size.width * 0.08,
-                                          backgroundColor: Colors.grey[200],
-                                          // Check if profile_image exists and is not empty before passing it to NetworkImage
-                                          backgroundImage: supervisor[0]['profile_image'] != null && supervisor[0]['profile_image']!.isNotEmpty
-                                              ? MemoryImage(base64Decode(supervisor[0]['profile_image'].split(',')[1]))
-                                              //? NetworkImage(apiService.baseUrl.substring(0, 40) + supervisor[0]['profile_image'])
-                                              : null,
-                                          child: supervisor[0]['profile_image'] == null || supervisor[0]['profile_image']!.isEmpty
-                                              ? Icon(
-                                            Icons.person,
-                                            color: Colors.white,
-                                            size: MediaQuery.of(context).size.width * 0.14,
-                                          )
-                                              : null,
-                                        ),
-                                        SizedBox(width: 16),
-                                        // Influencer Details
-                                        Expanded(
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 22),
+                          if (!isSearching)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                //My Supervisor
+                                Text(
+                                  'My Pramukh',
+                                  style: TextStyle(
+                                    fontSize: largeFontSize*1.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color.fromRGBO(5, 50, 70, 1.0),
+                                  ),
+                                ),
+                                const SizedBox(height: 1),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    //borderRadius: BorderRadius.circular(30),
+                                    borderRadius: supervisor.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Color.fromRGBO(60, 170, 145, 1.0),
+                                        Color.fromRGBO(2, 40, 60, 1),
+                                      ],
+                                    ),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      // If the list is empty, show a message
+                                      if (supervisor.isEmpty)
+                                        Container(
+                                          padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              'No Supervisor Assigned',
+                                              style: TextStyle(
+                                                fontSize: largeFontSize,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                      // If the list is not empty, build a ListView of InfluencerCards
+                                      else
+                                        Container(
+                                          padding: const EdgeInsets.all(16),
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                supervisor[0]['first_name']!, // Dynamic name
-                                                style: TextStyle(
-                                                  fontSize: largeFontSize+6,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.white,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                // First Row: Profile Picture and Influencer Details
+                                                Row(
+                                                  children: [
+                                                    // Profile Picture (placeholder)
+                                                    CircleAvatar(
+                                                      radius: MediaQuery.of(context).size.width * 0.08,
+                                                      backgroundColor: Colors.grey[200],
+                                                      // Check if profile_image exists and is not empty before passing it to NetworkImage
+                                                      backgroundImage: supervisor[0]['profile_image'] != null && supervisor[0]['profile_image']!.isNotEmpty
+                                                          ? MemoryImage(base64Decode(supervisor[0]['profile_image'].split(',')[1]))
+                                                      //? NetworkImage(apiService.baseUrl.substring(0, 40) + supervisor[0]['profile_image'])
+                                                          : null,
+                                                      child: supervisor[0]['profile_image'] == null || supervisor[0]['profile_image']!.isEmpty
+                                                          ? Icon(
+                                                        Icons.person,
+                                                        color: Colors.white,
+                                                        size: MediaQuery.of(context).size.width * 0.14,
+                                                      )
+                                                          : null,
+                                                    ),
+                                                    SizedBox(width: 16),
+                                                    // Influencer Details
+                                                    Expanded(
+                                                      child: Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Text(
+                                                            supervisor[0]['first_name']!, // Dynamic name
+                                                            style: TextStyle(
+                                                              fontSize: largeFontSize+6,
+                                                              fontWeight: FontWeight.bold,
+                                                              color: Colors.white,
+                                                            ),
+                                                          ),
+                                                          Text(
+                                                            supervisor[0]['last_name'], // Dynamic designation
+                                                            style: TextStyle(
+                                                              fontSize: smallFontSize,
+                                                              color: Colors.white,
+                                                            ),
+                                                          ),
+                                                          SizedBox(height: 1),
+                                                          Text(
+                                                            supervisor[0]['designation']??"", // Dynamic description
+                                                            style: TextStyle(
+                                                              fontSize: smallFontSize-2,
+                                                              color: Colors.white,
+                                                            ),
+                                                            maxLines: 2,
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
-                                              ),
-                                              Text(
-                                                supervisor[0]['last_name'], // Dynamic designation
-                                                style: TextStyle(
-                                                  fontSize: smallFontSize,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                              SizedBox(height: 1),
-                                              Text(
-                                                supervisor[0]['designation']??"", // Dynamic description
-                                                style: TextStyle(
-                                                  fontSize: smallFontSize-2,
-                                                  color: Colors.white,
-                                                ),
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
+                                              ]
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                //My Lead
+                                if(apiService.lvl<2)
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'My Lead',
+                                        style: TextStyle(
+                                          fontSize: largeFontSize*1.5,
+                                          fontWeight: FontWeight.bold,
+                                          color: const Color.fromRGBO(5, 50, 70, 1.0),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 1),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          //borderRadius: BorderRadius.circular(30),
+                                          borderRadius: lead.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
+                                          gradient: const LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              Color.fromRGBO(60, 170, 145, 1.0),
+                                              Color.fromRGBO(2, 40, 60, 1),
                                             ],
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ]
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      //My Lead
-                      if(apiService.lvl<2)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'My Lead',
-                            style: TextStyle(
-                              fontSize: largeFontSize*1.5,
-                              fontWeight: FontWeight.bold,
-                              color: const Color.fromRGBO(5, 50, 70, 1.0),
-                            ),
-                          ),
-                          const SizedBox(height: 1),
-                          Container(
-                            decoration: BoxDecoration(
-                              //borderRadius: BorderRadius.circular(30),
-                              borderRadius: lead.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
-                              gradient: const LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Color.fromRGBO(60, 170, 145, 1.0),
-                                  Color.fromRGBO(2, 40, 60, 1),
-                                ],
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                // If the list is empty, show a message
-                                if (lead.isEmpty)
-                                  Container(
-                                    padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        'No lead Assigned',
-                                        style: TextStyle(
-                                          fontSize: largeFontSize,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
+                                        child: Column(
+                                          children: [
+                                            // If the list is empty, show a message
+                                            if (lead.isEmpty)
+                                              Container(
+                                                padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    'No lead Assigned',
+                                                    style: TextStyle(
+                                                      fontSize: largeFontSize,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                            // If the list is not empty, build a ListView of InfluencerCards
+                                            else
+                                              Container(
+                                                padding: const EdgeInsets.all(16),
+                                                child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      // First Row: Profile Picture and Influencer Details
+                                                      Row(
+                                                        children: [
+                                                          CircleAvatar(
+                                                            radius: MediaQuery.of(context).size.width * 0.08,
+                                                            backgroundColor: Colors.grey[200],
+                                                            // Check if profile_image exists and is not empty before passing it to NetworkImage
+                                                            backgroundImage: lead[0]['profile_image'] != null && lead[0]['profile_image']!.isNotEmpty
+                                                                ? MemoryImage(base64Decode(lead[0]['profile_image'].split(',')[1]))
+                                                            //? NetworkImage(apiService.baseUrl.substring(0, 40) + lead[0]['profile_image'])
+                                                                : null,
+                                                            child: lead[0]['profile_image'] == null || lead[0]['profile_image']!.isEmpty
+                                                                ? Icon(
+                                                              Icons.person,
+                                                              color: Colors.white,
+                                                              size: MediaQuery.of(context).size.width * 0.14,
+                                                            )
+                                                                : null,
+                                                          ),
+                                                          SizedBox(width: 16),
+                                                          // Influencer Details
+                                                          Expanded(
+                                                            child: Column(
+                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                              children: [
+                                                                Text(
+                                                                  lead[0]['first_name'], // Dynamic name
+                                                                  style: TextStyle(
+                                                                    fontSize: largeFontSize+6,
+                                                                    fontWeight: FontWeight.bold,
+                                                                    color: Colors.white,
+                                                                  ),
+                                                                ),
+                                                                Text(
+                                                                  lead[0]['last_name'], // Dynamic designation
+                                                                  style: TextStyle(
+                                                                    fontSize: smallFontSize,
+                                                                    color: Colors.white,
+                                                                  ),
+                                                                ),
+                                                                SizedBox(height: 1),
+                                                                Text(
+                                                                  lead[0]['designation'], // Dynamic description
+                                                                  style: TextStyle(
+                                                                    fontSize: smallFontSize-2,
+                                                                    color: Colors.white,
+                                                                  ),
+                                                                  maxLines: 2,
+                                                                  overflow: TextOverflow.ellipsis,
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ]
+                                                ),
+                                              ),
+                                          ],
                                         ),
                                       ),
-                                    ),
-                                  )
-                                // If the list is not empty, build a ListView of InfluencerCards
-                                else
-                                  Container(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          // First Row: Profile Picture and Influencer Details
-                                          Row(
-                                            children: [
-                                              CircleAvatar(
-                                                radius: MediaQuery.of(context).size.width * 0.08,
-                                                backgroundColor: Colors.grey[200],
-                                                // Check if profile_image exists and is not empty before passing it to NetworkImage
-                                                backgroundImage: lead[0]['profile_image'] != null && lead[0]['profile_image']!.isNotEmpty
-                                                    ? MemoryImage(base64Decode(lead[0]['profile_image'].split(',')[1]))
-                                                    //? NetworkImage(apiService.baseUrl.substring(0, 40) + lead[0]['profile_image'])
-                                                    : null,
-                                                child: lead[0]['profile_image'] == null || lead[0]['profile_image']!.isEmpty
-                                                    ? Icon(
-                                                  Icons.person,
-                                                  color: Colors.white,
-                                                  size: MediaQuery.of(context).size.width * 0.14,
-                                                )
-                                                    : null,
+                                    ],
+                                  ),
+                                //My team
+                                if(apiService.lvl > 1)
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'My Team',
+                                        style: TextStyle(
+                                          fontSize: largeFontSize*2.5,
+                                          fontWeight: FontWeight.bold,
+                                          color: const Color.fromRGBO(5, 50, 70, 1.0),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 1),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          //borderRadius: BorderRadius.circular(30),
+                                          borderRadius: members.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
+                                          gradient: const LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              Color.fromRGBO(60, 170, 145, 1.0),
+                                              Color.fromRGBO(2, 40, 60, 1),
+                                            ],
+                                          ),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            // If the list is empty, show a message
+                                            if (members.isEmpty)
+                                              Container(
+                                                padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    'No Members Assigned',
+                                                    style: TextStyle(
+                                                      fontSize: largeFontSize,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                            // If the list is not empty, build a ListView of InfluencerCards
+                                            else
+                                              Column(
+                                                children: List.generate(
+                                                  (members.length < 4) ? members.length : 3, // Display either all members or just 3
+                                                      (index) {
+                                                    final member = members[index]; // Access the member data
+                                                    return Padding(
+                                                      padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
+                                                      child: MemberCard(
+                                                        id: member['id']!,
+                                                        first_name: member['first_name']!,
+                                                        last_name: member['last_name']!,
+                                                        designation: member['designation']!,
+                                                        profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
+                                                            ? member['profile_image']!
+                                                            : '',
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
                                               ),
-                                              SizedBox(width: 16),
-                                              // Influencer Details
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                                            if (members.isNotEmpty)
+                                            // View All Influencers Button
+                                              TextButton(
+                                                onPressed: () async {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(builder: (context) => const MyTeamPage()),
+                                                  );
+                                                },
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
                                                   children: [
                                                     Text(
-                                                      lead[0]['first_name'], // Dynamic name
+                                                      'View all Members',
                                                       style: TextStyle(
-                                                        fontSize: largeFontSize+6,
+                                                        fontSize: largeFontSize,
                                                         fontWeight: FontWeight.bold,
                                                         color: Colors.white,
                                                       ),
                                                     ),
-                                                    Text(
-                                                      lead[0]['last_name'], // Dynamic designation
-                                                      style: TextStyle(
-                                                        fontSize: smallFontSize,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-                                                    SizedBox(height: 1),
-                                                    Text(
-                                                      lead[0]['designation'], // Dynamic description
-                                                      style: TextStyle(
-                                                        fontSize: smallFontSize-2,
-                                                        color: Colors.white,
-                                                      ),
-                                                      maxLines: 2,
-                                                      overflow: TextOverflow.ellipsis,
+                                                    const SizedBox(width: 4),
+                                                    Image.asset(
+                                                      'assets/icon/arrow.png',
+                                                      color: Colors.white,
+                                                      width: 12,
+                                                      height: 12,
                                                     ),
                                                   ],
                                                 ),
                                               ),
-                                            ],
-                                          ),
-                                        ]
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      //My team
-                      if(apiService.lvl > 1)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'My Team',
-                            style: TextStyle(
-                              fontSize: largeFontSize*2.5,
-                              fontWeight: FontWeight.bold,
-                              color: const Color.fromRGBO(5, 50, 70, 1.0),
-                            ),
-                          ),
-                          const SizedBox(height: 1),
-                          Container(
-                            decoration: BoxDecoration(
-                              //borderRadius: BorderRadius.circular(30),
-                              borderRadius: members.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
-                              gradient: const LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Color.fromRGBO(60, 170, 145, 1.0),
-                                  Color.fromRGBO(2, 40, 60, 1),
-                                ],
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                // If the list is empty, show a message
-                                if (members.isEmpty)
-                                  Container(
-                                    padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        'No Members Assigned',
-                                        style: TextStyle(
-                                          fontSize: largeFontSize,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
+                                          ],
                                         ),
                                       ),
-                                    ),
-                                  )
-                                // If the list is not empty, build a ListView of InfluencerCards
-                                else
+                                    ],
+                                  ),
+                                //Add new members
+                                if(apiService.lvl > 2)
                                   Column(
-                                    children: List.generate(
-                                      (members.length < 4) ? members.length : 3, // Display either all members or just 3
-                                          (index) {
-                                        final member = members[index]; // Access the member data
-                                        return Padding(
-                                          padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
-                                          child: MemberCard(
-                                            id: member['id']!,
-                                            first_name: member['first_name']!,
-                                            last_name: member['last_name']!,
-                                            designation: member['designation']!,
-                                            profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
-                                                ? member['profile_image']!
-                                                : '',
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-
-                                if (members.isNotEmpty)
-                                // View All Influencers Button
-                                  TextButton(
-                                    onPressed: () async {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (context) => const MyTeamPage()),
-                                      );
-                                    },
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          'View all Members',
-                                          style: TextStyle(
-                                            fontSize: largeFontSize,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
+                                    children: [
+                                      const SizedBox(height: 20),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(10),
+                                          gradient: const LinearGradient(
+                                            begin: Alignment.centerLeft,
+                                            end: Alignment.centerRight,
+                                            colors: [
+                                              Color.fromRGBO(2, 40, 60, 1),
+                                              Color.fromRGBO(60, 170, 145, 1.0)
+                                            ],
                                           ),
                                         ),
-                                        const SizedBox(width: 4),
-                                        Image.asset(
-                                          'assets/icon/arrow.png',
-                                          color: Colors.white,
-                                          width: 12,
-                                          height: 12,
+                                        child: TextButton(
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(builder: (context) => RegisterUserPage()),
+                                            );
+                                          },
+                                          style: TextButton.styleFrom(
+                                            padding: const EdgeInsets.only(left: 0,right: 0, bottom: 10,top: 10), // Remove padding to fill the entire container
+                                            tapTargetSize: MaterialTapTargetSize.shrinkWrap, // Adjust the tap target size
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              'Add New Member',
+                                              style: TextStyle(
+                                                fontSize: largeFontSize,
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
+                                //const SizedBox(height: 16),
                               ],
-                            ),
-                          ),
+                            )
+                          else
+                            Column(
+                              children: [Text('data')],
+                            )
                         ],
                       ),
-                      //Add new members
-                      if(apiService.lvl > 2)
-                      Column(
-                        children: [
-                          const SizedBox(height: 20),
-                          Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              gradient: const LinearGradient(
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                                colors: [
-                                  Color.fromRGBO(2, 40, 60, 1),
-                                  Color.fromRGBO(60, 170, 145, 1.0)
-                                ],
-                              ),
-                            ),
-                            child: TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => RegisterUserPage()),
-                                );
-                              },
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.only(left: 0,right: 0, bottom: 10,top: 10), // Remove padding to fill the entire container
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap, // Adjust the tap target size
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'Add New Member',
-                                  style: TextStyle(
-                                    fontSize: largeFontSize,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      //const SizedBox(height: 16),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
 
 
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.only(left: 16,right: 16,bottom: 16,top: 1),  // Add padding around the bottom navigation bar
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color.fromRGBO(10, 205, 165, 1.0),
-              borderRadius: BorderRadius.circular(25),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildBottomNavItem(
-                  label: "Influencers",
-                  iconPath: 'assets/icon/add influencer.png',  // Use the PNG file path
-                  isActive: _selectedIndex == 0,
-                  onPressed: () => _onNavItemTapped(0),
+          bottomNavigationBar: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16,right: 16,bottom: 16,top: 1),  // Add padding around the bottom navigation bar
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color.fromRGBO(10, 205, 165, 1.0),
+                  borderRadius: BorderRadius.circular(25),
                 ),
-                _buildBottomNavItem(
-                  label: "Team",
-                  iconPath: 'assets/icon/team.png',  // Use the PNG file path
-                  isActive: _selectedIndex == 1,
-                  onPressed: () => _onNavItemTapped(1),
-                ),
-                _buildBottomNavItem(
-                  label: "Events",
-                  iconPath: 'assets/icon/meeting.png',  // Use the PNG file path
-                  isActive: _selectedIndex == 2,
-                  onPressed: () => _onNavItemTapped(2),
-                ),
-                _buildBottomNavItem(
-                  label: "Report",
-                  iconPath: 'assets/icon/report.png',  // Use the PNG file path
-                  isActive: _selectedIndex == 3,
-                  onPressed: () => _onNavItemTapped(3),
-                ),
-                /*_buildBottomNavItem(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildBottomNavItem(
+                      label: "Influencers",
+                      iconPath: 'assets/icon/add influencer.png',  // Use the PNG file path
+                      isActive: _selectedIndex == 0,
+                      onPressed: () => _onNavItemTapped(0),
+                    ),
+                    _buildBottomNavItem(
+                      label: "Team",
+                      iconPath: 'assets/icon/team.png',  // Use the PNG file path
+                      isActive: _selectedIndex == 1,
+                      onPressed: () => _onNavItemTapped(1),
+                    ),
+                    _buildBottomNavItem(
+                      label: "Events",
+                      iconPath: 'assets/icon/meeting.png',  // Use the PNG file path
+                      isActive: _selectedIndex == 2,
+                      onPressed: () => _onNavItemTapped(2),
+                    ),
+                    _buildBottomNavItem(
+                      label: "Report",
+                      iconPath: 'assets/icon/report.png',  // Use the PNG file path
+                      isActive: _selectedIndex == 3,
+                      onPressed: () => _onNavItemTapped(3),
+                    ),
+                    /*_buildBottomNavItem(
                   label: "API",
                   iconPath: 'assets/icon/report.png',  // Use the PNG file path
                   isActive: _selectedIndex == 4,
                   onPressed: () => _onNavItemTapped(4),
                 ),*/
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
         ),
-      ),
+        onWillPop: () async {
+          // If searching, reset the search state and prevent the back action
+          if (isSearching) {
+            setState(() {
+              isSearching = false; // Reset the searching state
+            });
+            return false; // Prevent back action if still searching
+          }
+
+          // Go to the previous screen directly if not searching
+          Navigator.of(context).pop(); // Go to the previous screen
+
+          return true; // Indicate that the back action is handled
+        }
+
     );
   }
 

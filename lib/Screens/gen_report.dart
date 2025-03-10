@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../Service/api_service.dart';
 import 'add_influencer.dart';
 import 'home.dart';
+import 'notifications.dart';
 
 class GenReportPage extends StatefulWidget {
   const GenReportPage({super.key});
@@ -344,7 +345,7 @@ class _GenReportPageState extends State<GenReportPage> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.settings, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
+          icon: const Icon(Icons.person, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
           onPressed: () {
             Navigator.push(
               context,
@@ -360,8 +361,10 @@ class _GenReportPageState extends State<GenReportPage> {
           IconButton(
             icon: const Icon(Icons.notifications, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
             onPressed: () {
-              // Handle the notification icon tap here (you can add navigation or other actions)
-              print('Notifications tapped');
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NotificationsPage()),
+              );
             },
           ),
         ],

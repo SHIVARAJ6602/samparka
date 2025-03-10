@@ -1,0 +1,2 @@
+C:/Users/HP/Desktop/samparka/samparka/android/app/.cxx/RelWithDebInfo/2f1b2342/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/HP/Desktop/samparka/samparka/android/app/.cxx/RelWithDebInfo/2f1b2342/x86_64/CMakeFiles/rebuild_cache.dir

@@ -223,23 +223,26 @@ class _InfluencersPageState extends State<InfluencersPage> {
   Future<void> search(String str) async {
     try {
       // Call the API service with the search query
-      result = await apiService.searchGV(str);
-      setState(() {
-        // Update the influencers list with the fetched data
-        print("serached before asign:");
-        infSearched = result;
-        print("search: ");
-      });
-      setState(() {
-        
-      });
+      var inf = await apiService.searchGV(str);
+      if (inf is List) {  // Check if inf is a List (data returned)
+        setState(() {
+          print("searched before assign:");
+          infSearched = [];
+          print("result: $inf");
+          infSearched = inf;  // Assign the list data to infSearched
+          print("search: ");
+        });
+        setState(() {});
+      } else if (inf == false) {  // If inf is false (no content or error)
+        setState(() {
+          infSearched = [];  // Clear the list since no results were found
+        });
+      }
     } catch (e) {
       // Handle any errors here
       print("Error fetching influencers: $e");
     }
   }
-
-
 
   /******************************************************/
 
@@ -252,15 +255,15 @@ class _InfluencersPageState extends State<InfluencersPage> {
         child: Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
-            /*leading: IconButton(
-          icon: const Icon(Icons.settings, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
+            leading: IconButton(
+          icon: const Icon(Icons.person, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
           onPressed: () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => SettingsPage()),
             );
           },
-        ),*/
+        ),
 
             backgroundColor: Colors.transparent, // Make the app bar background transparent
             elevation: 0, // Remove the app bar shadow
@@ -274,8 +277,6 @@ class _InfluencersPageState extends State<InfluencersPage> {
                     context,
                     MaterialPageRoute(builder: (context) => NotificationsPage()),
                   );
-                  // Handle the notification icon tap here (you can add navigation or other actions)
-                  print('Notifications tapped');
                 },
               ),
             ],
@@ -624,7 +625,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                         ),
                                                       ),
                                                       child: ApprovalCard(
-                                                        name: influencer['fname']!,
+                                                        name: '${influencer['fname']} ${influencer['lname']}',
                                                         designation: influencer['designation']!,
                                                         description: influencer['description']!,
                                                         hashtags: influencer['hashtags']!,
@@ -717,9 +718,9 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                 return Padding(
                                                   padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
                                                   child: InfluencerCard(
-                                                    id: influencer['id']!,
-                                                    name: influencer['fname']??'',
-                                                    designation: influencer['designation']!,
+                                                    id: influencer['id']??'',
+                                                    name: '${influencer['fname']} ${influencer['lname']}'??'',
+                                                    designation: influencer['designation']??'',
                                                     description: influencer['description']??'',
                                                     hashtags: influencer['hashtags']??'',
                                                     soochi: influencer['soochi']??'',
@@ -864,7 +865,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              ApproveMember['fname']??'', // Dynamic name
+                                              '${ApproveMember['fname']} ${ApproveMember['lname']}'??'', // Dynamic name
                                               style: TextStyle(
                                                 fontSize: largeFontSize + 6,
                                                 fontWeight: FontWeight.bold,
@@ -982,7 +983,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                           child: TextButton(
                                             onPressed: () async {
                                               // Handle the approval logic here
-                                              print('Selected Member Index: $selectedMemberIndex');
+                                              //print('Selected Member Index: $selectedMemberIndex');
                                               if(selectedMemberIndex>-1) {
                                                 print(ApproveMember['id']);
                                                 print(TeamMembers[selectedMemberIndex]['id']);
@@ -1018,7 +1019,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                       ],
                                     ),
                                   ),
-                                  //assign cancel cutton
+                                  //assign cancel button
                                   TextButton(
                                     onPressed: () async {
                                       setState((){
@@ -1116,24 +1117,12 @@ class _InfluencersPageState extends State<InfluencersPage> {
                   ),
                 ),
               //search page
-
               if (isSearching)
                 Center(
                   child: Container(
                     padding: const EdgeInsets.all(12), // Container padding
                     width: MediaQuery.of(context).size.width * 1.0,
                     height: MediaQuery.of(context).size.height * 1.0,
-                    /*decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 8,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),*/
                     child: Column(
                       children: [
                         //SizedBox(height: 16),
@@ -1181,8 +1170,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                             isSearching = true;
                           },
                         ),
-                        SizedBox(height: 10),
-                        TextButton(onPressed: (){setState(() {isSearching = false;});}, child: Text("X")),
+                        SizedBox(height: 30),
                         //Search Profiles
                         Container(
                           decoration: BoxDecoration(
@@ -1230,11 +1218,11 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                           (index) {
                                         final influencer = infSearched[index]; // Access the member data
                                         return Padding(
-                                          padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
+                                          padding: const EdgeInsets.only(left: 8, right: 8, top: 20,bottom: 10),
                                           child: InfluencerCard(
-                                            id: influencer['id']!,
-                                            name: influencer['fname']??'',
-                                            designation: influencer['designation']!,
+                                            id: influencer['id']??'',
+                                            name: "${influencer['fname']} ${influencer['lname']}",
+                                            designation: influencer['designation']??'',
                                             description: influencer['description']??'',
                                             hashtags: influencer['hashtags']??'',
                                             soochi: influencer['soochi']??'',
@@ -1247,37 +1235,6 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                       },
                                     ),
                                   ),
-
-                              if (influencers.isNotEmpty)
-                              // View All Influencers Button
-                                TextButton(
-                                  onPressed: () async {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (context) => const ViewInfluencersPage()),
-                                    );
-                                  },
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'View all Influencers',
-                                        style: TextStyle(
-                                          fontSize: MediaQuery.of(context).size.width * 0.041+2,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Image.asset(
-                                        'assets/icon/arrow.png',
-                                        color: Colors.white,
-                                        width: 12,
-                                        height: 12,
-                                      ),
-                                    ],
-                                  ),
-                                ),
                             ],
                           ),
                         ),
@@ -1285,199 +1242,13 @@ class _InfluencersPageState extends State<InfluencersPage> {
                     ),
                   ),
                 ),
-
-              //with back
-              /*
-              if (isSearching)
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      isSearching = false; // Close the search when the button is pressed
-                    });
-                    //Navigator.pop(context); // Go back to the previous screen
-                  },
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero, // Remove any padding around the button
-                    minimumSize: Size(double.infinity, double.infinity), // Make it fullscreen
-                    backgroundColor: Colors.transparent, // Background transparent to show the content underneath
-                  ).copyWith(
-                  overlayColor: WidgetStateProperty.all(Colors.transparent), // Disable the splash effect
-                  ),
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(12), // Container padding
-                      width: MediaQuery.of(context).size.width * 0.94,
-                      height: MediaQuery.of(context).size.width * 0.9,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 8,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          //SizedBox(height: 16),
-                          TextField(
-                            controller: _searchController,
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: const Color.fromRGBO(217, 217, 217, 1.0),
-                              hintText: 'Search Influencer',
-                              hintStyle: TextStyle(
-                                fontSize: MediaQuery.of(context).size.width * 0.041,
-                                fontWeight: FontWeight.normal,
-                                color: Color.fromRGBO(128, 128, 128, 1.0),
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(30),
-                                borderSide: BorderSide.none,
-                              ),
-                              suffixIcon: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Color.fromRGBO(60, 245, 200, 1.0),
-                                        Color.fromRGBO(2, 40, 60, 1),
-                                      ],
-                                    ),
-                                  ),
-                                  child: const Icon(Icons.search, color: Colors.white),
-                                ),
-                              ),
-                            ),
-                            onChanged: (text) {
-                              if (text.isNotEmpty) {
-                                search(text); // Call the search function whenever text changes
-                              }
-                            },
-                            onTap: () {
-                              isSearching = true;
-                            },
-                          ),
-                          SizedBox(height: 10),
-                          //Search Profiles
-                          Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(30),
-                              gradient: const LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Color.fromRGBO(60, 170, 145, 1.0),
-                                  Color.fromRGBO(2, 40, 60, 1),
-                                ],
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                // If the list is empty, show a message
-                                if (loading)
-                                  Center(
-                                    child: CircularProgressIndicator(
-                                      backgroundColor: Colors.blue,
-                                    ),
-                                  )
-                                else
-                                  if (influencers.isEmpty)
-                                    Container(
-                                      padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          'No Influencer Assigned',
-                                          style: TextStyle(
-                                            fontSize: MediaQuery.of(context).size.width * 0.041+2,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                  else
-                                    Column(
-                                      children: List.generate(
-                                        (influencers.length < 4) ? influencers.length : 3, // Display either all members or just 3
-                                            (index) {
-                                          final influencer = influencers[index]; // Access the member data
-                                          return Padding(
-                                            padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
-                                            child: InfluencerCard(
-                                              id: influencer['id']!,
-                                              name: influencer['fname']??'',
-                                              designation: influencer['designation']!,
-                                              description: influencer['description']??'',
-                                              hashtags: influencer['hashtags']??'',
-                                              soochi: influencer['soochi']??'',
-                                              itrLvl: influencer['interaction_level']??'',
-                                              profileImage: influencer['profile_image'] != null && influencer['profile_image']!.isNotEmpty
-                                                  ? apiService.baseUrl.substring(0,40)+influencer['profile_image']!
-                                                  : '',
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-
-                                if (influencers.isNotEmpty)
-                                // View All Influencers Button
-                                  TextButton(
-                                    onPressed: () async {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (context) => const ViewInfluencersPage()),
-                                      );
-                                    },
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          'View all Influencers',
-                                          style: TextStyle(
-                                            fontSize: MediaQuery.of(context).size.width * 0.041+2,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Image.asset(
-                                          'assets/icon/arrow.png',
-                                          color: Colors.white,
-                                          width: 12,
-                                          height: 12,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              */
             ],
           ),
 
           // Custom Bottom Navigation Bar with padding around it
           bottomNavigationBar: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.only(left: 16,right: 16,bottom: 8,top: 3),  // Add padding around the bottom navigation bar
+              padding: const EdgeInsets.only(left: 16,right: 16,bottom: 16,top: 8),
               child: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
@@ -1524,6 +1295,20 @@ class _InfluencersPageState extends State<InfluencersPage> {
           ),
         ),
         onWillPop: () async {
+          // If searching, do not show the exit dialog
+          if (isSearching) {
+            setState(() {
+              isSearching = false; // Reset the searching state
+            });
+            return false; // Prevent back action if still searching
+          } else if (assign) {
+            setState(() {
+              assign = false;
+            });
+            return false;
+          }
+
+          // Show the dialog to confirm exit
           bool exit = await showDialog(
             context: context,
             builder: (context) => AlertDialog(
@@ -1545,83 +1330,17 @@ class _InfluencersPageState extends State<InfluencersPage> {
               ],
             ),
           );
-          if (exit) {
-            SystemNavigator.pop();  // Close the app if 'Yes' is pressed
+
+          // Exit the app if 'Yes' is pressed
+          if (exit == true) {
+            SystemNavigator.pop();  // Close the app
           }
-          return exit ?? false;
+
+          return exit ?? false; // Return false if exit is null
         }
     );
   }
 
-  /*
-  if(isSearching)
-            Center(
-              child: Container(
-                padding: const EdgeInsets.all(0), // Container padding
-                width: MediaQuery.of(context).size.width * 0.94,
-                height: MediaQuery.of(context).size.width * 0.9,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(25),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 8,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: const Color.fromRGBO(217, 217, 217, 1.0),
-                        hintText: 'Search Influencer',
-                        hintStyle: TextStyle(
-                          fontSize: MediaQuery.of(context).size.width * 0.041,
-                          fontWeight: FontWeight.normal,
-                          color: Color.fromRGBO(128, 128, 128, 1.0),
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide.none,
-                        ),
-                        suffixIcon: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Color.fromRGBO(60, 245, 200, 1.0),
-                                  Color.fromRGBO(2, 40, 60, 1),
-                                ],
-                              ),
-                            ),
-                            child: const Icon(Icons.search, color: Colors.white),
-                          ),
-                        ),
-                      ),
-                      onChanged: (text) {
-                        if (text.isNotEmpty) {
-                          search(text);  // Call the search function whenever text changes
-                        }
-                      },
-                      onTap: (){
-                        isSearching = true;
-                      },
-                    )
-                  ],
-                ),
-              ),
-            )
-  * */
 
   Widget _buildBottomNavItem({
     required String label,

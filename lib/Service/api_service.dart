@@ -1414,25 +1414,32 @@ class ApiService {
     }
   }
 
-  Future<List<dynamic>> searchGV(String str) async {
+  Future searchGV(String str) async {
     dio.options.headers['Authorization'] = 'Token $token';
 
     try {
-      final response = await dio.post('$baseUrl/callHandler/',data: {'action':'search_inf','search':str});
+      final response = await dio.post('$baseUrl/callHandler/', data: {'action': 'search_inf', 'search': str});
       print("searchGV");
       print(response.data);
 
       if (response.statusCode == 200) {
-        print(response.data);
-        return response.data;
+        if (response.data is List<dynamic>) {
+          return response.data;
+        } else if (response.data is Map<String, dynamic>) {
+          return [response.data];
+        } else {
+          throw Exception('Unexpected data type: ${response.data.runtimeType}');
+        }
+      } else if (response.statusCode == 204 || response.statusCode == 404) {
+        // Return false for both 204 and 404 status codes
+        return false;
       } else {
-        throw Exception('Failed to load lead. Status code: ${response.statusCode}');
+        throw Exception('Failed to Search inf. Status code: ${response.statusCode}');
       }
-
-
     } catch (e) {
       print('Error: $e');
-      throw Exception('Failed to load supervisor: $e');
+      return false;
+      throw Exception('Failed to search inf: $e');
     }
   }
 

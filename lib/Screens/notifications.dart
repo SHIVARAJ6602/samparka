@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:samparka/Screens/resources.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -15,9 +16,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Column(
               children: [
+                //Resources
                 Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
@@ -32,15 +35,23 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   ),
                   child: TextButton(
                     onPressed: () {
-
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ResourcesPage()),
+                      );
                     },
                     style: TextButton.styleFrom(
-                      padding: const EdgeInsets.only(left: 0,right: 0, bottom: 10,top: 10), // Remove padding to fill the entire container
+                      padding: const EdgeInsets.only(left: 6,right: 6, bottom: 6,top: 6), // Remove padding to fill the entire container
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap, // Adjust the tap target size
                     ),
                     child: Row(
-
                       children: [
+                        Image.asset(
+                          'assets/icon/resource_book-outline.png',
+                          color: Colors.white,
+                          width: 40,
+                          height: 40,
+                        ),
                         SizedBox(width: 16),
                         Text(
                           'New Resources',
@@ -50,9 +61,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(width: 16,),
+                        Spacer(),  // Pushes the rest of the content to the left, placing '2' at the right
                         Container(
-                          width: 28,
+                          width: 33,
+                          height: 33,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(25),
                             gradient: const LinearGradient(
@@ -68,44 +80,31 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             child: Text(
                               '2',
                               style: TextStyle(
-
                                 fontSize: 23,
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                          )
-                        )
+                          ),
+                        ),
+                        SizedBox(width: 5),
                       ],
                     ),
                   ),
                 ),
               ],
             ),
-            /*
-            Column(
-              children: List.generate(
-                (GanyaVyakthis.length < 4)?
-                    (index) {
-                  final influencer = GanyaVyakthis[index]; // Access the member data
-                  return Padding(
-                    padding: const EdgeInsets.only(left: 10, right: 10, top: 10,bottom: 10),
-                    child: InfluencerCard(
-                      id: influencer[0]['id']!,
-                      name: influencer[0]['fname']??'',
-                      designation: influencer[0]['designation']!,
-                      description: influencer[0]['description']??'',
-                      hashtags: influencer[0]['hashtags']??'',
-                      soochi: influencer[0]['soochi']??'',
-                      itrLvl: influencer[0]['interaction_level']??'',
-                      profileImage: influencer[0]['profile_image'] != null && influencer[0]['profile_image']!.isNotEmpty
-                          ? apiService.baseUrl.substring(0,40)+influencer[0]['profile_image']!
-                          : '',
-                    ),
-                  );
-                },
+            SizedBox(height: 25),
+            Text(
+              'Other Notifications',
+              style: TextStyle(
+                fontSize: MediaQuery.of(context).size.width * 0.041+15,
+                fontWeight: FontWeight.w900,
+                color: Color.fromRGBO(2, 40, 60, 1),
               ),
-            ),*/
+            ),
+            SizedBox(height: 15),
+
           ],
         ),
       )
