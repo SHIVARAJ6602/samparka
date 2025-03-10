@@ -91,7 +91,7 @@ class _AddInteractionPageState extends State<AddInteractionPage> {
     }
   }
 
-  void createInteraction(){
+  Future<bool> createInteraction(){
     List<dynamic> interactionData = [
       titleDataController.text, // 0: Meeting Title
       placeDataController.text, // 1: Meeting Place
@@ -103,7 +103,7 @@ class _AddInteractionPageState extends State<AddInteractionPage> {
       discussion_pointsController.text,//7
       widget.id, // 8: Interaction ID (or widget ID)
     ];
-    apiService.createInteraction(interactionData);
+    return apiService.createInteraction(interactionData);
 
   }
 
@@ -289,8 +289,23 @@ class _AddInteractionPageState extends State<AddInteractionPage> {
                                 ),
                               ),
                               child: TextButton(
-                                onPressed: () {
-                                  createInteraction();
+                                onPressed: () async {
+                                  if (await createInteraction()) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Created interaction'),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                    Navigator.pop(context);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Failed to create interaction'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
                                 },
                                 style: TextButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(vertical: 10),

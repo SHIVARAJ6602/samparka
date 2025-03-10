@@ -14,46 +14,58 @@ void main() {
 
 class MyApp extends StatelessWidget {
   MyApp({super.key});
-  final apiService = ApiService();
+  final ApiService apiService = ApiService(); // Initializing ApiService here
 
   @override
   Widget build(BuildContext context) {
-    // FutureBuilder only for initialization, not MaterialApp rebuilding
     return FutureBuilder<void>(
-      future: _wait(), // Initialize ApiService and load authentication state
-      //future: null,
+      future: _wait(apiService), // Initialize ApiService and load authentication state
       builder: (context, snapshot) {
         // Handle different states of the Future
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'Samparka',
-            home: Center(child: CircularProgressIndicator()), // Waiting for initialization
-          );
+          return _buildWaitingState();
         }
 
         if (snapshot.hasError) {
-          // If there's an error, show an error page or retry option
-          return const MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'Samparka',
-            home: ErrorPage(),
-          );
+          // If there's an error, show an error page
+          return _buildErrorState();
         }
 
         // Once initialization is complete, return the actual MaterialApp
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Samparka',
-          // Depending on whether the user is authenticated or not, show the correct page
-          home: apiService.isAuthenticated ? const InfluencersPage() : const LoginPage(),
-          //home: apiService.isAuthenticated ? TempPage() : const LoginPage(),
-        );
+        return _buildApp(apiService);
       },
     );
   }
 
-  Future<void> _wait() async {
-    await Future.delayed(const Duration(milliseconds: 10));
+  // Helper function to build the waiting state screen
+  Widget _buildWaitingState() {
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Samparka',
+      home: Center(child: CircularProgressIndicator(color: Colors.green, backgroundColor: Colors.white,)),
+    );
+  }
+
+  // Helper function to build the error screen
+  Widget _buildErrorState() {
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Samparka',
+      home: ErrorPage(),
+    );
+  }
+
+  // Helper function to build the actual app depending on authentication
+  Widget _buildApp(ApiService apiService) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Samparka',
+      home: InfluencersPage(),
+      //home: apiService.isAuthenticated ? const InfluencersPage() : const LoginPage(),
+    );
+  }
+
+  Future<void> _wait(ApiService apiService) async {
+    await Future.delayed(const Duration(milliseconds: 50));
   }
 }

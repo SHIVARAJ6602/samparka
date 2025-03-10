@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:samparka/Screens/influencer_profile.dart';
 import 'package:samparka/Screens/settings.dart';
+import 'package:samparka/Screens/submit_report.dart';
 import 'package:samparka/Service/api_service.dart';
 import 'Temp2.dart';
 import 'add_inf.dart';
@@ -126,12 +127,9 @@ class _ApiScreenState extends State<ApiScreen> {
               children: [
                 TextButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => SettingsPage()),
-                      );
+                      apiService.getUser();
                     },
-                    child: Text('SettingsPage')
+                    child: Text('get User')
                 )
               ],
             ),
@@ -144,9 +142,9 @@ class _ApiScreenState extends State<ApiScreen> {
                     children: [
                       TextButton(
                         onPressed: () {
-                          apiService.get_unapproved_profiles();
+                          apiService.getEventImages('BT00000009', '1');
                           },
-                          child: Text('get Uaprv GV')
+                          child: Text('getMeetImage')
                       )
                     ],
                   ),
@@ -156,9 +154,14 @@ class _ApiScreenState extends State<ApiScreen> {
                     children: [
                       TextButton(
                           onPressed: () {
-                            apiService.homePage();
+                            /*
+                            Navigator.push(
+                              context,
+                              //MaterialPageRoute(builder: (context) => SubmitReportPage("BT0000001")),
+                            );
+                            */
                           },
-                          child: Text('Home Page')
+                          child: Text('Submit Report Page')
                       )
                     ],
                   ),
@@ -198,7 +201,7 @@ class _ApiScreenState extends State<ApiScreen> {
                             );
                           },
                           child: Text('Temp page')
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -281,8 +284,26 @@ class _ApiScreenState extends State<ApiScreen> {
                     onPressed: () {
                       apiService.getInteractionByID("IR00000001");
                     },
-                    child: Text('Get interaction')
-                )
+                    child: Text('Get Interaction')
+                ),
+                TextButton(
+                    onPressed: () {
+                      apiService.getEvents('1');
+                    },
+                    child: Text('Get Baitak')
+                ),
+                TextButton(
+                    onPressed: () {
+                      apiService.getEvents('2');
+                    },
+                    child: Text('Get prgm')
+                ),
+                TextButton(
+                    onPressed: () {
+                      apiService.getEvents('3');
+                    },
+                    child: Text('Get SGM')
+                ),
               ],
             ),
           ),
@@ -291,7 +312,7 @@ class _ApiScreenState extends State<ApiScreen> {
               children: [
                 TextButton(
                     onPressed: () {
-                      apiService.baseUrl = "https://llama-curious-adequately.ngrok-free.app/api";
+                      //apiService.baseUrl = "https://llama-curious-adequately.ngrok-free.app/api";
                       apiService.saveData();
                       apiService.loadData();
                     },
@@ -332,12 +353,9 @@ class _ApiScreenState extends State<ApiScreen> {
                     children: [
                       TextButton(
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => CascadingDropdownExample()),
-                            );
+                            apiService.getOTP("7337620623","shivaraj6602@gmail.com");
                           },
-                          child: Text('drop down')
+                          child: Text('getOtp')
                       )
                     ],
                   ),
@@ -347,8 +365,9 @@ class _ApiScreenState extends State<ApiScreen> {
                     children: [
                       TextButton(
                           onPressed: () {
+                            apiService.getEventByStatus();
                           },
-                          child: Text('WebViewScreen')
+                          child: Text('EventByStatus')
                       )
                     ],
                   ),
@@ -358,10 +377,7 @@ class _ApiScreenState extends State<ApiScreen> {
                     children: [
                       TextButton(
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => AddInfluencer1Page()),
-                            );
+                            //apiService.submit
                           },
                           child: Text('Add inf 1')
                       )
@@ -385,12 +401,9 @@ class _ApiScreenState extends State<ApiScreen> {
                     children: [
                       TextButton(
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => InfluencerProfilePage('GV00000001')),
-                            );
+                            apiService.getEvents('1');
                           },
-                          child: Text('Inf profile')
+                          child: Text('get baitek')
                       )
                     ],
                   ),
@@ -403,10 +416,34 @@ class _ApiScreenState extends State<ApiScreen> {
               children: [
                 TextButton(
                     onPressed: () {
+                      apiService.addGV();
+                    },
+                    child: Text('add GV')
+                ),
+                TextButton(
+                    onPressed: () {
                       apiService.addUsers();
                     },
-                    child: Text('add users')
-                )
+                    child: Text('add user')
+                ),
+                TextButton(
+                    onPressed: () {
+                      apiService.genReport('2025-02-08T00:00:00.000','2025-02-27T00:00:00.000');
+                    },
+                    child: Text('gen Report')
+                ),
+                TextButton(
+                    onPressed: () {
+                      apiService.searchGV('sa');
+                    },
+                    child: Text('search GV')
+                ),
+                TextButton(
+                    onPressed: () {
+                      //apiService.getReportPage();
+                    },
+                    child: Text('ReportPage')
+                ),
               ],
             ),
           ),

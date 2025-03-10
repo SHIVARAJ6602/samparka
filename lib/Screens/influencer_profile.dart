@@ -1,9 +1,14 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:samparka/Screens/change_request.dart';
 import 'package:samparka/Screens/schedule_interaction.dart';
 import 'package:samparka/Screens/view_influencers.dart';
 import 'package:samparka/Screens/view_interaction.dart';
+import 'package:flutter/services.dart'; // For Clipboard
+import 'package:fluttertoast/fluttertoast.dart'; // For Toast
+import 'package:url_launcher/url_launcher.dart';
 
 import '../Service/api_service.dart';
 
@@ -30,9 +35,19 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
   late String name = '';
   late String designation = '';
   late String description = '';
+  late String interactionLevel = '';
+  late String soochi = '';
+  late String shreni = '';
   late String hashtags = 'hastags';
   late String profileImage = '';
   late String GV_id = '';
+  late String IOS = '';
+  late String Phno = '';
+  late String address = '';
+  late String email = '';
+  late String state = '';
+  late String district = '';
+  late String organisation = '';
 
   TextEditingController titleController = TextEditingController();
 
@@ -55,6 +70,17 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
     });
   }
 
+  String soochi1 = "AkhilaBharthiya";
+  String abbreviation1 = "AB";
+
+  String soochi2 = "PranthyaSampark";
+  String abbreviation2 = "PS";
+
+  String soochi3 = "JillaSampark";
+  String abbreviation3 = "JS";
+
+  bool showAbbreviation = true;
+
   Future<bool> getGanyavyakthi() async{
     try {
       // Call the apiService.homePage() and store the result
@@ -62,14 +88,32 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
       setState(() {
         // Update the influencers list with the fetched data
         //meetings = result;
+        print('object');
         print(result[0]['fname']);
-        name = result[0]['fname'];
-        designation = result[0]['designation'];
-        description = result[0]['description'];
-        name = result[0]['fname'];
-        name = result[0]['fname'];
-        profileImage = result[0]['profile_image'];
-        print('Image: ${result[0]['profile_image']}');
+        print('object');
+        name = '${result[0]['fname'] ?? ''} ${result[0]['lname'] ?? '.'}';
+        //name = '${result[0]['fname'] ?? '' + result[0]['last_name'] ?? ''}';
+        print('object');
+        designation = result[0]['designation']??'';
+        description = result[0]['description']??'';
+        IOS = result[0]['impact_on_society']??'';
+        if (result[0]['soochi'] == 'AkhilaBharthiya'){
+          soochi = 'AB';
+        }else if(result[0]['soochi'] == 'PranthyaSampark'){
+          soochi = 'PS';
+        }else if(result[0]['soochi'] == 'JillaSampark'){
+          soochi = 'JS';
+        }
+        shreni = result[0]['shreni']??'';
+        Phno = result[0]['phone_number']??'';
+        address = result[0]['address']??'';
+        state = result[0]['state']??'';
+        district = result[0]['district']??'';
+        email = result[0]['email']??'';
+        organisation = result[0]['Organization']??'';
+        interactionLevel = result[0]['interaction_level']??'';
+        profileImage = result[0]['profile_image']??'';
+        print('Image: ${result[0]['profile_image']??''}');
         setState(() {});
 
       });
@@ -124,6 +168,163 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
       print("Error fetching influencers: $e");
     }
     return false;
+  }
+
+
+  void _showPopup(BuildContext context) {
+    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
+    double largeFontSize = normFontSize+4; //20
+    double smallFontSize = normFontSize-2;
+    // Simulated data
+    //String name = "John Doe";
+    String phoneNumber = "+1 234 567 890";
+    //String email = "johndoe@example.com";
+    //String address = "123 Main St, Springfield";
+    //String state = "California";
+    //String district = "District 9";
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(20)),
+          ),
+          title: Text("Influencer Information", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Name: $name', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
+                Divider(),
+                Text("Email: $email", style: TextStyle(fontSize: 16)),
+                Divider(),
+                Text("Address: $address", style: TextStyle(fontSize: 16)),
+                Text("District: $district", style: TextStyle(fontSize: 16)),
+                Text("State: $state", style: TextStyle(fontSize: 16)),
+                Divider(),
+                Text("Phone: $Phno", style: TextStyle(fontSize: 16)),
+                SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () async {
+                        final call = Uri.parse('tel:+91 $Phno');
+                        if (await canLaunchUrl(call)) {
+                          launchUrl(call);
+                        } else {
+                          throw 'Could not launch $call';
+                        }
+                      },
+                      child: Row(
+                        children: [
+                          Icon(Icons.call),
+                          SizedBox(width: 5),
+                          Text("Call"),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: () async {
+                        final web = Uri.parse('https://wa.me/$phoneNumber');
+                        if (await canLaunchUrl(web)) {
+                          launchUrl(web);
+                        } else {
+                          throw 'Could not launch $web';
+                        }
+                      },
+                      child: Row(
+                        children: [
+                          Icon(Icons.chat),
+                          SizedBox(width: 5),
+                          Text("WhatsApp"),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10),
+              ],
+            ),
+          ),
+          actions: [
+            Container(
+              width: MediaQuery.of(context).size.width * 0.25,
+              height: MediaQuery.of(context).size.width * 0.25 * 0.5,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(50),
+                gradient: const LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Color.fromRGBO(133, 1, 1, 1.0),
+                    Color.fromRGBO(237, 62, 62, 1.0),
+                  ],
+                ),
+              ),
+              child: TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ChangeRequestPage(GV_id)),
+                  );
+                },
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Change\nRequest ',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Transform.rotate(
+                        angle: 5.7,
+                        child: Icon(
+                          Icons.arrow_forward,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Expanded(child: SizedBox(height: 1)),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("Close"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _copyPhoneNumber(String phoneNumber) {
+    Clipboard.setData(ClipboardData(text: phoneNumber)); // Copy to clipboard
+    Fluttertoast.showToast(
+      msg: "$phoneNumber copied to clipboard",
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 1,
+      backgroundColor: Colors.black,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
   }
 
   @override
@@ -181,128 +382,134 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                             ),
                             SizedBox(width: 16),
                             // Influencer Details
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    name, // Dynamic name
-                                    style: TextStyle(
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color.fromRGBO(5, 50, 70, 1.0),
+                            TextButton(
+                              onPressed: () {
+                                _showPopup(context);
+                              },
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.38),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        double fontSize = 26; // Default font size
+                                        double availableWidth = name.length*largeFontSize;
+                                        print('$fontSize $availableWidth ${MediaQuery.of(context).size.width * 0.38*2}');
+
+                                        if (availableWidth > MediaQuery.of(context).size.width * 0.38*2) {
+                                          fontSize = 16; // Adjust this to your needs
+                                        }
+
+                                        return Text(
+                                          name,
+                                          style: TextStyle(
+                                            fontSize: fontSize, // Adjusted font size
+                                            fontWeight: FontWeight.bold,
+                                            color: Color.fromRGBO(5, 50, 70, 1.0),
+                                          ),
+                                          overflow: TextOverflow.ellipsis, // Truncate with ellipsis if the text overflows
+                                          softWrap: false, // Prevent wrapping
+                                        );
+                                      },
                                     ),
-                                  ),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        designation, // Dynamic designation
-                                        style: TextStyle(
-                                          fontSize: smallFontSize,
-                                          color: Color.fromRGBO(5, 50, 70, 1.0),
+
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          designation, // Dynamic designation
+                                          style: TextStyle(
+                                            fontSize: smallFontSize,
+                                            color: Color.fromRGBO(5, 50, 70, 1.0),
+                                          ),
                                         ),
-                                      ),
-                                      Container(
-                                        width: 2, // Divider width
-                                        height: smallFontSize, // Divider height (you can adjust this as needed)
-                                        color: Colors.black, // Divider color
-                                        margin: EdgeInsets.symmetric(horizontal: 8), // Add spacing around the divider
-                                      ),
-                                      Text(
-                                        'Shreni', // Dynamic designation
-                                        style: TextStyle(
-                                          fontSize: smallFontSize,
-                                          color: Color.fromRGBO(5, 50, 70, 1.0),
+                                        Text(
+                                          shreni, // Dynamic designation
+                                          style: TextStyle(
+                                            fontSize: smallFontSize,
+                                            color: Color.fromRGBO(5, 50, 70, 1.0),
+                                          ),
                                         ),
+                                      ],
+                                    ),
+                                    Text(
+                                      hashtags, // Dynamic designation
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.teal,
                                       ),
-                                    ],
-                                  ),
-                                  Text(
-                                    hashtags, // Dynamic designation
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.teal,
                                     ),
-                                  ),
-                                  SizedBox(height: 4),
-                                  //sahavasa
-                                  Container(
-                                    width: MediaQuery.of(context).size.width*0.25,
-                                    height: largeFontSize+5,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(50),
-                                      color: Color.fromRGBO(14, 57, 196,1.0),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        'Sahavasa',
-                                        style: TextStyle(
-                                          fontSize: smallFontSize-3,
-                                          color: Colors.white,
-                                          //fontWeight: FontWeight.bold,
+                                    SizedBox(height: 4),
+                                    // Sahavasa (Row with Containers)
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: MediaQuery.of(context).size.width * 0.20,
+                                          height: largeFontSize + 5,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(50),
+                                            color: Color.fromRGBO(14, 57, 196, 1.0),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              interactionLevel,
+                                              style: TextStyle(
+                                                fontSize: smallFontSize,
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
                                         ),
-                                      ),
+                                        SizedBox(width: 3),
+                                        Container(
+                                          width: MediaQuery.of(context).size.width * 0.15,
+                                          height: largeFontSize + 5,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(50),
+                                            color: Color.fromRGBO(59, 171, 144, 1.0),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              soochi,
+                                              style: TextStyle(
+                                                fontSize: smallFontSize,
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                             //change request
                             Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Container(
-                                  width: MediaQuery.of(context).size.width*0.25,
-                                  height: MediaQuery.of(context).size.width*0.25*0.5,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(50),
-                                    gradient: const LinearGradient(
-                                      begin: Alignment.centerLeft,
-                                      end: Alignment.centerRight,
-                                      colors: [
-                                        Color.fromRGBO(133, 1, 1, 1.0),
-                                        Color.fromRGBO(237, 62, 62, 1.0),
-                                      ],
-                                    ),
-                                  ),
-                                  child: TextButton(
-                                    onPressed: () {},
-                                    style: TextButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                    ),
-                                    child: Center(
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            'Change\nRequest ',
-                                            style: TextStyle(
-                                              fontSize: smallFontSize-3,
-                                              color: Colors.white,
-                                              //fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 1),  // Add space between the text and the image
-                                          Transform.rotate(
-                                            angle: 5.7,  // Adjust the rotation angle here as needed
-                                            child: Icon(
-                                              Icons.arrow_forward,  // You might want to use arrow_forward or another arrow icon
-                                              color: Colors.white,
-                                              size: largeFontSize,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
+                                IconButton(
+                                  icon: Icon(Icons.info_outline),
+                                  onPressed: () => _showPopup(context),
                                 ),
                               ],
                             ),
                             SizedBox(width: 10),
                           ],
                         ),
-                        SizedBox(height: 16),
-                        Text(description,style: TextStyle(fontSize: normFontSize)),
+                        SizedBox(height: 26),
+                        Divider(),
+                        Text('Short Description:',style: TextStyle(fontSize: largeFontSize,color: Color.fromRGBO(2, 40, 60, 1),fontWeight: FontWeight.bold)),
+                        //SizedBox(height: 5),
+                        Text('   $description',style: TextStyle(fontSize: normFontSize)),
+                        SizedBox(height: 10,),
+                        Text('Impact On Society:',style: TextStyle(fontSize: largeFontSize,color: Color.fromRGBO(2, 40, 60, 1),fontWeight: FontWeight.bold)),
+                        SizedBox(height: 1),
+                        Text('   $IOS',style: TextStyle(fontSize: normFontSize)),
+                        Divider(),
                         SizedBox(height: 16),
                         //Tasks
                         Row(
@@ -588,7 +795,22 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                                     ),
                                   )
                                 else
-                                  ListView.builder(
+                                  Column(
+                                    children: List.generate(meetings.length, (index) {
+                                      final meeting = meetings[index]; // Access the meeting data for each item
+                                      return Padding(
+                                        padding: const EdgeInsets.only(left: 8, right: 8, top: 12),
+                                        child: meetingCard(
+                                          title: meeting['title']!,
+                                          description: meeting['description']!,
+                                          dateTime: meeting['meeting_datetime']!,
+                                          id: meeting['id']!,
+                                        ),
+                                      );
+                                    }),
+                                  ),
+
+                              /*ListView.builder(
                                     shrinkWrap: true,
                                     itemCount: meetings.length, // The number of items in your data list
                                     itemBuilder: (context, index) {
@@ -598,20 +820,21 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                                         child: meetingCard(
                                           title: meeting['title']!,
                                           description: meeting['description']!,
+                                          dateTime: meeting['meeting_datetime']!,
                                           id: meeting['id']!,
                                         ),
                                       );
                                     },
-                                  ),
+                                  ),*/
 
-                              if (meetings.isNotEmpty)
+                              //if (meetings.isNotEmpty)
                               // View All Influencers Button
-                                TextButton(
+                                /*TextButton(
                                   onPressed: () async {
-                                    Navigator.push(
+                                    /*Navigator.push(
                                       context,
                                       MaterialPageRoute(builder: (context) => InfluencerProfilePage('GV00000001')),
-                                    );
+                                    );*/
                                   },
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -633,7 +856,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                                       ),
                                     ],
                                   ),
-                                ),
+                                ),*/
 
                             ],
                           ),
@@ -678,6 +901,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
 class meetingCard extends StatelessWidget {
   final String title;
   final String description;
+  final String dateTime;
   final String id;
 
   const meetingCard({
@@ -685,7 +909,9 @@ class meetingCard extends StatelessWidget {
     required this.title,
     required this.description,
     required this.id,
+    required this.dateTime,
   });
+
 
   @override
   Widget build(BuildContext context) {
@@ -730,14 +956,21 @@ class meetingCard extends StatelessWidget {
                       padding: const EdgeInsets.only(bottom: 2.0), // Space between text
                       child: Text(
                         title,
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: largeFontSize),
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: largeFontSize,color: Color.fromRGBO(5, 50, 70, 1.0)),
                       ),
                     ),
                     Padding(
                       padding: const EdgeInsets.only(bottom: 2.0),
                       child: Text(
                         description,
-                        style: TextStyle(fontSize: smallFontSize),
+                        style: TextStyle(fontSize: smallFontSize,color: Color.fromRGBO(5, 50, 70, 1.0)),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 2.0),
+                      child: Text(
+                        DateFormat('yyyy-MM-dd HH:mm a').format(DateTime.parse(dateTime)),
+                        style: TextStyle(fontSize: smallFontSize,color: Color.fromRGBO(0, 0, 0, 1)),
                       ),
                     ),
                   ],

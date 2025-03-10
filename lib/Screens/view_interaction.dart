@@ -6,7 +6,7 @@ class ViewInteractionPage extends StatefulWidget {
   final String id;
 
   // Receiving the id directly through the constructor
-  ViewInteractionPage(this.id);
+  const ViewInteractionPage(this.id, {super.key});
 
   @override
   _ViewInteractionPageState createState() => _ViewInteractionPageState();
@@ -30,19 +30,47 @@ class _ViewInteractionPageState extends State<ViewInteractionPage> {
   DateTime? selectedDate;
   DateTime? selectedMeetDate;
   String? selectedStatus = 'scheduled';
+  //late List<dynamic> result;
+  late List<dynamic> Interaction = [];
 
   @override
   void initState() {
     super.initState();
 
-    titleDataController.text = 'title';
-    placeDataController.text = 'place';
-    selectedMeetDate = DateTime.parse('2025-02-09T22:31:00.000');
-    selectedStatus = 'status';
-    descriptionController.text = 'description';
-    materials_distributedController.text = 'materialsDistributed';
-    virtual_meeting_linkController.text = 'virtualLink';
-    discussion_pointsController.text = 'discussionPoints';
+    fetchInteraction(widget.id);
+    /*titleDataController.text = Interaction[0]['title']??'';
+    placeDataController.text = Interaction[0]['meeting_place']??'';
+    selectedMeetDate = DateTime.parse(Interaction[0]['meeting_datetime']??'');
+    selectedStatus = Interaction[0]['status'];
+    descriptionController.text = Interaction[0]['description'];
+    materials_distributedController.text = Interaction[0]['materials_distributed']??'';
+    virtual_meeting_linkController.text = 'virtualLink'??'';
+    discussion_pointsController.text = 'discussionPoints';*/
+    //print(apiService.getInteractionByID(widget.id));
+  }
+
+  Future<bool> fetchInteraction(MT_id)async{
+    try{
+      var result = await apiService.getInteractionByID(MT_id);
+      setState(() {
+        Interaction = result;
+        titleDataController.text = Interaction[0]['title']??'';
+        placeDataController.text = Interaction[0]['meeting_place']??'';
+        selectedMeetDate = DateTime.parse(Interaction[0]['meeting_datetime']??'');
+        selectedStatus = Interaction[0]['status'];
+        descriptionController.text = Interaction[0]['description'];
+        materials_distributedController.text = Interaction[0]['materials_distributed']??'';
+        virtual_meeting_linkController.text = 'virtualLink'??'';
+        discussion_pointsController.text = Interaction[0]['discussion_points'];
+      });
+      setState(() {
+
+      });
+      return true;
+    } catch (e) {
+      print("Error fetching interaction: $e");
+    }
+    return false;
   }
 
   @override
@@ -61,20 +89,118 @@ class _ViewInteractionPageState extends State<ViewInteractionPage> {
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   child: Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          "Meeting Details",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: Color.fromRGBO(5, 50, 70, 1.0),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Text(
+                            'Title: ${titleDataController.text}',
+                            style: TextStyle(
+                              fontSize: 23,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
                           ),
                         ),
                         SizedBox(height: 30),
-
+                        Container(
+                          width: MediaQuery.of(context).size.width*0.9,
+                          padding: const EdgeInsets.all(10.0),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            //color: Color.fromRGBO(255, 255, 255, 0.1), // Background color
+                            borderRadius: BorderRadius.circular(12), // Rounded corners for the border
+                            border: Border.all(
+                              color: Colors.grey.shade400, // Border color
+                              width: 1, // Border width
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,  // Ensure text aligns to the left
+                                    children: [
+                                      Text(
+                                        'Description:',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: largeFontSize,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                      Text(
+                                        descriptionController.text.trim(),
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w400,
+                                          fontSize: normFontSize,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Divider(),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8.0),
+                                  child: Text(
+                                    'Place: ${placeDataController.text}',
+                                    style: TextStyle(
+                                      fontSize: normFontSize,
+                                      fontStyle: FontStyle.italic,
+                                      color: Colors.blueAccent,
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8.0),
+                                  child: Text(
+                                    'Date & Time: ${selectedMeetDate == null ? "Date & Time not set" : "${selectedMeetDate!.toLocal()}".split(' ')[0]}',
+                                    style: TextStyle(
+                                      fontSize: normFontSize,
+                                      color: selectedMeetDate == null ? Colors.red : Colors.green,
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8.0),
+                                  child: Text(
+                                    'Discussion Points:\n ${discussion_pointsController.text}',
+                                    style: TextStyle(
+                                      fontSize: normFontSize,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8.0),
+                                  child: Text(
+                                    'Materials Given: ${materials_distributedController.text}',
+                                    style: TextStyle(
+                                      fontSize: normFontSize,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8.0),
+                                  child: Text(
+                                    'Status: ${selectedStatus ?? "Scheduled"}',
+                                    style: TextStyle(
+                                      fontSize: normFontSize,
+                                      fontWeight: FontWeight.bold,
+                                      color: selectedStatus == null ? Colors.orange : Colors.green,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                          ),
+                        ),
+                        /*
                         _buildReadOnlyField("Meeting Title", titleDataController),
 
                         SizedBox(height: 16),
@@ -141,7 +267,7 @@ class _ViewInteractionPageState extends State<ViewInteractionPage> {
                             ),
                           ),
                         ),
-                        SizedBox(height: 20),
+                        SizedBox(height: 20),*/
                       ],
                     ),
                   ),

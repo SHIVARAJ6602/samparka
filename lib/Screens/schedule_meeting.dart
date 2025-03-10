@@ -17,9 +17,9 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
 
-  final typeList = [{'id': 1, 'name': 'Baitak'}, {'id': 2,'name': 'Meeting'}];
-  String? selectedType;
-  String? selectedStatus = 'None';
+  final typeList = [{'id': 1, 'name': 'Baitak'}, {'id': 2,'name': 'Program'}, {'id': 3, 'name':'SmallGroupEvent'}];
+  String? selectedType = '1';
+  String? selectedStatus = 'scheduled';
 
   List<String> selectedMembersIds = []; // Change this to a list for multiple selection
   List<String> selectedInfluencerIds = []; // Change this to a list for multiple selection
@@ -30,7 +30,7 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
   List<dynamic> members = [];
   List<dynamic> influencers = [];
 
-  void createMeeting(){
+  Future<bool> createMeeting() async {
     List<dynamic> MeetingData = [
       selectedType, // 0: The type of the meeting (e.g., business, casual, etc.)
       meetingTitleController.text, // 1: The title of the meeting, entered by the user
@@ -42,7 +42,11 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
       selectedStatus, // 7: The current status of the meeting (e.g., scheduled, canceled, etc.)
       apiService.UserId, // 8: The User ID of the person organizing the meeting (e.g., interaction ID or widget ID)
     ];
-    apiService.createMeeting(MeetingData);
+    if(await apiService.createMeeting(MeetingData)){
+      return true;
+    } else {
+      return false;
+    }
 
   }
 
@@ -53,6 +57,7 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
         setState(() {
           selectedMembersIds = [apiService.UserId]; // Default to self if no members are found
         });
+        setState(() {});
         showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -83,8 +88,9 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
   Future<void> fetchInfluencers() async {
     try {
       resultInf = await apiService.myInfluencer(0, 100);
+      print(resultInf);
       setState(() {
-        members = resultInf;
+        influencers = resultInf;
       });
     } catch (e) {
       print("Error fetching members: $e");
@@ -109,6 +115,27 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
     if (selectedMembers != null) {
       setState(() {
         selectedMembersIds = selectedMembers.cast<String>();
+      });
+    }
+  }
+
+  Future<void> _selectInfluencers(BuildContext context) async {
+    final selectedInfluencers = await showDialog<List<dynamic>>(
+      context: context,
+      builder: (BuildContext context) {
+        return MultiSelectDialog(
+          items: influencers.map((member) {
+            return MultiSelectItem(member['id'], '${member['lname']} ${member['fname']}');
+          }).toList(),
+          title: Text('Select Members'),
+          initialValue: selectedInfluencerIds,
+        );
+      },
+    );
+
+    if (selectedInfluencers != null) {
+      setState(() {
+        selectedInfluencerIds = selectedInfluencers.cast<String>();
       });
     }
   }
@@ -150,6 +177,7 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
   void initState() {
     super.initState();
     fetchMembers();
+    fetchInfluencers();
   }
 
   @override
@@ -160,7 +188,7 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Create Meeting'),
+        title: Text('Create Event'),
       ),
       body: Stack(
         children: [
@@ -179,7 +207,7 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text("Schedule New", style: TextStyle(fontSize: normFontSize + 2, fontWeight: FontWeight.w600, color: const Color.fromRGBO(5, 50, 70, 1.0))),
-                                Text("Meeting", style: TextStyle(fontSize: largeFontSize + 20, fontWeight: FontWeight.w600, color: const Color.fromRGBO(5, 50, 70, 1.0))),
+                                Text("Event", style: TextStyle(fontSize: largeFontSize + 30, fontWeight: FontWeight.w600, color: const Color.fromRGBO(5, 50, 70, 1.0))),
                                 const SizedBox(height: 16),
                                 Container(
                                   decoration: BoxDecoration(
@@ -190,7 +218,7 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
                                   child: DropdownButton<String>(
                                     hint: Padding(
                                       padding: EdgeInsets.symmetric(horizontal: 10),
-                                      child: Text(typeList.isNotEmpty ? 'Select Meeting Type' : 'Loading Meeting Type..'),
+                                      child: Text(typeList.isNotEmpty ? 'Select Event Type' : 'Loading Event Type..'),
                                     ),
                                     value: selectedType,
                                     onChanged: (String? newValue) {
@@ -213,7 +241,7 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
                                   ),
                                 ),
                                 const SizedBox(height: 16),
-                                _buildTextField(hint: "Meeting Title", controller: meetingTitleController),
+                                _buildTextField(hint: "Event Title", controller: meetingTitleController),
                                 const SizedBox(height: 16),
                                 _buildTextField(hint: "Description", controller: descriptionController),
                                 SizedBox(height: 10),
@@ -249,6 +277,7 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
                                   ],
                                 ),
                                 SizedBox(height: 16),
+                                //select members
                                 Container(
                                   height: 50,
                                   decoration: BoxDecoration(
@@ -268,7 +297,9 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
                                           Text(
                                             selectedMembersIds.isEmpty
                                                 ? "Select Members"
-                                                : selectedMembersIds.join(', '),
+                                                : selectedMembersIds.length <= 3
+                                                ? selectedMembersIds.join(', ') // Join all members if there are 3 or fewer
+                                                : '${selectedMembersIds[0]}+${selectedMembersIds.sublist(1, 3).join(', ')},+ ', // First member with +, then 2 more
                                             style: TextStyle(color: Colors.grey.shade600, fontSize: normFontSize),
                                           ),
                                         ],
@@ -276,9 +307,10 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
                                     ),
                                   ),
                                 ),
-                                if(selectedType == '2')
+                                //select influencers
+                                if(selectedType != '1')
                                   SizedBox(height: 16),
-                                if (selectedType == '2')
+                                if (selectedType != '1')
                                   Container(
                                     height: 50,
                                     decoration: BoxDecoration(
@@ -287,7 +319,7 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
                                       border: Border.all(color: Colors.grey.shade400, width: 1.0),
                                     ),
                                     child: InkWell(
-                                      onTap: () => _selectMembers(context),
+                                      onTap: () => _selectInfluencers(context),
                                       borderRadius: BorderRadius.circular(15),  // Ensure the ripple effect respects the border radius
                                       child: Padding(
                                         padding: EdgeInsets.symmetric(horizontal: 10),
@@ -321,7 +353,22 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
                                   ),
                                   child: TextButton(
                                     onPressed: () async {
-                                      createMeeting();
+                                      if (await createMeeting()) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Created interaction'),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                        Navigator.pop(context,true);
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Failed to create interaction'),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
                                     },
                                     style: TextButton.styleFrom(padding: const EdgeInsets.all(10)),
                                     child: Center(
@@ -329,7 +376,7 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
                                           const Text(
-                                            'Schedule Meeting',
+                                            'Schedule Event',
                                             style: TextStyle(fontSize: 23, color: Colors.white, fontWeight: FontWeight.bold),
                                           ),
                                           const SizedBox(width: 8),

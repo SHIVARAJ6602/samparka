@@ -2,9 +2,17 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+
+import '../Service/api_service.dart';
 
 class SubmitReportPage extends StatefulWidget {
-  const SubmitReportPage({super.key});
+
+  final String type;
+  final String id;
+  final Map<String, dynamic> data;
+
+  const SubmitReportPage(this.id,this.type,this.data,{super.key,});
 
   @override
   _SubmitReportPageState createState() => _SubmitReportPageState();
@@ -12,11 +20,38 @@ class SubmitReportPage extends StatefulWidget {
 
 class _SubmitReportPageState extends State<SubmitReportPage> {
 
+  final apiService = ApiService();
+
+  late Map<String, dynamic> data;
+
   final TextEditingController reportDataController = TextEditingController();
 
   List<File> _imageFiles = [];
 
   final ImagePicker _picker = ImagePicker();
+
+  String formatDate(String isoDateTime) {
+    try {
+      // Parse the ISO 8601 string to DateTime object
+      DateTime dateTimeObj = DateTime.parse(isoDateTime);
+
+      return DateFormat('dd MMM yyyy').format(dateTimeObj);
+    } catch (e) {
+      // If the date parsing fails, return a default message
+      return 'Invalid Date';
+    }
+  }
+  String formatTime(String isoDateTime) {
+    try {
+      // Parse the ISO 8601 string to DateTime object
+      DateTime dateTimeObj = DateTime.parse(isoDateTime);
+
+      return DateFormat('HH:MM a').format(dateTimeObj);
+    } catch (e) {
+      // If the date parsing fails, return a default message
+      return 'Invalid Date';
+    }
+  }
 
   // Function to pick images
   Future<void> _pickImages() async {
@@ -35,6 +70,23 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
     setState(() {
       _imageFiles.removeAt(index);
     });
+  }
+
+  Future<void> submitReport() async {
+    print('${widget.id} $_imageFiles ${reportDataController.text}');
+    bool status = await apiService.submitReport(widget.id, widget.type, _imageFiles, reportDataController.text);
+    if(status){
+      print('successful');
+    }else{
+      print('failed');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    data = widget.data;
+    print('data received sub report $data');
   }
 
   @override
@@ -91,7 +143,7 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Meeting Name',  // Dynamic name
+                                      data['title'],  // Dynamic name
                                       style: TextStyle(
                                         fontSize: largeFontSize + 6,
                                         fontWeight: FontWeight.bold,
@@ -99,21 +151,21 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
                                       ),
                                     ),
                                     Text(
-                                      'Date: xx/xx/xxxx',  // Dynamic date
+                                      'Date: ${formatDate(data['meeting_datetime'])}',  // Dynamic date
                                       style: TextStyle(
                                         fontSize: smallFontSize,
                                         color: Colors.white,
                                       ),
                                     ),
                                     Text(
-                                      'Time: xx:xx:xx',  // Dynamic time
+                                      'Time: ${formatTime(data['meeting_datetime'])}',  // Dynamic time
                                       style: TextStyle(
                                         fontSize: smallFontSize - 2,
                                         color: Colors.white,
                                       ),
                                     ),
                                     Text(
-                                      'Location: Location, Location',  // Dynamic location
+                                      'Location: ${data['venue']}',  // Dynamic location
                                       style: TextStyle(
                                         fontSize: smallFontSize - 2,
                                         color: Colors.white,
@@ -221,7 +273,9 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
                               ),
                             ),
                             child: TextButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                submitReport();
+                              },
                               style: TextButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(vertical: 10),
                               ),

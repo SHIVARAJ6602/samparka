@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:samparka/Screens/meeting.dart';
 import 'package:samparka/Screens/my_team.dart';
+import 'package:samparka/Screens/user_profile_page.dart';
 import 'package:samparka/Screens/register_user.dart';
 import 'package:samparka/Screens/settings.dart';
 import 'Temp2.dart';
@@ -211,7 +212,7 @@ class _TeamPageState extends State<TeamPage> {
                       const SizedBox(height: 22),
                       //My Supervisor
                       Text(
-                        'My Supervisor',
+                        'My Pramukh',
                         style: TextStyle(
                           fontSize: largeFontSize*1.5,
                           fontWeight: FontWeight.bold,
@@ -487,25 +488,27 @@ class _TeamPageState extends State<TeamPage> {
                                   )
                                 // If the list is not empty, build a ListView of InfluencerCards
                                 else
-                                  ListView.builder(
-                                    shrinkWrap: true,
-                                    itemCount: members.length, // The number of items in your data list
-                                    itemBuilder: (context, index) {
-                                      final member = members[index]; // Access the influencer data for each item
-                                      return Padding(
-                                        padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
-                                        child: MemberCard(
-                                          first_name: member['first_name']!,
-                                          last_name: member['last_name']!,
-                                          designation: member['designation']!,
-                                          profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
-                                              ? member['profile_image']!
-                                              //? apiService.baseUrl.substring(0,40)+member['profile_image']!
-                                              : '',
-                                        ),
-                                      );
-                                    },
+                                  Column(
+                                    children: List.generate(
+                                      (members.length < 4) ? members.length : 3, // Display either all members or just 3
+                                          (index) {
+                                        final member = members[index]; // Access the member data
+                                        return Padding(
+                                          padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
+                                          child: MemberCard(
+                                            id: member['id']!,
+                                            first_name: member['first_name']!,
+                                            last_name: member['last_name']!,
+                                            designation: member['designation']!,
+                                            profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
+                                                ? member['profile_image']!
+                                                : '',
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ),
+
                                 if (members.isNotEmpty)
                                 // View All Influencers Button
                                   TextButton(
@@ -619,7 +622,7 @@ class _TeamPageState extends State<TeamPage> {
                   onPressed: () => _onNavItemTapped(1),
                 ),
                 _buildBottomNavItem(
-                  label: "Meeting",
+                  label: "Events",
                   iconPath: 'assets/icon/meeting.png',  // Use the PNG file path
                   isActive: _selectedIndex == 2,
                   onPressed: () => _onNavItemTapped(2),
@@ -650,6 +653,9 @@ class _TeamPageState extends State<TeamPage> {
     required bool isActive,
     required VoidCallback onPressed,
   }) {
+    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
+    double largeFontSize = normFontSize+4; //20
+    double smallFontSize = normFontSize-2; //14
     return GestureDetector(
       onTap: onPressed,
       child: Column(
@@ -689,7 +695,7 @@ class _TeamPageState extends State<TeamPage> {
             label,
             style: TextStyle(
               color: isActive ? Colors.white : const Color.fromRGBO(5, 50, 70, 1.0),
-              fontSize: 12,
+              fontSize: smallFontSize,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -701,6 +707,7 @@ class _TeamPageState extends State<TeamPage> {
 }
 
 class MemberCard extends StatelessWidget {
+  final String id;
   final String first_name;
   final String last_name;
   final String designation;
@@ -713,10 +720,15 @@ class MemberCard extends StatelessWidget {
     required this.last_name,
     required this.designation,
     required this.profileImage,
+    required this.id,
+
   });
 
   @override
   Widget build(BuildContext context) {
+    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
+    double largeFontSize = normFontSize+4; //20
+    double smallFontSize = normFontSize-2; //14
     return Container(
       padding: const EdgeInsets.all(0), // Container padding
       decoration: BoxDecoration(
@@ -732,7 +744,10 @@ class MemberCard extends StatelessWidget {
       ),
       child: TextButton(
         onPressed: () {
-          print('object');
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => UserProfilePage(id)),
+          );
         },
         style: ButtonStyle(
           shape: WidgetStateProperty.all(RoundedRectangleBorder(
@@ -765,7 +780,7 @@ class MemberCard extends StatelessWidget {
                     Text(
                       '$first_name $last_name', // Dynamic name
                       style: TextStyle(
-                        fontSize: 26,
+                        fontSize: largeFontSize+6,
                         fontWeight: FontWeight.bold,
                         color: Color.fromRGBO(5, 50, 70, 1.0),
                       ),
@@ -773,7 +788,7 @@ class MemberCard extends StatelessWidget {
                     Text(
                       designation, // Dynamic designation
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: smallFontSize,
                         color: Color.fromRGBO(5, 50, 70, 1.0),
                       ),
                     ),
