@@ -1,47 +1,73 @@
 import 'dart:io';
-import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import '../Service/api_service.dart';
 
-Future<void> sendExcelFile(String opt) async {
-  // Step 1: Pick the Excel file
-  FilePickerResult? result = await FilePicker.platform.pickFiles(
-    type: FileType.custom,
-    allowedExtensions: ['xlsx', 'xls'],
-  );
+class UploadKRExcel extends StatefulWidget {
+  const UploadKRExcel({super.key});
 
-  if (result != null && result.files.isNotEmpty) {
-    String filePath = result.files.single.path!;
+  @override
+  _UploadExcelKRPageState createState() => _UploadExcelKRPageState();
+}
 
-    // Step 2: Prepare the file to send with Dio
-    File file = File(filePath);
-    FormData formData = FormData.fromMap({
-      'action': opt,
-      'file': await MultipartFile.fromFile(file.path, filename: file.uri.pathSegments.last),
-    });
+class _UploadExcelKRPageState extends State<UploadKRExcel> {
+  String? _statusMessage = "No file selected.";
+  final ApiService apiService = ApiService(); // Your ApiService instance
 
-    // Step 3: Send the file to Django server
-    Dio dio = Dio();
-    try {
-      final response = await dio.post(
-        'http://your-django-server-url/api/upload/',  // Replace with your actual Django endpoint
-        data: formData,
-        options: Options(
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        ),
-      );
+  void _uploadFile() async {
+    // Step 1: Pick the Excel file
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['xlsx', 'xls'],
+    );
 
-      if (response.statusCode == 200) {
-        print("File uploaded successfully!");
-        print(response.data);  // Optionally handle the response
-      } else {
-        print("Failed to upload file.");
-      }
-    } catch (e) {
-      print("Error occurred: $e");
+    if (result != null && result.files.isNotEmpty) {
+      File file = File(result.files.single.path!);
+
+      setState(() {
+        _statusMessage = "Uploading file...";
+      });
+
+      // Step 2: Call the API service with the selected file
+      bool success = await apiService.addUsers(file);
+
+      setState(() {
+        if (success) {
+          _statusMessage = "File upload complete!";
+        } else {
+          _statusMessage = "Failed to upload file.";
+        }
+      });
+    } else {
+      setState(() {
+        _statusMessage = "No file selected.";
+      });
     }
-  } else {
-    print('No file selected');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Excel File Upload'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              onPressed: _uploadFile,
+              child: const Text("Pick and Upload Excel File"),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              _statusMessage ?? "",
+              style: const TextStyle(fontSize: 18, color: Colors.blue),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -125,6 +125,7 @@ class _ViewEventPageState extends State<ViewEventPage> {
     try{
       var result = await apiService.getInteractionByID(Event_id);
       setState(() {
+        print("fetching event by ID");
         Interaction = result;
         titleDataController.text = Interaction[0]['title']??'';
         placeDataController.text = Interaction[0]['meeting_place']??'';
@@ -134,6 +135,8 @@ class _ViewEventPageState extends State<ViewEventPage> {
         materials_distributedController.text = Interaction[0]['materials_distributed']??'';
         virtual_meeting_linkController.text = 'virtualLink'??'';
         discussion_pointsController.text = Interaction[0]['discussion_points'];
+        //images = Interaction[0]['images'];
+        //print("images : $images");
       });
       setState(() {
 
@@ -150,6 +153,7 @@ class _ViewEventPageState extends State<ViewEventPage> {
         var imageResult = await apiService.getEventImages(widget.id, widget.type);
         setState(() {
           images = imageResult;
+          print("fimages : $images");
           print('images = ${images[0]['images'].length}');
         });
         setState(() {
@@ -162,12 +166,64 @@ class _ViewEventPageState extends State<ViewEventPage> {
       return false;
     }
 
+  void _openFullScreenImage(BuildContext context, String imageUrl) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            iconTheme: IconThemeData(color: Colors.white),
+            elevation: 0,
+          ),
+          body: Center(
+            child: InteractiveViewer(
+              child: Image.network(
+                Uri.encodeFull(imageUrl),
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return Center(
+                    child: Icon(Icons.error, color: Colors.white),
+                  );
+                },
+                loadingBuilder: (context, child, progress) {
+                  if (progress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: progress.expectedTotalBytes != null
+                          ? progress.cumulativeBytesLoaded /
+                          (progress.expectedTotalBytes ?? 1)
+                          : null,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openFullScreenGallery(BuildContext context, List imageList, int initialIndex) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FullScreenImageGallery(
+          imageList: imageList,
+          initialIndex: initialIndex,
+        ),
+      ),
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
     double largeFontSize = normFontSize + 4; //20
     double smallFontSize = normFontSize - 2; //14
-
     return Scaffold(
       appBar: AppBar(),
       body: Stack(
@@ -194,6 +250,7 @@ class _ViewEventPageState extends State<ViewEventPage> {
                           ),
                         ),
                         SizedBox(height: 30),
+                        //detail container
                         Container(
                           width: MediaQuery.of(context).size.width*0.9,
                           padding: const EdgeInsets.all(10.0),
@@ -255,102 +312,58 @@ class _ViewEventPageState extends State<ViewEventPage> {
                           ),
                         ),
                         SizedBox(height: 10),
+                        //meet Images
                         if(images.isNotEmpty)
                           Wrap(
-                          spacing: 8.0,  // Horizontal spacing between items
-                          runSpacing: 8.0,  // Vertical spacing between rows
-                          children: [
-                            // Generate image boxes dynamically
-                            ...List.generate(images[0]['images'].length, (index) {
-                              String base64Image = images[0]['images'][index];
-                              return Container(
-                                width: (MediaQuery.of(context).size.width * 0.80) / 3,  // 90% of screen width divided by 3 images
-                                height: (MediaQuery.of(context).size.width * 0.80) / 3 + 15,  // Fixed height for each image
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.grey.shade400),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: base64Image.isNotEmpty
-                                      ? Image.memory(
-                                    base64Decode(base64Image),
-                                    fit: BoxFit.cover,
-                                  )
-                                      : Container(color: Colors.grey[200]),  // Default background color if no image
-                                ),
-                              );
-                            }),
-                          ],
-                        ),
-                        /*
-                        _buildReadOnlyField("Meeting Title", titleDataController),
-
-                        SizedBox(height: 16),
-                        _buildReadOnlyField("Meeting Description", descriptionController),
-
-                        SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildReadOnlyField("Location", placeDataController),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[200], // Background color
-                                  borderRadius: BorderRadius.circular(12), // Rounded corners for the border
-                                  border: Border.all(
-                                    color: Colors.grey.shade400, // Border color
-                                    width: 1, // Border width
+                            spacing: 8.0,
+                            runSpacing: 8.0,
+                            children: [
+                              ...List.generate(images[0]['images'].length, (index) {
+                                final imageUrl = images[0]['images'][index]['image_url'];
+                                return GestureDetector(
+                                  onTap: () => _openFullScreenGallery(context, images[0]['images'], index),
+                                  child: Container(
+                                    width: (MediaQuery.of(context).size.width * 0.80) / 3,
+                                    height: (MediaQuery.of(context).size.width * 0.80) / 3 + 15,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: Colors.grey.shade400),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: (images.isNotEmpty &&
+                                          images[0]['images'][index]['image'] != null &&
+                                          images[0]['images'][index]['image'].isNotEmpty)
+                                          ? Image.network(
+                                        Uri.encodeFull(imageUrl),
+                                        fit: BoxFit.cover,
+                                        loadingBuilder: (context, child, loadingProgress) {
+                                          if (loadingProgress == null) return child;
+                                          return Center(
+                                            child: CircularProgressIndicator(
+                                              value: loadingProgress.expectedTotalBytes != null
+                                                  ? loadingProgress.cumulativeBytesLoaded /
+                                                  (loadingProgress.expectedTotalBytes ?? 1)
+                                                  : null,
+                                            ),
+                                          );
+                                        },
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            color: Colors.red,
+                                            child: Center(
+                                              child: Icon(Icons.error, color: Colors.white),
+                                            ),
+                                          );
+                                        },
+                                      )
+                                          : Container(color: Colors.grey[200]),
+                                    ),
                                   ),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12), // Padding inside the container
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.calendar_today,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        selectedMeetDate == null
-                                            ? "Date & Time"
-                                            : "${selectedMeetDate!.toLocal()}".split(' ')[0],
-                                        style: TextStyle(color: Colors.grey.shade600, fontSize: normFontSize),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 16),
-                        _buildReadOnlyField("Discussion Points", discussion_pointsController),
-                        SizedBox(height: 16),
-                        _buildReadOnlyField("Virtual Meeting Link", virtual_meeting_linkController),
-                        SizedBox(height: 16),
-                        _buildReadOnlyField("Materials Distributed", materials_distributedController),
-                        SizedBox(height: 16),
-                        // Display the status dropdown
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(15),
-                            border: Border.all(color: Colors.grey.shade400, width: 1.0),
+                                );
+                              }),
+                            ],
                           ),
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 10),
-                            child: Text(
-                              selectedStatus ?? "Scheduled",
-                              style: TextStyle(color: Colors.grey.shade600, fontSize: normFontSize),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 20),*/
 
 
                         if(GanyaVyakthis.isNotEmpty)
@@ -387,7 +400,8 @@ class _ViewEventPageState extends State<ViewEventPage> {
                                                 name: influencer[0]['fname']??'',
                                                 designation: influencer[0]['designation']!,
                                                 description: influencer[0]['description']??'',
-                                                hashtags: influencer[0]['hashtags']??'',
+                                                hashtags: '',
+                                                //hashtags: influencer[0]['hashtags']??'',
                                                 soochi: influencer[0]['soochi']??'',
                                                 itrLvl: influencer[0]['interaction_level']??'',
                                                 profileImage: influencer[0]['profile_image'] != null && influencer[0]['profile_image']!.isNotEmpty
@@ -414,6 +428,7 @@ class _ViewEventPageState extends State<ViewEventPage> {
                                 return CircleAvatar(
                                   radius: MediaQuery.of(context).size.width * 0.08,
                                   backgroundColor: Colors.grey[200],
+                                  //backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
                                   backgroundImage: base64Image.isNotEmpty
                                       ? MemoryImage(base64Decode(base64Image.split(',')[1]))
                                       : null,
@@ -597,6 +612,7 @@ class MemberCard extends StatelessWidget {
               CircleAvatar(
                 radius: MediaQuery.of(context).size.width * 0.08,
                 backgroundColor: Colors.grey[200],
+                //backgroundImage: profileImage.isNotEmpty ? NetworkImage(profileImage) : null,
                 backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null, // Use NetworkImage here
                 child: profileImage.isEmpty
                     ? Icon(
@@ -699,6 +715,7 @@ class InfluencerCard extends StatelessWidget {
                     CircleAvatar(
                       radius: MediaQuery.of(context).size.width * 0.08,
                       backgroundColor: Colors.grey[200],
+                      //backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
                       backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null,
                       //backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null, // Use NetworkImage here
                       child: profileImage.isEmpty
@@ -811,3 +828,69 @@ class InfluencerCard extends StatelessWidget {
     );
   }
 }
+
+class FullScreenImageGallery extends StatefulWidget {
+  final List imageList;
+  final int initialIndex;
+
+  const FullScreenImageGallery({
+    super.key,
+    required this.imageList,
+    required this.initialIndex,
+  });
+
+  @override
+  _FullScreenImageGalleryState createState() => _FullScreenImageGalleryState();
+}
+
+class _FullScreenImageGalleryState extends State<FullScreenImageGallery> {
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
+      body: PageView.builder(
+        controller: _pageController,
+        itemCount: widget.imageList.length,
+        itemBuilder: (context, index) {
+          final imageUrl = widget.imageList[index]['image_url'];
+          return InteractiveViewer(
+            child: Center(
+              child: Image.network(
+                Uri.encodeFull(imageUrl),
+                fit: BoxFit.contain,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                          (loadingProgress.expectedTotalBytes ?? 1)
+                          : null,
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Icon(Icons.error, color: Colors.white, size: 40);
+                },
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+

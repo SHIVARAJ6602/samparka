@@ -28,10 +28,18 @@ class _InfluencersPageState extends State<InfluencersPage> {
   // This keeps track of the selected index for the bottom navigation
   int _selectedIndex = 0;
   final apiService = ApiService();
+  final FocusNode _focusNode = FocusNode();// search focus node
 
   // Method to handle bottom navigation item tap
   void _onNavItemTapped(int index) {
-    if (index == 4) {
+
+    if (index == 5) {
+      // Navigate to AddInfluencerPage when index 1 is tapped
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => SettingsPage()),
+      );
+    } else if (index == 4) {
       // Navigate to AddInfluencerPage when index 1 is tapped
       Navigator.push(
         context,
@@ -103,8 +111,10 @@ class _InfluencersPageState extends State<InfluencersPage> {
     level = apiService.lvl;
     currentUrl = apiService.baseUrl;
     fetchInfluencers();
-    getUnapprovedProfile();
-    fetchTeam();
+    if(apiService.lvl>2){
+      getUnapprovedProfile();
+    }
+    //fetchTeam();
     setState(() {});
     loading = false;
   }
@@ -211,7 +221,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
       setState(() {
         // Update the influencers list with the fetched data
         TeamMembers = result;
-        TeamMembers.add({'id':apiService.UserId,'first_name':'${apiService.first_name}(self)','last_name':apiService.last_name,'designation':apiService.designation,'profileImage':apiService.profile_image});
+        TeamMembers.add({'id':apiService.UserId,'first_name':'${apiService.first_name}(self)','last_name':apiService.last_name,'designation':apiService.designation,'profileImage':apiService.profileImage});
 
       });
     } catch (e) {
@@ -240,7 +250,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
       }
     } catch (e) {
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      print("Error fetching Karyakartha: $e");
     }
   }
 
@@ -255,16 +265,24 @@ class _InfluencersPageState extends State<InfluencersPage> {
         child: Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
-            leading: IconButton(
-          icon: const Icon(Icons.person, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SettingsPage()),
-            );
-          },
-        ),
-
+            /*
+            leading: apiService.lvl > 2
+                ? IconButton(
+              icon: const Icon(Icons.person, color: Color.fromRGBO(5, 50, 70, 1.0)),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SettingsPage()),
+                );
+              },
+            )
+                : IconButton(
+              icon: const Icon(Icons.arrow_back_ios, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
+              onPressed: () {
+                SystemNavigator.pop(); // This exits the app
+              },
+            ),
+            */
             backgroundColor: Colors.transparent, // Make the app bar background transparent
             elevation: 0, // Remove the app bar shadow
             title: Text('Samparka',style: TextStyle(fontWeight: FontWeight.bold)),
@@ -527,7 +545,8 @@ class _InfluencersPageState extends State<InfluencersPage> {
                             TextButton(
                               onPressed: () {
                                 setState(() {
-                                  isSearching = true; // Trigger searching logic when the button is pressed
+                                  isSearching = true;
+                                  _focusNode.requestFocus();
                                 });
                               },
                               style: TextButton.styleFrom(
@@ -628,7 +647,8 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                         name: '${influencer['fname']} ${influencer['lname']}',
                                                         designation: influencer['designation']!,
                                                         description: influencer['description']!,
-                                                        hashtags: influencer['hashtags']!,
+                                                        //hashtags: influencer['hashtags']!,
+                                                        hashtags: '',
                                                         imageUrl: influencer['profile_image'] != null && influencer['profile_image']!.isNotEmpty
                                                             ? apiService.baseUrl.substring(0, 40) + influencer['profile_image']!
                                                             : '',
@@ -722,11 +742,12 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                     name: '${influencer['fname']} ${influencer['lname']}'??'',
                                                     designation: influencer['designation']??'',
                                                     description: influencer['description']??'',
-                                                    hashtags: influencer['hashtags']??'',
+                                                    //hashtags: influencer['hashtags']??'',
+                                                    hashtags: '',
                                                     soochi: influencer['soochi']??'',
                                                     itrLvl: influencer['interaction_level']??'',
                                                     profileImage: influencer['profile_image'] != null && influencer['profile_image']!.isNotEmpty
-                                                        ? apiService.baseUrl.substring(0,40)+influencer['profile_image']!
+                                                        ? influencer['profile_image']!
                                                         : '',
                                                   ),
                                                 );
@@ -740,7 +761,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                           onPressed: () async {
                                             Navigator.push(
                                               context,
-                                              MaterialPageRoute(builder: (context) => const ViewInfluencersPage()),
+                                              MaterialPageRoute(builder: (context) => ViewInfluencersPage(apiService.UserId)),
                                             );
                                           },
                                           child: Row(
@@ -849,6 +870,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                       /*CircleAvatar(
                                     radius: MediaQuery.of(context).size.width * 0.10,
                                     backgroundColor: Colors.grey[200],
+                                    //backgroundImage: ApproveMember.isNotEmpty ? NetworkImage(ApproveMember['profile_image']) : null,
                                     backgroundImage: ApproveMember.isNotEmpty? FileImage(File(ApproveMember['profile_image'])): null,
                                     child: ApproveMember.isEmpty
                                         ? Icon(
@@ -1128,6 +1150,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                         //SizedBox(height: 16),
                         TextField(
                           controller: _searchController,
+                          focusNode: _focusNode,
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: const Color.fromRGBO(217, 217, 217, 1.0),
@@ -1224,7 +1247,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                             name: "${influencer['fname']} ${influencer['lname']}",
                                             designation: influencer['designation']??'',
                                             description: influencer['description']??'',
-                                            hashtags: influencer['hashtags']??'',
+                                            hashtags: influencer['hashtags'].toString()??'',
                                             soochi: influencer['soochi']??'',
                                             itrLvl: influencer['interaction_level']??'',
                                             profileImage: influencer['profile_image'] != null && influencer['profile_image']!.isNotEmpty
@@ -1276,12 +1299,20 @@ class _InfluencersPageState extends State<InfluencersPage> {
                       isActive: _selectedIndex == 2,
                       onPressed: () => _onNavItemTapped(2),
                     ),
-                    _buildBottomNavItem(
-                      label: "Report",
-                      iconPath: 'assets/icon/report.png',  // Use the PNG file path
-                      isActive: _selectedIndex == 3,
-                      onPressed: () => _onNavItemTapped(3),
-                    ),
+                    if(apiService.lvl>2)
+                      _buildBottomNavItem(
+                        label: "Report",
+                        iconPath: 'assets/icon/report.png',  // Use the PNG file path
+                        isActive: _selectedIndex == 3,
+                        onPressed: () => _onNavItemTapped(3),
+                      ),
+                    if(apiService.lvl<=2)
+                      _buildBottomNavItem(
+                        label: "Profile",
+                        iconPath: 'assets/icon/report.png',  // Use the PNG file path
+                        isActive: _selectedIndex == 5,
+                        onPressed: () => _onNavItemTapped(3),
+                      ),
                     /*_buildBottomNavItem(
                   label: "API",
                   iconPath: 'assets/icon/report.png',  // Use the PNG file path
@@ -1460,18 +1491,65 @@ class InfluencerCard extends StatelessWidget {
                 child: Row(
                   children: [
                     // Profile Picture (placeholder)
-                    CircleAvatar(
-                      radius: MediaQuery.of(context).size.width * 0.08,
-                      backgroundColor: Colors.grey[200],
-                      backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null,
-                      //backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null, // Use NetworkImage here
-                      child: profileImage.isEmpty
-                          ? Icon(
-                        Icons.person,
-                        color: Colors.white,
-                        size: MediaQuery.of(context).size.width * 0.14,
-                      )
-                          : null,
+                    Container(
+                      width: (MediaQuery.of(context).size.width * 0.80) / 5,  // 90% of screen width divided by 3 images
+                      height: (MediaQuery.of(context).size.width * 0.80) / 5,  // Fixed height for each image
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(50),
+                        border: Border.all(color: Colors.grey.shade400),
+                        color: Colors.grey[200],
+                        boxShadow: [
+                          if(profileImage.isNotEmpty)
+                            BoxShadow(
+                              color: Color.fromRGBO(5, 50, 70, 1.0).withOpacity(0.5), // Grey shadow color with opacity
+                              spreadRadius: 1, // Spread radius of the shadow
+                              blurRadius: 7, // Blur radius of the shadow
+                              offset: Offset(0, 4), // Shadow position (x, y)
+                            ),
+                          if(profileImage.isEmpty)
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
+                              spreadRadius: 1, // Spread radius of the shadow
+                              blurRadius: 3, // Blur radius of the shadow
+                              offset: Offset(0, 4), // Shadow position (x, y)
+                            ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(50),
+                        child: (profileImage.isNotEmpty)
+                            ? Image.network(
+                          profileImage,  // Ensure the URL is encoded
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) {
+                              return child;  // Image loaded successfully
+                            } else {
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                      (loadingProgress.expectedTotalBytes ?? 1)
+                                      : null,
+                                ),
+                              );
+                            }
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.red,  // Placeholder color for invalid image URLs
+                              child: Center(
+                                child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                              ),
+                            );
+                          },
+                        )
+                            : Icon(
+                          Icons.person,
+                          color: Colors.white,
+                          size: MediaQuery.of(context).size.width * 0.14,
+                        ),
+                      ),
                     ),
                     SizedBox(width: 16),
                     // Influencer Details
@@ -1609,17 +1687,65 @@ class ApprovalCard extends StatelessWidget {
           Row(
             children: [
               // Profile Picture (placeholder)
-              CircleAvatar(
-                radius: MediaQuery.of(context).size.width * 0.08,
-                backgroundColor: Colors.grey[200],
-                backgroundImage: imageUrl.isNotEmpty ? MemoryImage(base64Decode(imageUrl.split(',')[1])) : null,
-                child: imageUrl.isEmpty
-                    ? Icon(
-                  Icons.person,
-                  color: Colors.white,
-                  size: MediaQuery.of(context).size.width * 0.14,
-                )
-                    : null,
+              Container(
+                width: (MediaQuery.of(context).size.width * 0.80) / 5,  // 90% of screen width divided by 3 images
+                height: (MediaQuery.of(context).size.width * 0.80) / 5,  // Fixed height for each image
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(50),
+                  border: Border.all(color: Colors.grey.shade400),
+                  color: Colors.grey[200],
+                  boxShadow: [
+                    if(imageUrl.isNotEmpty)
+                      BoxShadow(
+                        color: Color.fromRGBO(5, 50, 70, 1.0).withOpacity(0.5), // Grey shadow color with opacity
+                        spreadRadius: 1, // Spread radius of the shadow
+                        blurRadius: 7, // Blur radius of the shadow
+                        offset: Offset(0, 4), // Shadow position (x, y)
+                      ),
+                    if(imageUrl.isEmpty)
+                      BoxShadow(
+                        color: Color.fromRGBO(59, 171, 144, 1.0).withOpacity(0.5), // Grey shadow color with opacity
+                        spreadRadius: 1, // Spread radius of the shadow
+                        blurRadius: 7, // Blur radius of the shadow
+                        offset: Offset(0, 2), // Shadow position (x, y)
+                      ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(50),
+                  child: (imageUrl.isNotEmpty)
+                      ? Image.network(
+                    imageUrl,  // Ensure the URL is encoded
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) {
+                        return child;  // Image loaded successfully
+                      } else {
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                (loadingProgress.expectedTotalBytes ?? 1)
+                                : null,
+                          ),
+                        );
+                      }
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.red,  // Placeholder color for invalid image URLs
+                        child: Center(
+                          child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                        ),
+                      );
+                    },
+                  )
+                      : Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: MediaQuery.of(context).size.width * 0.14,
+                  ),
+                ),
               ),
               SizedBox(width: 16),
               // Influencer Details
@@ -1743,17 +1869,65 @@ class AssignCard extends StatelessWidget {
           Row(
             children: [
               // Profile Picture
-              CircleAvatar(
-                radius: MediaQuery.of(context).size.width * 0.08,
-                backgroundColor: Colors.grey[200],
-                backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null, // Use NetworkImage here
-                child: imageUrl.isEmpty
-                    ? Icon(
-                  Icons.person,
-                  color: Colors.white,
-                  size: MediaQuery.of(context).size.width * 0.14,
-                )
-                    : null,
+              Container(
+                width: (MediaQuery.of(context).size.width * 0.80) / 5,  // 90% of screen width divided by 3 images
+                height: (MediaQuery.of(context).size.width * 0.80) / 5,  // Fixed height for each image
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(50),
+                  border: Border.all(color: Colors.grey.shade400),
+                  color: Colors.grey[200],
+                  boxShadow: [
+                    if(imageUrl.isNotEmpty)
+                      BoxShadow(
+                        color: Color.fromRGBO(5, 50, 70, 1.0).withOpacity(0.5), // Grey shadow color with opacity
+                        spreadRadius: 1, // Spread radius of the shadow
+                        blurRadius: 7, // Blur radius of the shadow
+                        offset: Offset(0, 4), // Shadow position (x, y)
+                      ),
+                    if(imageUrl.isEmpty)
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
+                        spreadRadius: 1, // Spread radius of the shadow
+                        blurRadius: 3, // Blur radius of the shadow
+                        offset: Offset(0, 4), // Shadow position (x, y)
+                      ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(50),
+                  child: (imageUrl.isNotEmpty)
+                      ? Image.network(
+                    imageUrl,  // Ensure the URL is encoded
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) {
+                        return child;  // Image loaded successfully
+                      } else {
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                (loadingProgress.expectedTotalBytes ?? 1)
+                                : null,
+                          ),
+                        );
+                      }
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.red,  // Placeholder color for invalid image URLs
+                        child: Center(
+                          child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                        ),
+                      );
+                    },
+                  )
+                      : Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: MediaQuery.of(context).size.width * 0.14,
+                  ),
+                ),
               ),
               SizedBox(width: 16),
               // Influencer Details
@@ -1889,17 +2063,65 @@ class MemberCard extends StatelessWidget {
           child: Row(
             children: [
               // Profile Picture (placeholder)
-              CircleAvatar(
-                radius: MediaQuery.of(context).size.width * 0.08,
-                backgroundColor: Colors.grey[200],
-                backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null, // Use NetworkImage here
-                child: profileImage.isEmpty
-                    ? Icon(
-                  Icons.person,
-                  color: Colors.white,
-                  size: MediaQuery.of(context).size.width * 0.14,
-                )
-                    : null,
+              Container(
+                width: (MediaQuery.of(context).size.width * 0.80) / 5,  // 90% of screen width divided by 3 images
+                height: (MediaQuery.of(context).size.width * 0.80) / 5,  // Fixed height for each image
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(50),
+                  border: Border.all(color: Colors.grey.shade400),
+                  color: Colors.grey[200],
+                  boxShadow: [
+                    if(profileImage.isNotEmpty)
+                      BoxShadow(
+                        color: Color.fromRGBO(5, 50, 70, 1.0).withOpacity(0.5), // Grey shadow color with opacity
+                        spreadRadius: 1, // Spread radius of the shadow
+                        blurRadius: 7, // Blur radius of the shadow
+                        offset: Offset(0, 4), // Shadow position (x, y)
+                      ),
+                    if(profileImage.isEmpty)
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
+                        spreadRadius: 1, // Spread radius of the shadow
+                        blurRadius: 3, // Blur radius of the shadow
+                        offset: Offset(0, 4), // Shadow position (x, y)
+                      ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(50),
+                  child: (profileImage.isNotEmpty)
+                      ? Image.network(
+                    profileImage,  // Ensure the URL is encoded
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) {
+                        return child;  // Image loaded successfully
+                      } else {
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                (loadingProgress.expectedTotalBytes ?? 1)
+                                : null,
+                          ),
+                        );
+                      }
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.red,  // Placeholder color for invalid image URLs
+                        child: Center(
+                          child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                        ),
+                      );
+                    },
+                  )
+                      : Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: MediaQuery.of(context).size.width * 0.14,
+                  ),
+                ),
               ),
               SizedBox(width: 16),
               // Influencer Details
@@ -1976,6 +2198,7 @@ class SearchCard extends StatelessWidget {
               CircleAvatar(
                 radius: MediaQuery.of(context).size.width * 0.08,
                 backgroundColor: Colors.grey[200],
+                //backgroundImage: profileImage.isNotEmpty ? NetworkImage(profileImage) : null,
                 backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null, // Use NetworkImage here
                 child: profileImage.isEmpty
                     ? Icon(
@@ -2011,4 +2234,5 @@ class SearchCard extends StatelessWidget {
   }
 
 }
+
 

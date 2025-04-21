@@ -87,7 +87,7 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
 
   Future<void> fetchInfluencers() async {
     try {
-      resultInf = await apiService.myInfluencer(0, 100);
+      resultInf = await apiService.getInfluencer(0, 100,apiService.UserId);
       print(resultInf);
       setState(() {
         influencers = resultInf;

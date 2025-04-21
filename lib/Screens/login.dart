@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:samparka/Screens/home.dart'; // Assuming InfluencersPage is the next screen
+import 'package:samparka/Service/FCM.dart';
 import 'package:samparka/Service/api_service.dart';
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,6 +15,7 @@ class _LoginPageState extends State<LoginPage> {
   //PhoneEmail.initializeApp(clientId: '14349191896196900482');
   bool _otpSent = false;  // Track whether OTP has been sent
   bool _isLoading = false;  // Add a loading state to manage button disable/enable
+  bool _noOTP = false;  // Add a loading state to manage button disable/enable
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _otpController = TextEditingController();
 
@@ -51,9 +53,8 @@ class _LoginPageState extends State<LoginPage> {
         );
       },
     );
-
     // Dismiss the dialog after 2 seconds
-    Future.delayed(Duration(seconds: 3), () {
+    Future.delayed(Duration(seconds: 2), () {
       Navigator.of(context).pop();
     });
   }
@@ -126,7 +127,7 @@ class _LoginPageState extends State<LoginPage> {
                 ],
               ),
               const SizedBox(height: 8),
-              /********** TEMP *************/
+              /********** TEMP (Mail OTP) *************/
               /*TextField(
                 controller: _mailController,
                 focusNode: _mailFocusNode,  // Attach the focus node for phone field
@@ -157,8 +158,8 @@ class _LoginPageState extends State<LoginPage> {
               ),*/
               /*************************/
               const SizedBox(height: 16),
-              // Get OTP Button with Gradient
 
+              // Get OTP Button with Gradient
               if (!_otpSent) ...[
                 Container(
                   decoration: BoxDecoration(
@@ -177,23 +178,24 @@ class _LoginPageState extends State<LoginPage> {
                       });
 
                       // Call the apiService to get the OTP
-                      var response = await apiService.login(_phoneNumber, '');
-                      print('respomnse: ${response.statusCode}');
+                      var response = await apiService.getOTP(_phoneNumber, '');
+                      print('response: ${response}');
                       String message = '';
-                      if (response.statusCode == 200){
+                      if (response == 200){
                         setState(() {
                           _otpSent = true;
                           apiService.saveData();
                           apiService.loadData();
-                          message = response.data['message'] ?? 'Successful';
+                          show_Dialog(context, 'OTP sent successfully');
 
                           // Handle login logic or navigate to home page
-                          Navigator.push(
+                          //below code is not needed( used when otp was not available)
+                          /*Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => const InfluencersPage(),
                             ),
-                          );
+                          );*/
                         });
                       }else if(response == 400){
                         show_Dialog(context, 'failed to send otp');
@@ -212,8 +214,8 @@ class _LoginPageState extends State<LoginPage> {
                       shadowColor: Colors.transparent, // Remove shadow
                     ),
                     child: Text(
-                      'Login',
-                      //'Get OTP',
+                      //'Login',
+                      'Get OTP',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -276,6 +278,7 @@ class _LoginPageState extends State<LoginPage> {
                           apiService.loadData();
                           message = response.data['message'] ?? 'Successful';
                         });
+                        initFCM();
                         // Handle login logic or navigate to home page
                         Navigator.push(
                           context,

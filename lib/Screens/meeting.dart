@@ -28,7 +28,13 @@ class _MeetingPageState extends State<MeetingPage> {
   final apiService = ApiService();
 
   void _onNavItemTapped(int index) {
-    if (index == 4) {
+    if (index == 5) {
+      // Navigate to AddInfluencerPage when index 1 is tapped
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => SettingsPage()),
+      );
+    } else if (index == 4) {
       // Navigate to AddInfluencerPage when index 1 is tapped
       Navigator.push(
         context,
@@ -171,15 +177,26 @@ class _MeetingPageState extends State<MeetingPage> {
     double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
     double largeFontSize = normFontSize+4; //20
     double smallFontSize = normFontSize-2; //14
+    double squareSize = MediaQuery.of(context).size.width * 0.4;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.person, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
+        leading: apiService.lvl > 2
+            ? IconButton(
+              icon: const Icon(Icons.person, color: Color.fromRGBO(5, 50, 70, 1.0)),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SettingsPage()),
+                );
+              },
+            )
+            : IconButton(
+          icon: const Icon(Icons.home_outlined, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => SettingsPage()),
+              MaterialPageRoute(builder: (context) => InfluencersPage()),
             );
           },
         ),
@@ -200,6 +217,7 @@ class _MeetingPageState extends State<MeetingPage> {
         ],
       ),
       /**************menu***********************/
+      /*
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -216,17 +234,65 @@ class _MeetingPageState extends State<MeetingPage> {
                 ),
               ),
             ),
-            CircleAvatar(
-              radius: MediaQuery.of(context).size.width * 0.15,
-              backgroundColor: Colors.grey[200],
-              backgroundImage: apiService.profile_image.isNotEmpty ? MemoryImage(base64Decode(apiService.profile_image.split(',')[1])) : null, // Use NetworkImage here
-              child: apiService.profile_image.isEmpty
-                  ? Icon(
-                Icons.person,
-                color: Colors.white,
-                size: MediaQuery.of(context).size.width * 0.14,
-              )
-                  : null,
+            Container(
+              width: squareSize,
+              height: squareSize,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(80),
+                border: Border.all(color: Colors.grey.shade400),
+                color: Colors.grey[200],
+                boxShadow: [
+                  if(apiService.profileImage != '')
+                    BoxShadow(
+                      color: Color.fromRGBO(5, 50, 70, 1.0).withOpacity(0.5), // Grey shadow color with opacity
+                      spreadRadius: 1, // Spread radius of the shadow
+                      blurRadius: 7, // Blur radius of the shadow
+                      offset: Offset(0, 4), // Shadow position (x, y)
+                    ),
+                  if(apiService.profileImage == '')
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
+                      spreadRadius: 1, // Spread radius of the shadow
+                      blurRadius: 3, // Blur radius of the shadow
+                      offset: Offset(0, 4), // Shadow position (x, y)
+                    ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(80),
+                child: (apiService.profileImage != '')
+                    ? Image.network(
+                  apiService.profileImage,  // Ensure the URL is encoded
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) {
+                      return child;  // Image loaded successfully
+                    } else {
+                      return Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                              (loadingProgress.expectedTotalBytes ?? 1)
+                              : null,
+                        ),
+                      );
+                    }
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.white,  // Placeholder color for invalid image URLs
+                      child: Center(
+                        child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                      ),
+                    );
+                  },
+                )
+                    : Icon(
+                  Icons.person,
+                  color: Colors.white,
+                  size: MediaQuery.of(context).size.width * 0.25,
+                ),
+              ),
             ),
             ListTile(
               title: Text('Username: $username'),
@@ -400,6 +466,7 @@ class _MeetingPageState extends State<MeetingPage> {
           ],
         ),
       ),
+      */
       /***************************menu end*************************************/
       body: Stack(
         children: [
@@ -654,7 +721,7 @@ class _MeetingPageState extends State<MeetingPage> {
                                       onPressed: () async {
                                         Navigator.push(
                                           context,
-                                          MaterialPageRoute(builder: (context) => const ViewInfluencersPage()),
+                                          MaterialPageRoute(builder: (context) => ViewInfluencersPage(apiService.UserId)),
                                         );
                                       },
                                       child: Row(
@@ -757,7 +824,7 @@ class _MeetingPageState extends State<MeetingPage> {
                                       onPressed: () async {
                                         Navigator.push(
                                           context,
-                                          MaterialPageRoute(builder: (context) => const ViewInfluencersPage()),
+                                          MaterialPageRoute(builder: (context) => ViewInfluencersPage(apiService.UserId)),
                                         );
                                       },
                                       child: Row(
@@ -848,7 +915,7 @@ class _MeetingPageState extends State<MeetingPage> {
                                       onPressed: () async {
                                         Navigator.push(
                                           context,
-                                          MaterialPageRoute(builder: (context) => const ViewInfluencersPage()),
+                                          MaterialPageRoute(builder: (context) => ViewInfluencersPage(apiService.UserId)),
                                         );
                                        },
                                       child: Row(
@@ -918,12 +985,20 @@ class _MeetingPageState extends State<MeetingPage> {
                   isActive: _selectedIndex == 2,
                   onPressed: () => _onNavItemTapped(2),
                 ),
-                _buildBottomNavItem(
-                  label: "Report",
-                  iconPath: 'assets/icon/report.png',  // Use the PNG file path
-                  isActive: _selectedIndex == 3,
-                  onPressed: () => _onNavItemTapped(3),
-                ),
+                if(apiService.lvl>2)
+                  _buildBottomNavItem(
+                    label: "Report",
+                    iconPath: 'assets/icon/report.png',  // Use the PNG file path
+                    isActive: _selectedIndex == 3,
+                    onPressed: () => _onNavItemTapped(3),
+                  ),
+                if(apiService.lvl<=2)
+                  _buildBottomNavItem(
+                    label: "Profile",
+                    iconPath: 'assets/icon/report.png',  // Use the PNG file path
+                    isActive: _selectedIndex == 5,
+                    onPressed: () => _onNavItemTapped(5),
+                  ),
                 /*_buildBottomNavItem(
                   label: "API",
                   iconPath: 'assets/icon/report.png',  // Use the PNG file path

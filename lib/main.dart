@@ -1,20 +1,40 @@
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:no_screenshot/no_screenshot.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:samparka/Screens/home.dart'; //InfluencersPage()
 import 'package:samparka/Screens/login.dart'; //LoginPage()
 import 'package:samparka/Screens/error_page.dart'; //ErrorPage()
 import 'package:samparka/Screens/add_influencer.dart'; //AddInfluencerPage()
 import 'package:samparka/Service/api_service.dart';
 import 'Screens/API_TEST.dart';
-import 'Screens/temp.dart'; //TaskListScreen()
+import 'Screens/temp.dart';
+import 'Service/PushNotificationService.dart'; //TaskListScreen()
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure bindings are initialized
+  //await Firebase.initializeApp();
+  await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  setupFCMListeners();
+  NoScreenshot.instance.screenshotOff();
+  //screenshotOn()
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
   MyApp({super.key});
   final ApiService apiService = ApiService(); // Initializing ApiService here
+  final FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+  StreamSubscription<ConnectivityResult>? _subscription;
+  bool _isOffline = false;
+
 
   @override
   Widget build(BuildContext context) {
@@ -37,14 +57,36 @@ class MyApp extends StatelessWidget {
     );
   }
 
+  Future<bool> checkVersion() {
+    return apiService.checkVersion();
+  }
+
   // Helper function to build the waiting state screen
   Widget _buildWaitingState() {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Samparka',
-      home: Center(child: CircularProgressIndicator(color: Colors.green, backgroundColor: Colors.white,)),
+      home: Scaffold(
+        backgroundColor: Colors.white, // Set the background color to white
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/logo/logo.png',
+                height: 150,
+              ),
+              const CupertinoActivityIndicator(
+                color: Colors.green,
+                radius: 20, // Customize the radius of the activity indicator
+              )
+            ],
+          )
+        ),
+      ),
     );
   }
+
 
   // Helper function to build the error screen
   Widget _buildErrorState() {
@@ -60,12 +102,33 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Samparka',
-      home: InfluencersPage(),
-      //home: apiService.isAuthenticated ? const InfluencersPage() : const LoginPage(),
+      //home: InfluencersPage(),
+      home: apiService.isAuthenticated ? const InfluencersPage() : const LoginPage(),
     );
   }
 
   Future<void> _wait(ApiService apiService) async {
-    await Future.delayed(const Duration(milliseconds: 50));
+    //await requestNotificationPermission();
+    await Future.delayed(const Duration(milliseconds: 0));
   }
+
+
+  Future<void> requestNotificationPermission() async {
+    NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      print("Notifications permission granted.");
+    } else {
+      print("Notifications permission denied.");
+    }
+  }
+}
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print('🔔 Background message: ${message.messageId}');
 }

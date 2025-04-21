@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:samparka/Screens/home.dart';
+import 'package:samparka/Screens/upload_gv_excel.dart';
 
 import '../Service/api_service.dart';
 
@@ -54,7 +55,38 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
 
   late List<dynamic> result;
   List<dynamic> shreni = [];
+  List<dynamic> hashtags = [];
+  List<dynamic> selectedHashtags = [];
+  Set<int> selectedHashtagsIDs = {};
   String? selectedShreniId;
+
+  void toggleHashtagSelection(int id) {
+    setState(() {
+      if (selectedHashtagsIDs.contains(id)) {
+        selectedHashtagsIDs.remove(id);  // Deselect
+      } else {
+        selectedHashtagsIDs.add(id);  // Select
+      }
+      getSelectedHashtags();
+      print("selected hashtag IDs: $selectedHashtagsIDs , selected hashtags: $selectedHashtags");
+    });
+  }
+
+  // Function to get the list of selected hashtags (with names)
+  void getSelectedHashtags() {
+    // Store the names of selected hashtags only
+    selectedHashtags = hashtags
+        .where((hashtag) {
+      return selectedHashtagsIDs.contains(hashtag['id']);
+    })
+        .map((hashtag) => hashtag['name'])
+        .toList();
+
+    // Optionally, print or store the selected hashtag names
+    //print("Selected Hashtags Names: $selectedHashtags");
+  }
+
+
 
   Future<void> fetchShreni() async {
     try {
@@ -92,6 +124,64 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
     }
   }
 
+  Future<void> fetchHashtags() async {
+    try {
+      // Call the apiService.homePage() and store the result
+      result = await apiService.getHashtags();
+      setState(() {
+        hashtags = result;
+        print('hastags\'s $result');
+      });
+    } catch (e) {
+      print("Error fetching influencers: $e");
+    }
+  }
+
+  void addHashtagDialog() {
+    // Text editing controller to take input from user
+    TextEditingController newHashtagController = TextEditingController();
+
+    // Show dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Add New Hashtag'),
+          content: TextField(
+            controller: newHashtagController,
+            decoration: InputDecoration(hintText: 'Enter new hashtag name'),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                String newHashtagName = newHashtagController.text.trim();
+                if (newHashtagName.isNotEmpty) {
+                  // Create a new hashtag map with an incremented ID
+                  setState(() {
+                    hashtags.add({
+                      'id': hashtags.length + 1, // Simple way to increment ID
+                      'name': newHashtagName,
+                    });
+                    print('updated hastags: $hashtags');
+                  });
+                }
+                Navigator.pop(context); // Close the dialog
+              },
+              child: Text('Add'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close the dialog without adding
+              },
+              child: Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
   void _onNavItemTapped(int index) {
     if (index == 0) {
       // Navigate to InfluencersPage when the 0th index is tapped
@@ -114,6 +204,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
     if(apiService.lvl>2){
       fetchShreni();
     }
+    fetchHashtags();
     // Initialize formData with default values if necessary
     Map<String, dynamic> formData = {
       "action": "CreateGanyaVyakti",
@@ -149,7 +240,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
         emailController.text,//3
         designationController.text,//4
         descriptionController.text,//5
-        hashtagsController.text,//6
+        selectedHashtags,//6
         organizationController.text,//7
         impactOnSocietyController.text,//8
         interactionLevelController.text,//9
@@ -192,22 +283,92 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Title Section
-            const Text(
-              "Add New",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: Color.fromRGBO(5, 50, 70, 1.0),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween, // Distribute space between the columns
+              children: [
+                // First Column: "Add New" and "Influencer"
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start, // Align the text to the start
+                  children: [
+                    const Text(
+                      "Add New",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Color.fromRGBO(5, 50, 70, 1.0),
+                      ),
+                    ),
+                    const Text(
+                      "Influencer",
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromRGBO(5, 50, 70, 1.0),
+                      ),
+                    ),
+                  ],
+                ),
+                Expanded(child: SizedBox()),
+                // Second Column: Button with Upload and Rotated Arrow Icon (pushed to the right)
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    gradient: const LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        Color.fromRGBO(16, 115, 65, 1.0),
+                        Color.fromRGBO(60, 170, 145, 1.0)
+                      ],
+                    ),
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerRight,  // Align the button to the right
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => UploadGVExcel()),
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        //backgroundColor: Colors.blue, // Background color for the button
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12), // Rounded corners for the button
+                        ),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.all(6),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center, // Center the row content inside the button
+                          children: [
+                            const Text(
+                              'Upload',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: 4),  // Add space between the text and the image
+                            Transform.rotate(
+                              angle: 4.7124,  // Rotate the arrow 90 degrees
+                              child: Image.asset(
+                                'assets/icon/arrow.png',
+                                color: Colors.white,
+                                width: 15,  // Adjust the size of the image
+                                height: 15, // Adjust the size of the image
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const Text(
-              "Influencer",
-              style: TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
-                color: Color.fromRGBO(5, 50, 70, 1.0),
-              ),
-            ),
+
             //influencer image
             Center(
               child: Stack(
@@ -317,12 +478,33 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
             const SizedBox(height: 16),
             // Hashtag Section
             SingleChildScrollView(
-              scrollDirection: Axis.horizontal,  // Make the Row scrollable horizontally
+              scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
+                  // Wrap the tags in a Row to keep them in a single horizontal line
+                  if (hashtags.isNotEmpty)
+                    Row(
+                      children: List.generate(hashtags.length, (index) {
+                        bool isSelected = selectedHashtagsIDs.contains(hashtags[index]['id']);
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: GestureDetector(
+                            onTap: () {
+                              toggleHashtagSelection(hashtags[index]['id']);  // Toggle selection on tap
+                            },
+                            child: Chip(
+                              label: Text(hashtags[index]['name']),
+                              backgroundColor: isSelected ? Colors.green : Colors.blue[50],
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () {
-                      // Add hashtag functionality
+                      // Open the dialog to add a new hashtag
+                      addHashtagDialog();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
@@ -334,19 +516,6 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                       "+ Add Hashtags",
                       style: TextStyle(color: Colors.white),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Wrap the tags in a Row instead of Wrap to keep them in a single horizontal line
-                  Row(
-                    children: List.generate(5, (index) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: Chip(
-                          label: Text("#Hash${index + 1}"),
-                          backgroundColor: Colors.blue[50],
-                        ),
-                      );
-                    }),
                   ),
                 ],
               ),

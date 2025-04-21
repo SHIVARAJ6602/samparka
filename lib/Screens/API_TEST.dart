@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:samparka/Screens/influencer_profile.dart';
 import 'package:samparka/Screens/settings.dart';
 import 'package:samparka/Screens/submit_report.dart';
+import 'package:samparka/Screens/update_user_profile.dart';
+import 'package:samparka/Screens/upload_gv_excel.dart';
+import 'package:samparka/Screens/upload_kr_excel.dart';
 import 'package:samparka/Service/api_service.dart';
 import 'Temp2.dart';
 import 'add_inf.dart';
@@ -69,12 +72,9 @@ class _ApiScreenState extends State<ApiScreen> {
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    final title = _taskController.text.trim();
-                    if (title.isNotEmpty) {
-                      await _addTask(title);
-                    }
+                    apiService.getHashtags();
                   },
-                  child: const Text('Add Task'),
+                  child: const Text('get Hashtags'),
                 ),
               ],
             ),
@@ -142,9 +142,12 @@ class _ApiScreenState extends State<ApiScreen> {
                     children: [
                       TextButton(
                         onPressed: () {
-                          apiService.getEventImages('BT00000009', '1');
-                          },
-                          child: Text('getMeetImage')
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => UploadKRExcel()),
+                          );
+                        },
+                          child: Text('add KR upload')
                       )
                     ],
                   ),
@@ -154,14 +157,12 @@ class _ApiScreenState extends State<ApiScreen> {
                     children: [
                       TextButton(
                           onPressed: () {
-                            /*
                             Navigator.push(
                               context,
-                              //MaterialPageRoute(builder: (context) => SubmitReportPage("BT0000001")),
+                              MaterialPageRoute(builder: (context) => UploadGVExcel()),
                             );
-                            */
                           },
-                          child: Text('Submit Report Page')
+                          child: Text('add GV upload')
                       )
                     ],
                   ),
@@ -171,9 +172,12 @@ class _ApiScreenState extends State<ApiScreen> {
                     children: [
                       TextButton(
                           onPressed: () {
-                            apiService.myTeam(0,100);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => UpdateUserPage(apiService.UserId)),
+                            );
                           },
-                          child: Text('My Team')
+                          child: Text('Update User')
                       )
                     ],
                   ),
@@ -183,7 +187,7 @@ class _ApiScreenState extends State<ApiScreen> {
                     children: [
                       TextButton(
                           onPressed: () {
-                            apiService.myInfluencer(0,3);
+                            apiService.getInfluencer(0,3,"KR00000001");
                           },
                           child: Text('My Influencer')
                       )
@@ -416,13 +420,13 @@ class _ApiScreenState extends State<ApiScreen> {
               children: [
                 TextButton(
                     onPressed: () {
-                      apiService.addGV();
+                      //apiService.addGV();
                     },
                     child: Text('add GV')
                 ),
                 TextButton(
                     onPressed: () {
-                      apiService.addUsers();
+                      //apiService.addUsers();
                     },
                     child: Text('add user')
                 ),

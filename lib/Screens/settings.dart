@@ -61,6 +61,7 @@ class _SettingsPageState extends State<SettingsPage> {
     double normFontSize = MediaQuery.of(context).size.width * 0.041;
     double largeFontSize = normFontSize + 4;
     double smallFontSize = normFontSize - 2;
+    double squareSize = MediaQuery.of(context).size.width * 0.4;
 
     return Scaffold(
       appBar: AppBar(
@@ -71,15 +72,67 @@ class _SettingsPageState extends State<SettingsPage> {
         padding: EdgeInsets.all(20),
         children: <Widget>[
           // Profile Section
-          CircleAvatar(
-            radius: MediaQuery.of(context).size.width * 0.15,
-            backgroundColor: Colors.grey[400],
-            backgroundImage: apiService.profile_image.isNotEmpty
-                ? MemoryImage(base64Decode(apiService.profile_image.split(',')[1]))
-                : null,
-            child: apiService.profile_image.isEmpty
-                ? Icon(Icons.person, color: Colors.white, size: MediaQuery.of(context).size.width * 0.18)
-                : null,
+          Center(
+            child: Container(
+              width: squareSize,
+              height: squareSize,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(80),
+                border: Border.all(color: Colors.grey.shade400),
+                color: Colors.grey[200],
+                boxShadow: [
+                  if(apiService.profileImage != '')
+                    BoxShadow(
+                      color: Color.fromRGBO(5, 50, 70, 1.0).withOpacity(0.5), // Grey shadow color with opacity
+                      spreadRadius: 1, // Spread radius of the shadow
+                      blurRadius: 7, // Blur radius of the shadow
+                      offset: Offset(0, 4), // Shadow position (x, y)
+                    ),
+                  if(apiService.profileImage == '')
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
+                      spreadRadius: 1, // Spread radius of the shadow
+                      blurRadius: 3, // Blur radius of the shadow
+                      offset: Offset(0, 4), // Shadow position (x, y)
+                    ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(80),
+                child: (apiService.profileImage != '')
+                    ? Image.network(
+                  apiService.profileImage,  // Ensure the URL is encoded
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) {
+                      return child;  // Image loaded successfully
+                    } else {
+                      return Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                              (loadingProgress.expectedTotalBytes ?? 1)
+                              : null,
+                        ),
+                      );
+                    }
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.white,  // Placeholder color for invalid image URLs
+                      child: Center(
+                        child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                      ),
+                    );
+                  },
+                )
+                    : Icon(
+                  Icons.person,
+                  color: Colors.white,
+                  size: MediaQuery.of(context).size.width * 0.25,
+                ),
+              ),
+            ),
           ),
           SizedBox(height: 30),
           // Username Section

@@ -46,3 +46,8 @@ android {
 flutter {
     source = "../.."
 }
+
+/******************v firebase**************/
+
+apply plugin: 'com.google.gms.google-services'
+

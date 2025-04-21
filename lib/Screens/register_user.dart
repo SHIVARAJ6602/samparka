@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:samparka/Service/api_service.dart';
 
 class RegisterUserPage extends StatefulWidget {
+  const RegisterUserPage({super.key});
 
   @override
   _RegisterUserState createState() => _RegisterUserState();

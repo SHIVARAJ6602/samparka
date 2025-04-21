@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:samparka/Screens/schedule_interaction.dart';
 import 'package:samparka/Screens/view_influencers.dart';
 import 'package:samparka/Screens/view_interaction.dart';
@@ -23,6 +24,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
   final apiService = ApiService();
 
   List<dynamic> meetings = [{"id":"MT00001","title":"meet1","description":"adadad"},{"id":"MT00002","title":"meet2","description":"adadad"}];
+  late List<dynamic> resultKR;
+  late List<dynamic> resultGV;
   late List<dynamic> result;
   List<dynamic> tasks = [];
   List<dynamic> interactions = [];
@@ -43,10 +46,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
   Future<void> fetchInfluencers() async {
     try {
       // Call the apiService.homePage() and store the result
-      result = await apiService.myInfluencer(0, 100);
+      resultGV = await apiService.getInfluencer(0, 100,widget.id);
       print('Influencers User Screen $result');
       setState(() {
-        result.forEach((inf) {
+        resultGV.forEach((inf) {
           if (inf['soochi'] == 'AkhilaBharthiya') {
             inf['soochi'] = 'AB';
           } else if (inf['soochi'] == 'PranthyaSampark') {
@@ -65,7 +68,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
           }
         });
         // Update the influencers list with the fetched data
-        influencers = result;
+        influencers = resultGV;
       });
     } catch (e) {
       // Handle any errors here
@@ -94,17 +97,18 @@ class _UserProfilePageState extends State<UserProfilePage> {
   Future<bool> getKaryakartha() async{
     try {
       // Call the apiService.homePage() and store the result
-      result = await apiService.getKaryakartha(KR_id);
+      resultKR = await apiService.getKaryakartha(KR_id);
       setState(() {
         // Update the influencers list with the fetched data
         //meetings = result;
-        print(result[0]['first_name']);
-        print(result);
-        name = '${result[0]['first_name']} ${result[0]['last_name']}';
-        designation = result[0]['designation'];
-        description = result[0]['description'];
-        profileImage = result[0]['profile_image'];
-        print('Image: ${result[0]['profile_image']}');
+        print(resultKR[0]['first_name']);
+        print("getKR KR data: $resultKR");
+        print(resultKR[0]['profile_image']);
+        name = '${resultKR[0]['first_name']} ${resultKR[0]['last_name']}';
+        designation = resultKR[0]['designation'];
+        description = resultKR[0]['description']??'';
+        profileImage = resultKR[0]['profile_image'];
+        print('Image: ${resultKR[0]['profile_image']}');
         setState(() {});
 
       });
@@ -135,6 +139,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     String GV_id = widget.id;
     print(GV_id);
     print(widget.id);
+    print("profile image: $profileImage");
     double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
     double largeFontSize = normFontSize+4; //20
     double smallFontSize = normFontSize-2;
@@ -169,17 +174,54 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         children: [
                           Column(
                             children: [
-                              CircleAvatar(
-                                radius: MediaQuery.of(context).size.width * 0.08,
-                                backgroundColor: Colors.grey[200],
-                                backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null,
-                                child: profileImage.isEmpty
-                                    ? Icon(
-                                  Icons.person,
-                                  color: Colors.white,
-                                  size: MediaQuery.of(context).size.width * 0.14,
-                                )
-                                    : null,
+                              Container(
+                                width: (MediaQuery.of(context).size.width * 0.80) / 3,  // 90% of screen width divided by 3 images
+                                height: (MediaQuery.of(context).size.width * 0.80) / 3,  // Fixed height for each image
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(50),
+                                  border: Border.all(color: Colors.grey.shade400),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
+                                      spreadRadius: 2, // Spread radius of the shadow
+                                      blurRadius: 7, // Blur radius of the shadow
+                                      offset: Offset(0, 4), // Shadow position (x, y)
+                                    ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(50),
+                                  child: (profileImage.isNotEmpty)
+                                      ? Image.network(
+                                    profileImage,  // Ensure the URL is encoded
+                                    fit: BoxFit.cover,
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) {
+                                        return child;  // Image loaded successfully
+                                      } else {
+                                        return Center(
+                                          child: CircularProgressIndicator(
+                                            value: loadingProgress.expectedTotalBytes != null
+                                                ? loadingProgress.cumulativeBytesLoaded /
+                                                (loadingProgress.expectedTotalBytes ?? 1)
+                                                : null,
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: Colors.red,  // Placeholder color for invalid image URLs
+                                        child: Center(
+                                          child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                                        ),
+                                      );
+                                    },
+                                  )
+                                      : Container(
+                                    color: Colors.grey[200],  // Default background color if no image
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -255,8 +297,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
                             // If the list is empty, show a message
                             if (loading)
                               Center(
-                                child: CircularProgressIndicator(
-                                  backgroundColor: Colors.blue,
+                                child: CupertinoActivityIndicator(
+                                  color: Colors.white,
+                                  radius: 20, // Customize the radius of the activity indicator
                                 ),
                               )
                             else
@@ -308,7 +351,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                                 onPressed: () async {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => const ViewInfluencersPage()),
+                                    MaterialPageRoute(builder: (context) => ViewInfluencersPage(KR_id)),
                                   );
                                 },
                                 child: Row(
@@ -477,8 +520,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      CircularProgressIndicator(
+                      CupertinoActivityIndicator(
                         color: Colors.white,
+                        radius: 20, // Customize the radius of the activity indicator
                       ),
                       const SizedBox(height: 10), // Space between the indicator and text
                       const Text(

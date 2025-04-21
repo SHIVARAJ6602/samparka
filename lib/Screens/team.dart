@@ -30,6 +30,8 @@ class _TeamPageState extends State<TeamPage> {
   // This keeps track of the selected index for the bottom navigation
   int _selectedIndex = 1;
   final apiService = ApiService();
+  final FocusNode _focusNode = FocusNode(); // search focus node
+  final TextEditingController _searchController = TextEditingController();
 
   List<dynamic> members = [];
   List<dynamic> membersSearched = [];
@@ -37,11 +39,17 @@ class _TeamPageState extends State<TeamPage> {
   List<dynamic> lead = [];
   late List<dynamic> result = [];
   bool loading = true;
-  bool isSearching = true;
+  bool isSearching = false;
 
   // Method to handle bottom navigation item tap
   void _onNavItemTapped(int index) {
-    if (index == 4) {
+    if (index == 5) {
+      // Navigate to AddInfluencerPage when index 1 is tapped
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => SettingsPage()),
+      );
+    } else if (index == 4) {
       // Navigate to AddInfluencerPage when index 1 is tapped
       Navigator.push(
         context,
@@ -121,7 +129,7 @@ class _TeamPageState extends State<TeamPage> {
   Future<void> search(String str) async {
     try {
       // Call the API service with the search query
-      var mem = await apiService.searchGV(str);
+      var mem = await apiService.searchKR(str);
       if (mem is List) {  // Check if inf is a List (data returned)
         setState(() {
           print("searched before assign:");
@@ -165,12 +173,22 @@ class _TeamPageState extends State<TeamPage> {
         child: Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
-            leading: IconButton(
-              icon: const Icon(Icons.person, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
+            leading: apiService.lvl > 2
+                ? IconButton(
+              icon: const Icon(Icons.person, color: Color.fromRGBO(5, 50, 70, 1.0)),
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => SettingsPage()),
+                );
+              },
+            )
+                : IconButton(
+              icon: const Icon(Icons.home_outlined, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => InfluencersPage()),
                 );
               },
             ),
@@ -204,47 +222,115 @@ class _TeamPageState extends State<TeamPage> {
                         children: [
                           //const SizedBox(height: 50),
                           // Search Bar
-                          TextField(
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: const Color.fromRGBO(217, 217, 217, 1.0),
-                              hintText: 'Search Member',
-                              hintStyle: TextStyle(
-                                fontSize: normFontSize,
-                                fontWeight: FontWeight.normal,
-                                color: const Color.fromRGBO(128, 128, 128, 1.0),
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(30),
-                                borderSide: BorderSide.none,
-                              ),
-                              suffixIcon: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Color.fromRGBO(60, 245, 200, 1.0),
-                                        Color.fromRGBO(2, 40, 60, 1),
-                                      ],
+                          if(isSearching)
+                          Column(
+                            children: [
+                              TextField(
+                                controller: _searchController,
+                                focusNode: _focusNode,
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: const Color.fromRGBO(217, 217, 217, 1.0),
+                                  hintText: 'Search Member',
+                                  hintStyle: TextStyle(
+                                    fontSize: MediaQuery.of(context).size.width * 0.041,
+                                    fontWeight: FontWeight.normal,
+                                    color: Color.fromRGBO(128, 128, 128, 1.0),
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  suffixIcon: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Color.fromRGBO(60, 245, 200, 1.0),
+                                            Color.fromRGBO(2, 40, 60, 1),
+                                          ],
+                                        ),
+                                      ),
+                                      child: const Icon(Icons.search, color: Colors.white),
                                     ),
                                   ),
-                                  child: const Icon(Icons.search, color: Colors.white),
+                                ),
+                                onChanged: (text) {
+                                  if (text.isNotEmpty) {
+                                    search(text); // Call the search function whenever text changes
+                                  }
+                                },
+                                onTap: () {
+                                  isSearching = true;
+
+                                },
+                              ),
+                              const SizedBox(height: 22),
+                            ],
+                          ),
+                          //search button
+                          if(!isSearching)
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  isSearching = true;
+                                  _focusNode.requestFocus();
+                                });
+                              },
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero, // Remove padding to make the button's content tight
+                                backgroundColor: const Color.fromRGBO(217, 217, 217, 1.0), // Same as TextField background color
+                                minimumSize: Size(double.infinity, 48), // Ensure the button is appropriately sized
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30), // Same border radius as the TextField
                                 ),
                               ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '     Search Member', // The text inside the button, just like the hintText in TextField
+                                      style: TextStyle(
+                                        fontSize: MediaQuery.of(context).size.width * 0.041,
+                                        fontWeight: FontWeight.normal,
+                                        color: Color.fromRGBO(128, 128, 128, 1.0),
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Color.fromRGBO(60, 245, 200, 1.0),
+                                            Color.fromRGBO(2, 40, 60, 1),
+                                          ],
+                                        ),
+                                      ),
+                                      child: const Icon(Icons.search, color: Colors.white),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 22),
+                          //My Supervisor / Pramukh
                           if (!isSearching)
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                //My Supervisor
+                                //My Supervisor / Pramukh
                                 Text(
                                   'My Pramukh',
                                   style: TextStyle(
@@ -254,6 +340,7 @@ class _TeamPageState extends State<TeamPage> {
                                   ),
                                 ),
                                 const SizedBox(height: 1),
+                                //My Supervisor / Pramukh
                                 Container(
                                   decoration: BoxDecoration(
                                     //borderRadius: BorderRadius.circular(30),
@@ -278,7 +365,7 @@ class _TeamPageState extends State<TeamPage> {
                                           ),
                                           child: Center(
                                             child: Text(
-                                              'No Supervisor Assigned',
+                                              'No Pramukh Assigned',
                                               style: TextStyle(
                                                 fontSize: largeFontSize,
                                                 fontWeight: FontWeight.bold,
@@ -298,21 +385,65 @@ class _TeamPageState extends State<TeamPage> {
                                                 Row(
                                                   children: [
                                                     // Profile Picture (placeholder)
-                                                    CircleAvatar(
-                                                      radius: MediaQuery.of(context).size.width * 0.08,
-                                                      backgroundColor: Colors.grey[200],
-                                                      // Check if profile_image exists and is not empty before passing it to NetworkImage
-                                                      backgroundImage: supervisor[0]['profile_image'] != null && supervisor[0]['profile_image']!.isNotEmpty
-                                                          ? MemoryImage(base64Decode(supervisor[0]['profile_image'].split(',')[1]))
-                                                      //? NetworkImage(apiService.baseUrl.substring(0, 40) + supervisor[0]['profile_image'])
-                                                          : null,
-                                                      child: supervisor[0]['profile_image'] == null || supervisor[0]['profile_image']!.isEmpty
-                                                          ? Icon(
-                                                        Icons.person,
-                                                        color: Colors.white,
-                                                        size: MediaQuery.of(context).size.width * 0.14,
-                                                      )
-                                                          : null,
+                                                    Container(
+                                                      width: (MediaQuery.of(context).size.width * 0.80) / 5,  // 90% of screen width divided by 3 images
+                                                      height: (MediaQuery.of(context).size.width * 0.80) / 5,  // Fixed height for each image
+                                                      decoration: BoxDecoration(
+                                                        borderRadius: BorderRadius.circular(50),
+                                                        border: Border.all(color: Colors.grey.shade400),
+                                                        color: Colors.grey[200],
+                                                        boxShadow: [
+                                                          if (supervisor.isNotEmpty && (supervisor[0]['profile_image'] ?? '').isNotEmpty)
+                                                            BoxShadow(
+                                                              color: Colors.white10.withOpacity(0.5), // Grey shadow color with opacity
+                                                              spreadRadius: 1, // Spread radius of the shadow
+                                                              blurRadius: 6, // Blur radius of the shadow
+                                                              offset: Offset(0, 4), // Shadow position (x, y)
+                                                            ),
+                                                          if (supervisor.isNotEmpty && (supervisor[0]['profile_image'] ?? '').isEmpty)
+                                                            BoxShadow(
+                                                              color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
+                                                              spreadRadius: 1, // Spread radius of the shadow
+                                                              blurRadius: 3, // Blur radius of the shadow
+                                                              offset: Offset(0, 4), // Shadow position (x, y)
+                                                            ),
+                                                        ],
+                                                      ),
+                                                      child: ClipRRect(
+                                                        borderRadius: BorderRadius.circular(50),
+                                                        child: (supervisor.isNotEmpty && (supervisor[0]['profile_image'] ?? '').isNotEmpty)
+                                                            ? Image.network(
+                                                          supervisor[0]['profile_image'],  // Ensure the URL is encoded
+                                                          fit: BoxFit.cover,
+                                                          loadingBuilder: (context, child, loadingProgress) {
+                                                            if (loadingProgress == null) {
+                                                              return child;  // Image loaded successfully
+                                                            } else {
+                                                              return Center(
+                                                                child: CircularProgressIndicator(
+                                                                  value: loadingProgress.expectedTotalBytes != null
+                                                                      ? loadingProgress.cumulativeBytesLoaded /
+                                                                      (loadingProgress.expectedTotalBytes ?? 1)
+                                                                      : null,
+                                                                ),
+                                                              );
+                                                            }
+                                                          },
+                                                          errorBuilder: (context, error, stackTrace) {
+                                                            return Container(
+                                                              color: Colors.red,  // Placeholder color for invalid image URLs
+                                                              child: Center(
+                                                                child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                                                              ),
+                                                            );
+                                                          },
+                                                        )
+                                                            : Icon(
+                                                          Icons.person,
+                                                          color: Colors.white,
+                                                          size: MediaQuery.of(context).size.width * 0.14,
+                                                        ),
+                                                      ),
                                                     ),
                                                     SizedBox(width: 16),
                                                     // Influencer Details
@@ -356,123 +487,6 @@ class _TeamPageState extends State<TeamPage> {
                                     ],
                                   ),
                                 ),
-                                //My Lead
-                                if(apiService.lvl<2)
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'My Lead',
-                                        style: TextStyle(
-                                          fontSize: largeFontSize*1.5,
-                                          fontWeight: FontWeight.bold,
-                                          color: const Color.fromRGBO(5, 50, 70, 1.0),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 1),
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          //borderRadius: BorderRadius.circular(30),
-                                          borderRadius: lead.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
-                                          gradient: const LinearGradient(
-                                            begin: Alignment.topCenter,
-                                            end: Alignment.bottomCenter,
-                                            colors: [
-                                              Color.fromRGBO(60, 170, 145, 1.0),
-                                              Color.fromRGBO(2, 40, 60, 1),
-                                            ],
-                                          ),
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            // If the list is empty, show a message
-                                            if (lead.isEmpty)
-                                              Container(
-                                                padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(4),
-                                                ),
-                                                child: Center(
-                                                  child: Text(
-                                                    'No lead Assigned',
-                                                    style: TextStyle(
-                                                      fontSize: largeFontSize,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: Colors.white,
-                                                    ),
-                                                  ),
-                                                ),
-                                              )
-                                            // If the list is not empty, build a ListView of InfluencerCards
-                                            else
-                                              Container(
-                                                padding: const EdgeInsets.all(16),
-                                                child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      // First Row: Profile Picture and Influencer Details
-                                                      Row(
-                                                        children: [
-                                                          CircleAvatar(
-                                                            radius: MediaQuery.of(context).size.width * 0.08,
-                                                            backgroundColor: Colors.grey[200],
-                                                            // Check if profile_image exists and is not empty before passing it to NetworkImage
-                                                            backgroundImage: lead[0]['profile_image'] != null && lead[0]['profile_image']!.isNotEmpty
-                                                                ? MemoryImage(base64Decode(lead[0]['profile_image'].split(',')[1]))
-                                                            //? NetworkImage(apiService.baseUrl.substring(0, 40) + lead[0]['profile_image'])
-                                                                : null,
-                                                            child: lead[0]['profile_image'] == null || lead[0]['profile_image']!.isEmpty
-                                                                ? Icon(
-                                                              Icons.person,
-                                                              color: Colors.white,
-                                                              size: MediaQuery.of(context).size.width * 0.14,
-                                                            )
-                                                                : null,
-                                                          ),
-                                                          SizedBox(width: 16),
-                                                          // Influencer Details
-                                                          Expanded(
-                                                            child: Column(
-                                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                                              children: [
-                                                                Text(
-                                                                  lead[0]['first_name'], // Dynamic name
-                                                                  style: TextStyle(
-                                                                    fontSize: largeFontSize+6,
-                                                                    fontWeight: FontWeight.bold,
-                                                                    color: Colors.white,
-                                                                  ),
-                                                                ),
-                                                                Text(
-                                                                  lead[0]['last_name'], // Dynamic designation
-                                                                  style: TextStyle(
-                                                                    fontSize: smallFontSize,
-                                                                    color: Colors.white,
-                                                                  ),
-                                                                ),
-                                                                SizedBox(height: 1),
-                                                                Text(
-                                                                  lead[0]['designation'], // Dynamic description
-                                                                  style: TextStyle(
-                                                                    fontSize: smallFontSize-2,
-                                                                    color: Colors.white,
-                                                                  ),
-                                                                  maxLines: 2,
-                                                                  overflow: TextOverflow.ellipsis,
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ]
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
                                 //My team
                                 if(apiService.lvl > 1)
                                   Column(
@@ -544,7 +558,7 @@ class _TeamPageState extends State<TeamPage> {
                                               ),
 
                                             if (members.isNotEmpty)
-                                            // View All Influencers Button
+                                              // View All Influencers Button
                                               TextButton(
                                                 onPressed: () async {
                                                   Navigator.push(
@@ -622,11 +636,64 @@ class _TeamPageState extends State<TeamPage> {
                                   ),
                                 //const SizedBox(height: 16),
                               ],
+                            ),
+                          // Search page content
+                          if(isSearching)
+                            Container(
+                              decoration: BoxDecoration(
+                                //borderRadius: BorderRadius.circular(30),
+                                borderRadius: members.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Color.fromRGBO(60, 170, 145, 1.0),
+                                    Color.fromRGBO(2, 40, 60, 1),
+                                  ],
+                                ),
+                              ),
+                              child: Center(
+                                  child: Column(
+                                    children: [
+                                      if (membersSearched.isEmpty)
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
+                                          child: Text(
+                                            'No Influencer Found',
+                                            style: TextStyle(
+                                              fontSize: MediaQuery.of(context).size.width * 0.041 + 2,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        )
+                                      else
+                                        Column(
+                                          children: List.generate(
+                                            (membersSearched.length < 4) ? membersSearched.length : 3, // Display either all members or just 3
+                                                (index) {
+                                              final member = membersSearched[index]; // Access the member data
+                                              print("before sending to member: ${member['first_name']} TEam page");
+                                              return Padding(
+                                                padding: const EdgeInsets.only(left: 8, right: 8, top: 20,bottom: 10),
+                                                child: MemberCard(
+                                                  id: member['id']??'',
+                                                  first_name: member['first_name']??'',
+                                                  last_name: member['last_name']??'',
+                                                  designation: member['designation']??'',
+                                                  profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
+                                                      ? member['profile_image']!
+                                                      : '',
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        )
+                                    ],
+                                  )
+                              ),
                             )
-                          else
-                            Column(
-                              children: [Text('data')],
-                            )
+                            
                         ],
                       ),
                     ),
@@ -661,18 +728,27 @@ class _TeamPageState extends State<TeamPage> {
                       isActive: _selectedIndex == 1,
                       onPressed: () => _onNavItemTapped(1),
                     ),
-                    _buildBottomNavItem(
-                      label: "Events",
-                      iconPath: 'assets/icon/meeting.png',  // Use the PNG file path
-                      isActive: _selectedIndex == 2,
-                      onPressed: () => _onNavItemTapped(2),
-                    ),
-                    _buildBottomNavItem(
-                      label: "Report",
-                      iconPath: 'assets/icon/report.png',  // Use the PNG file path
-                      isActive: _selectedIndex == 3,
-                      onPressed: () => _onNavItemTapped(3),
-                    ),
+                    if(apiService.lvl>2)
+                      _buildBottomNavItem(
+                        label: "Events",
+                        iconPath: 'assets/icon/meeting.png',  // Use the PNG file path
+                        isActive: _selectedIndex == 2,
+                        onPressed: () => _onNavItemTapped(2),
+                      ),
+                    if(apiService.lvl>2)
+                      _buildBottomNavItem(
+                        label: "Report",
+                        iconPath: 'assets/icon/report.png',  // Use the PNG file path
+                        isActive: _selectedIndex == 3,
+                        onPressed: () => _onNavItemTapped(3),
+                      ),
+                    if(apiService.lvl<=2)
+                      _buildBottomNavItem(
+                        label: "Profile",
+                        iconPath: 'assets/icon/report.png',  // Use the PNG file path
+                        isActive: _selectedIndex == 5,
+                        onPressed: () => _onNavItemTapped(5),
+                      ),
                     /*_buildBottomNavItem(
                   label: "API",
                   iconPath: 'assets/icon/report.png',  // Use the PNG file path
@@ -685,11 +761,13 @@ class _TeamPageState extends State<TeamPage> {
             ),
           ),
         ),
+        //onWillPop
         onWillPop: () async {
           // If searching, reset the search state and prevent the back action
           if (isSearching) {
             setState(() {
               isSearching = false; // Reset the searching state
+              membersSearched = [];
             });
             return false; // Prevent back action if still searching
           }
@@ -785,6 +863,7 @@ class MemberCard extends StatelessWidget {
     double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
     double largeFontSize = normFontSize+4; //20
     double smallFontSize = normFontSize-2; //14
+    print(' KR received $first_name $last_name');
     return Container(
       padding: const EdgeInsets.all(0), // Container padding
       decoration: BoxDecoration(
@@ -815,17 +894,65 @@ class MemberCard extends StatelessWidget {
           child: Row(
             children: [
               // Profile Picture (placeholder)
-              CircleAvatar(
-                radius: MediaQuery.of(context).size.width * 0.08,
-                backgroundColor: Colors.grey[200],
-                backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null, // Use NetworkImage here
-                child: profileImage.isEmpty
-                    ? Icon(
-                  Icons.person,
-                  color: Colors.white,
-                  size: MediaQuery.of(context).size.width * 0.14,
-                )
-                    : null,
+              Container(
+                width: (MediaQuery.of(context).size.width * 0.80) / 5,  // 90% of screen width divided by 3 images
+                height: (MediaQuery.of(context).size.width * 0.80) / 5,  // Fixed height for each image
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(50),
+                  border: Border.all(color: Colors.grey.shade400),
+                  color: Colors.grey[200],
+                  boxShadow: [
+                    if(profileImage.isNotEmpty)
+                      BoxShadow(
+                        color: Color.fromRGBO(5, 50, 70, 1.0).withOpacity(0.5), // Grey shadow color with opacity
+                        spreadRadius: 1, // Spread radius of the shadow
+                        blurRadius: 7, // Blur radius of the shadow
+                        offset: Offset(0, 4), // Shadow position (x, y)
+                      ),
+                    if(profileImage.isEmpty)
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
+                        spreadRadius: 1, // Spread radius of the shadow
+                        blurRadius: 3, // Blur radius of the shadow
+                        offset: Offset(0, 4), // Shadow position (x, y)
+                      ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(50),
+                  child: (profileImage.isNotEmpty)
+                      ? Image.network(
+                    profileImage,  // Ensure the URL is encoded
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) {
+                        return child;  // Image loaded successfully
+                      } else {
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                (loadingProgress.expectedTotalBytes ?? 1)
+                                : null,
+                          ),
+                        );
+                      }
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.red,  // Placeholder color for invalid image URLs
+                        child: Center(
+                          child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                        ),
+                      );
+                    },
+                  )
+                      : Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: MediaQuery.of(context).size.width * 0.14,
+                  ),
+                ),
               ),
               SizedBox(width: 16),
               // Influencer Details

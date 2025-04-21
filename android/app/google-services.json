@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "698152879996",
+    "project_id": "samparka-mysuru",
+    "storage_bucket": "samparka-mysuru.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:698152879996:android:5cf7eb86e5e3d1e1c086f9",
+        "android_client_info": {
+          "package_name": "com.example.samparka"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBE6TfYU8s4wNAqz2E2GZbhTbneGBV9VdA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

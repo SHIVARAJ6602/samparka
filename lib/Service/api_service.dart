@@ -1,12 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:image/image.dart' as img;
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:dio/dio.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,9 +22,9 @@ class ApiService {
   late String baseUrl2 = "https://t6q7lj15-8000.inc1.devtunnels.ms/api";
   late String baseUrl3 = "https://llama-curious-adequately.ngrok-free.app/api";
   late String baseUrl = 'https://samparka.org/api';
-  late String token='8dd529c0df4ca79b2b85e786088af9daa614cccf';
+  late String token = '';
   late int lvl = 0;
-  late var profile_image = '';
+  late var profileImage = '';
   late String UserId = '';
   late String first_name = '';
   late String last_name = '';
@@ -30,8 +33,11 @@ class ApiService {
   late String district = '';
   late String state = '';
   late bool isAuthenticated = false;
+  late bool shouldUpdate = false;
   late Dio dio;
   late CookieJar cookieJar;
+  late FirebaseMessaging messaging;
+  late FlutterLocalNotificationsPlugin localNotifications;
   late bool _isInitialized = false;
   late String txt = '...';
 
@@ -39,6 +45,11 @@ class ApiService {
     dio = Dio();
     cookieJar = CookieJar();
     dio.interceptors.add(CookieManager(cookieJar));
+    messaging = FirebaseMessaging.instance;
+    localNotifications = FlutterLocalNotificationsPlugin();
+    setupNotifications();
+    requestNotificationPermission();
+    //showNotification('Test','this is a test notification');
     await loadData();
 
     try {
@@ -54,20 +65,112 @@ class ApiService {
     _isInitialized = true;
   }
 
-  Future<void> saveData() async {
-    print('Token: $token');
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('baseUrl', baseUrl??'');
-    await prefs.setString("token", token??'');
-    await prefs.setBool("isAuthenticated", isAuthenticated??false);
-    await prefs.setString("userName", first_name??'');
-    await prefs.setInt("level", lvl??1);
-    await prefs.setString("city", city??'');
-    await prefs.setString("district", district??'');
-    await prefs.setString("state", state??'');
-    await prefs.setString("profile_image", profile_image??'');
+  /***************FCM*******************/
 
-    print("DataSaved");
+  /*
+  Future<void> _requestPermissions() async {
+    if (Platform.isIOS || Platform.isMacOS) {
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+          MacOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    } else if (Platform.isAndroid) {
+      final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
+      flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+
+      final bool? grantedNotificationPermission =
+      await androidImplementation?.requestNotificationsPermission();
+      setState(() {
+        _notificationsEnabled = grantedNotificationPermission ?? false;
+      });
+    }
+  }
+  */
+
+  Future<void> requestNotificationPermission() async {
+    NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      print("Notifications permission granted.");
+    } else {
+      print("Notifications permission denied.");
+    }
+  }
+
+  bool setupNotifications() {
+    try{
+      var androidSettings = AndroidInitializationSettings('@drawable/ic_launcher');
+      var initializationSettings = InitializationSettings(android: androidSettings);
+
+      localNotifications.initialize(initializationSettings);
+      return true;
+    }
+    catch (e) {
+      return false;
+    }
+  }
+
+  void showNotification(String? title, String? body) async {
+    var androidDetails = AndroidNotificationDetails(
+        "channelId", "channelName",
+        importance: Importance.high, priority: Priority.high);
+    var notificationDetails = NotificationDetails(android: androidDetails);
+
+    await localNotifications.show(0, title, body, notificationDetails);
+  }
+
+  void setupFirebaseListeners() {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print("New notification received: ${message.notification?.title}");
+      showNotification(message.notification?.title, message.notification?.body);
+    });
+  }
+  /******************FCM*************************/
+
+  Future<bool> checkVersion() async {
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    print("App Version: ${packageInfo.version}");
+    print("Build Number: ${packageInfo.buildNumber}");
+    return true;
+  }
+
+  Future<bool> saveData() async {
+    try {
+      print('Token: $token');
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString("token", token ?? '');
+      await prefs.setString('baseUrl', baseUrl ?? '');
+      await prefs.setBool("isAuthenticated", isAuthenticated ?? false);
+      await prefs.setString("userName", first_name ?? '');
+      await prefs.setInt("level", lvl ?? 1);
+      await prefs.setString("city", city ?? '');
+      await prefs.setString("district", district ?? '');
+      await prefs.setString("state", state ?? '');
+      await prefs.setString("profile_image", profileImage ?? '');
+
+      print("Data Saved Successfully");
+      return true;
+    } catch (e) {
+      print("Error saving data: $e");
+      return false;
+    }
   }
 
   Future<void> loadData() async {
@@ -77,7 +180,7 @@ class ApiService {
     first_name = prefs.getString("userName") ?? '';
     lvl = prefs.getInt("level")??1;
     isAuthenticated = prefs.getBool("isAuthenticated") ?? isAuthenticated;
-    profile_image = prefs.getString("profile_image") ?? profile_image;
+    profileImage = prefs.getString("profile_image") ?? profileImage;
     city = prefs.getString('city') ?? city;
     district = prefs.getString('district') ?? district;
     state = prefs.getString('state') ?? state;
@@ -115,18 +218,26 @@ class ApiService {
   Future<bool> registerUser(List<dynamic> data) async {
     try {
       print(data);
+
       // Check if token is null or empty before making the request
       if (token.isEmpty) {
         print('Error: Authorization token is missing');
         return false;
       }
 
-      List<int> imageBytes = await data[8].readAsBytes();
+      print("registration Start");
+      File orgImage = await data[8];
+      print("D1");
+      List<int> resizedImageBytes = await imageResize(orgImage, true, 600);
+      print("D2");
+      // Convert the byte array into a MultipartFile (temporary file)
+      String tempFilePath = '${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+      File tempFile = File(tempFilePath)..writeAsBytesSync(resizedImageBytes);
 
-      // Resize the image in memory
-      Uint8List resizedImageBytes = await resizeImage(Uint8List.fromList(imageBytes));
+      // Create a MultipartFile from the resized temporary file
+      MultipartFile resizedImage = await MultipartFile.fromFile(tempFile.path, filename: tempFile.uri.pathSegments.last);
 
-      print("Resized Image Size: ${resizedImageBytes.lengthInBytes} bytes");
+      print("Resized Image Size: ${resizedImage.length}");
 
       print("ProfileImage ${data[8]} ${data[8].path.split('/').last}");
 
@@ -142,16 +253,14 @@ class ApiService {
         "password": data[5],
         "group": data[6],
         "supervisor": UserId,
-        "supervisor": 'AD00000001',
+        //"supervisor": 'AD00000001',
         "shreni_id": data[7],
-        "profile_image": MultipartFile.fromBytes(
-          resizedImageBytes,
-          filename: data[8].path.split('/').last, // Optional: set file name
-        ),
+        "profile_image": resizedImage,
         "city": data[9],
         "district": data[10],
         "state": data[11],
       });
+
       dio.options.headers['Authorization'] = 'Token $token';
 
       // Send registration request to the server
@@ -178,6 +287,66 @@ class ApiService {
       return false;
     }
   }
+
+  Future<bool> updateUser(List<dynamic> userData, String userId) async {
+    try {
+      if (token.isEmpty) {
+        print('Error: Authorization token is missing');
+        return false;
+      }
+
+      Map<String, dynamic> updatePayload = {};
+
+      void addIfValid(String key, dynamic value) {
+        if (value != null) {
+          if (value is String && value.trim().isEmpty) return;
+          updatePayload[key] = value;
+        }
+      }
+
+      // Optional image
+      if (userData[10] != null && userData[10] is File) {
+        File orgImage = userData[10];
+        List<int> resizedImageBytes = await imageResize(orgImage, true, 600);
+        String tempFilePath = '${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+        File tempFile = File(tempFilePath)..writeAsBytesSync(resizedImageBytes);
+        MultipartFile resizedImage = await MultipartFile.fromFile(tempFile.path, filename: tempFile.uri.pathSegments.last);
+        updatePayload['profile_image'] = resizedImage;
+      }
+
+      addIfValid("phone_number", userData[0]);
+      addIfValid("first_name", userData[1]);
+      addIfValid("last_name", userData[2]);
+      addIfValid("email", userData[3]);
+      addIfValid("designation", userData[4]);
+      addIfValid("description", userData[5]);
+      addIfValid("address", userData[6]);
+      addIfValid("city", userData[7]);
+      addIfValid("district", userData[8]);
+      addIfValid("state", userData[9]);
+      addIfValid("shreni_id", userData[11]);
+
+      updatePayload["KR_id"] = userId;
+      updatePayload["action"] = "updateKaryakartha";
+
+      FormData formData = FormData.fromMap(updatePayload);
+      dio.options.headers['Authorization'] = 'Token $token';
+
+      final response = await dio.post('$baseUrl/callHandler/', data: formData);
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        print("User updated successfully");
+        return true;
+      } else {
+        print('Update failed: ${response.statusCode}, ${response.data}');
+        return false;
+      }
+    } catch (e) {
+      print('Error during update: $e');
+      return false;
+    }
+  }
+
 
   ApiService._privateConstructor();
 
@@ -243,10 +412,11 @@ class ApiService {
         print(userData);
         UserId = userData['id']??'';
         first_name = userData['first_name']??'';
-        last_name = userData['last_name'??''];
+        last_name = userData['last_name']??'';
         lvl  = userData['level'??1];
         city = userData['city'??''];
         district = userData['district']??'';
+        profileImage = userData['profile_image']??'';
         state = userData['state']??'';
         designation = userData['designation']??'None';
         await saveData();
@@ -262,17 +432,41 @@ class ApiService {
       }
 
     } catch (e) {
-      isAuthenticated = false;
-      token = '';
-      await saveData();
-      await loadData();
       print('Error: $e');
       throw Exception('Failed to load user data: $e');
     }
     return false;
   }
 
-  Future<List<dynamic>> myInfluencer(int sCount,int eCount) async{
+  Future<dynamic> getHashtags() async  {
+    dio.options.headers['Authorization'] = 'Token $token';
+    print('getHashTags Called');
+
+    try {
+      final response = await dio.post(
+        '$baseUrl/callHandler/',
+        data: {
+          "action":"getHashtags",
+        },
+      );
+
+      print(response.data);
+      print(response.statusCode);
+
+      if (response.statusCode == 200) {
+        // Assuming the response data contains a list of user data.
+        print(response.data);
+        return response.data;
+      }
+
+    } catch (e) {
+      print('Error: $e');
+      throw Exception('Failed to load user data: $e');
+    }
+    return false;
+  }
+
+  Future<List<dynamic>> getInfluencer(int sCount,int eCount,String krId) async{
     try {
       // Check if token is null or empty before making the request
       if (token.isEmpty) {
@@ -284,8 +478,9 @@ class ApiService {
       final response = await dio.post(
         '$baseUrl/callHandler/',
         data: {
-          "action":"myInfluencer",
+          'action':"getInfluencers",
           'orderby':'date_approved',
+          'KR_id': krId,
           'sCount':sCount,
           'eCount':eCount,
         },
@@ -389,14 +584,16 @@ class ApiService {
         return false;
       }
 
-      List<int> imageBytes = await UserData[14].readAsBytes();
+      print("registration Start");
+      File orgImage = await UserData[14];
+      List<int> resizedImageBytes = await imageResize(orgImage, true, 600);
+      String tempFilePath = '${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+      File tempFile = File(tempFilePath)..writeAsBytesSync(resizedImageBytes);
 
-      // Resize the image in memory
-      Uint8List resizedImageBytes = await resizeImage(Uint8List.fromList(imageBytes));
+      // Create a MultipartFile from the resized temporary file
+      MultipartFile resizedImage = await MultipartFile.fromFile(tempFile.path, filename: tempFile.uri.pathSegments.last);
 
-      print("Resized Image Size: ${resizedImageBytes.lengthInBytes} bytes");
-
-      print("ProfileImage ${UserData[14]} ${UserData[14].path.split('/').last}");
+      print("Resized Image Size: ${resizedImage.length}");
 
       FormData formData = FormData.fromMap({
         "action":"CreateGanyaVyakti",
@@ -419,10 +616,7 @@ class ApiService {
         "city_2": UserData[11],
         "district_2": UserData[12],
         "state_2": UserData[13],
-        "profile_image": MultipartFile.fromBytes(
-          resizedImageBytes,
-          filename: UserData[14].path.split('/').last, // Optional: set file name
-        ),
+        "profile_image": resizedImage,
       });
 
       dio.options.headers['Authorization'] = 'Token $token';
@@ -446,6 +640,106 @@ class ApiService {
     } catch (e) {
       // Handle unexpected errors such as network issues or invalid responses
       print('Error during registration: $e');
+      return false;
+    }
+  }
+
+  Future<bool> UpdateGanyaVyakthi(List<dynamic> UserData, String gvId) async {
+    try {
+      if (token.isEmpty) {
+        print('Error: Authorization token is missing');
+        return false;
+      }
+
+      Map<String, dynamic> updatePayload = {};
+
+      // Optional fields — only include them if they're not null or empty
+      void addIfValid(String key, dynamic value) {
+        if (value != null) {
+          if (value is String && value.trim().isEmpty) return;
+          updatePayload[key] = value;
+        }
+      }
+
+      // Optional image resizing
+      if (UserData[14] != null) {
+        File orgImage = await UserData[14];
+        List<int> resizedImageBytes = await imageResize(orgImage, true, 600);
+        String tempFilePath = '${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+        File tempFile = File(tempFilePath)..writeAsBytesSync(resizedImageBytes);
+        MultipartFile resizedImage = await MultipartFile.fromFile(tempFile.path, filename: tempFile.uri.pathSegments.last);
+        updatePayload['profile_image'] = resizedImage;
+      }
+
+      // Add only the changed/filled fields
+      addIfValid("fname", UserData[1]);
+      addIfValid("lname", UserData[2]);
+      addIfValid("phone_number", UserData[0]);
+      addIfValid("assigned_karyakarta_id", UserData[15]);
+      addIfValid("designation", UserData[4]);
+      addIfValid("description", UserData[5]);
+      addIfValid("hashtags", UserData[6]);
+      addIfValid("organization", UserData[7]);
+      addIfValid("email", UserData[3]);
+      addIfValid("impact_on_society", UserData[8]);
+      addIfValid("interaction_level", UserData[9]);
+      addIfValid("address", UserData[10]);
+      addIfValid("city", UserData[11]);
+      addIfValid("district", UserData[12]);
+      addIfValid("state", UserData[13]);
+      addIfValid("GVid", gvId);
+
+      updatePayload["action"] = "UpdateGanyaVyakti";
+
+      print('data $updatePayload');
+
+      FormData formData = FormData.fromMap(updatePayload);
+
+      dio.options.headers['Authorization'] = 'Token $token';
+
+      final response = await dio.post(
+        '$baseUrl/callHandler/',
+        data: formData,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        print("GanyaVyakthi updated successfully");
+        return true;
+      } else {
+        print('Update failed: ${response.statusCode}, ${response.data}');
+        return false;
+      }
+    } catch (e) {
+      print('Error during update: $e');
+      return false;
+    }
+  }
+
+  Future<bool> deleteGanyaVyakthi(String id) async {
+    try {
+      dio.options.headers['Authorization'] = 'Token $token';
+
+      final response = await dio.post(
+        '$baseUrl/callHandler/',
+        data: {
+          "action": "deleteGanyaVyakthi",
+          "gvid": id,
+        },
+        options: Options(
+          headers: {"Content-Type": "application/json"},
+        ),
+      );
+
+
+      if (response.statusCode == 200) {
+        print("Profile and image deleted successfully.");
+        return true;
+      } else {
+        print("Deletion failed: ${response.data}");
+        return false;
+      }
+    } catch (e) {
+      print("Error deleting profile: $e");
       return false;
     }
   }
@@ -784,7 +1078,7 @@ class ApiService {
       //print(response.data);
 
       if (response.statusCode == 200) {
-        print('GV ${response.data[0]}');
+        //print('GV ${response.data[0]}');
 
         if (response.data is List<dynamic>) {
           return response.data;
@@ -809,10 +1103,10 @@ class ApiService {
 
     try {
       final response = await dio.post('$baseUrl/callHandler/',data: {'action':'getKaryakartha','KR_id':KR_id});
-      print(response.data);
+      //print(response.data);
 
       if (response.statusCode == 200) {
-        print('RV ${response.data[0]}');
+        //print('RV ${response.data[0]}');
 
         if (response.data is List<dynamic>) {
           return response.data;
@@ -895,6 +1189,34 @@ class ApiService {
       } else {
         // Log and throw exception if status code is not 200
         print('Failed to create task: ${response.statusCode}');
+        return false;
+        throw Exception('Failed to create task. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Print the error and rethrow it
+      print('Error: $e');
+      throw Exception('Failed to create task: $e');
+    }
+
+    // Return false if for any reason the task could not be created
+    return false;
+  }
+
+  Future<bool> deleteTask(String taskId) async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      final response = await dio.post(
+        '$baseUrl/callHandler/',
+        data: {'action': 'delete_task','task_id': taskId},
+      );
+
+      // Check if the response is successful (status code 200)
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        // Log and throw exception if status code is not 200
+        print('Failed to delete task: ${response.statusCode}');
         return false;
         throw Exception('Failed to create task. Status code: ${response.statusCode}');
       }
@@ -1017,70 +1339,117 @@ class ApiService {
     }
   }
 
-  Future<bool> addUsers() async {
+  Future<bool> addUsers(File file) async {
     dio.options.headers['Authorization'] = 'Token $token';
 
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['xlsx', 'xls'],
-    );
+    // Step 2: Prepare the file for sending with Dio
+    FormData formData = FormData.fromMap({
+      'action': 'add_Karyakartha_Excel',  // Action name for the API
+      'file': await MultipartFile.fromFile(file.path, filename: file.uri.pathSegments.last),
+    });
 
-    if (result != null && result.files.isNotEmpty) {
-      String filePath = result.files.single.path!;
+    print("FormData: $formData");
 
-      // Step 2: Prepare the file to send with Dio
-      File file = File(filePath);
-      FormData formData = FormData.fromMap({
-        'action': 'add_users',
-        'file': await MultipartFile.fromFile(file.path, filename: file.uri.pathSegments.last),
-      });
-      print(formData);
+    try {
+      // Step 3: Send the file to the server via a POST request
+      final response = await dio.post(
+        '$baseUrl/callHandler/',  // Replace with your actual API endpoint
+        data: formData,
+        options: Options(
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        ),
+      );
 
-      try {
-        final response = await dio.post(
-          '$baseUrl/callHandler/',
-          data: formData,
-          options: Options(
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          ),
-        );
-
-        if (response.statusCode == 200) {
-          print("File uploaded successfully!");
-          print(response.data);  // Optionally handle the response
-        } else {
-          print("Failed to upload file.");
-        }
-      } catch (e) {
-        print("Error occurred: $e");
+      if (response.statusCode == 200) {
+        print("File uploaded successfully!");
+        return true;  // Return true on success
+      } else {
+        print("Failed to upload file. Status code: ${response.statusCode}");
+        return false;  // Return false on failure
       }
-    } else {
-      print('No file selected');
+    } catch (e) {
+      print("Error occurred: $e");
+      return false;  // Return false if there's an exception
     }
-    return false;
   }
 
-  Future<bool> addGV() async {
+  Future<bool> addGVORG(File file) async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    // Step 2: Prepare the file for sending with Dio
+    FormData formData = FormData.fromMap({
+      'action': 'add_GanyaVyakti_Excel',  // Action name for the API
+      'file': await MultipartFile.fromFile(file.path, filename: file.uri.pathSegments.last),
+    });
+
+    print("FormData: $formData");
+
+    try {
+      // Step 3: Send the file to the server via a POST request
+      final response = await dio.post(
+        '$baseUrl/callHandler/',  // Replace with your actual API endpoint
+        data: formData,
+        options: Options(
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        print("File uploaded successfully!");
+        return true;  // Return true on success
+      } else {
+        print("Failed to upload file. Status code: ${response.statusCode}");
+        return false;  // Return false on failure
+      }
+    } catch (e) {
+      print("Error occurred: $e");
+      return false;  // Return false if there's an exception
+    }
+  }
+
+  Future<File?> addGV(File file) async {
     dio.options.headers['Authorization'] = 'Token $token';
 
     try {
-      final response = await dio.post('$baseUrl/callHandler/',data: {'action':'add_GanyaVyakti'});
-      //print(response.data);
+      FormData formData = FormData.fromMap({
+        'action': 'add_GanyaVyakti_Excel',
+        'file': await MultipartFile.fromFile(file.path, filename: file.uri.pathSegments.last),
+      });
 
-      if (response.statusCode == 200) {
-        //print('TS ${response.data}');
+      final response = await dio.post(
+        '$baseUrl/callHandler/',
+        data: formData,
+        options: Options(responseType: ResponseType.bytes), // Expect bytes if Excel returned
+      );
 
-        return true;
-      } else {
-        throw Exception('Failed to load lead. Status code: ${response.statusCode}');
+      // If the response is an Excel file (failures present)
+      if (response.statusCode == 200 &&
+          response.headers.map['content-type']?.contains(
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          ) == true) {
+        // Get external directory
+        final directory = Directory('/storage/emulated/0/Download/samparka');
+        await directory.create(recursive: true);
+
+        final filePath = '${directory.path}/failed_ganyavyakthi_uploads.xlsx';
+        final File failedFile = File(filePath);
+        await failedFile.writeAsBytes(response.data);
+
+        print("Failed Excel saved to: $filePath");
+        return failedFile;
       }
 
+      // If upload is successful and no file is returned
+      print("File uploaded successfully with no failures.");
+      return null;
 
     } catch (e) {
-      print('Error: $e');
-      throw Exception('Failed to load supervisor: $e');
+      print("Error during addGV: $e");
+      return null;
     }
   }
 
@@ -1119,7 +1488,7 @@ class ApiService {
     try {
       print(meetingTypeID);
       final response = await dio.post('$baseUrl/callHandler/',data: {'action':'get_interaction_by_id','id':meetingID});
-      print(response.data);
+      //print(response.data);
 
       if (response.statusCode == 200) {
         //print('TS ${response.data}');
@@ -1295,14 +1664,14 @@ class ApiService {
     try {
       print('meeting ID: $meetingTypeID');
       final response = await dio.post('$baseUrl/callHandler/',data: {'action':'getEventImage','EventType':meetingTypeID,'id':id});
-      print('meeting images');
-      print(response.data);
+      //print('meeting images');
+      //print(response.data);
 
       if (response.statusCode == 200) {
         //print('TS ${response.data}');
 
         if (response.data is List<dynamic>) {
-          print('images : ${response.data[0]['images'].length}');
+          //print('images : ${response.data[0]['images'].length}');
           return response.data;
         } else if (response.data is Map<String, dynamic>) {
           return [response.data];
@@ -1443,6 +1812,35 @@ class ApiService {
     }
   }
 
+  Future searchKR(String str) async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      final response = await dio.post('$baseUrl/callHandler/', data: {'action': 'search_Karyakartha', 'search': str});
+      print("searchKR");
+      print(response.data);
+
+      if (response.statusCode == 200) {
+        if (response.data is List<dynamic>) {
+          return response.data;
+        } else if (response.data is Map<String, dynamic>) {
+          return [response.data];
+        } else {
+          throw Exception('Unexpected data type: ${response.data.runtimeType}');
+        }
+      } else if (response.statusCode == 204 || response.statusCode == 404) {
+        // Return false for both 204 and 404 status codes
+        return false;
+      } else {
+        throw Exception('Failed to Search inf. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
+      return false;
+      throw Exception('Failed to search inf: $e');
+    }
+  }
+
   Future<bool> markTaskComplete(taskId) async {
     dio.options.headers['Authorization'] = 'Token $token';
 
@@ -1496,7 +1894,7 @@ class ApiService {
     return resizedImageBytes;
   }
 
-  Future<bool> submitReport(String id,String typeID, List<File> images, String reportData) async {
+  Future<bool> submitReportORG(String id,String typeID, List<File> images, String reportData) async {
     Dio dio = Dio();
     dio.options.headers['Authorization'] = 'Token $token';
 
@@ -1544,5 +1942,95 @@ class ApiService {
     }
   }
 
+  Future<List<int>> imageResize(File orgImage, bool profile, int maxDim) async {
+    // Decode the image (supports JPEG, PNG, etc.)
+    img.Image? image = img.decodeImage(await orgImage.readAsBytes());
+
+    if (image == null) {
+      throw Exception("Unable to decode the image. Please check the image format.");
+    }
+
+    // Get the current width and height of the image
+    int orgWidth = image.width;
+    int orgHeight = image.height;
+
+    int newWidth, newHeight;
+
+    if (profile) {
+      // Determine the resizing factor based on the larger dimension
+      double factor = 600.0 / (orgWidth > orgHeight ? orgWidth : orgHeight);
+
+      // Calculate the new dimensions to maintain the aspect ratio
+      newWidth = (orgWidth * factor).round();
+      newHeight = (orgHeight * factor).round();
+    } else {
+      // Calculate the new dimensions to maintain the aspect ratio
+      double factor = maxDim / (orgWidth > orgHeight ? orgWidth : orgHeight);
+
+      // Calculate the new dimensions to maintain the aspect ratio
+      newWidth = (orgWidth * factor).round();
+      newHeight = (orgHeight * factor).round();
+    }
+
+    // Ensure that we don't enlarge the image if it's already smaller than the target size
+    if (newWidth > orgWidth || newHeight > orgHeight) {
+      newWidth = orgWidth;
+      newHeight = orgHeight;
+    }
+
+    // Resize the image proportionally
+    img.Image resizedImage = img.copyResize(image, width: newWidth, height: newHeight);
+
+    // Return the resized image as a byte array (JPEG)
+    return img.encodeJpg(resizedImage);
+  }
+
+  Future<bool> submitReport(String id, String typeID, List<File> images, String reportData) async {
+    Dio dio = Dio();
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      List<MultipartFile> imageFiles = [];
+
+      // Loop through each image, resize it, and convert it to binary
+      for (File image in images) {
+        // Resize the image and get it as a byte array
+        List<int> resizedImageBytes = await imageResize(image, false, 2000);
+
+        // Convert the byte array into a MultipartFile (temporary file)
+        String tempFilePath = '${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+        File tempFile = File(tempFilePath)..writeAsBytesSync(resizedImageBytes);
+
+        // Add the file to the list of image files
+        imageFiles.add(await MultipartFile.fromFile(tempFile.path, filename: tempFile.uri.pathSegments.last));
+      }
+
+      print('Sub func $id $imageFiles $reportData');
+
+      // Make the POST request with FormData
+      FormData formData = FormData.fromMap({
+        'action': 'submitReport',
+        'id': id,
+        'type': typeID,
+        'report': reportData,
+        'images': imageFiles,
+      });
+
+      final response = await dio.post('$baseUrl/callHandler/', data: formData);
+
+      // Check if the response is successful (status code 200)
+      if (response.statusCode == 200 || response.statusCode == 200) {
+        return true;
+      } else {
+        // Log and throw exception if status code is not 200
+        print('Failed to submit report: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      // Print the error and rethrow it
+      print('Error: $e');
+      throw Exception('Failed to submit report: $e');
+    }
+  }
 
 }

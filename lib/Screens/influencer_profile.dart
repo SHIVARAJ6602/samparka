@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:samparka/Screens/change_request.dart';
+import 'package:samparka/Screens/update_influencer_profile.dart';
 import 'package:samparka/Screens/schedule_interaction.dart';
 import 'package:samparka/Screens/view_influencers.dart';
 import 'package:samparka/Screens/view_interaction.dart';
@@ -252,8 +252,8 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
           ),
           actions: [
             Container(
-              width: MediaQuery.of(context).size.width * 0.25,
-              height: MediaQuery.of(context).size.width * 0.25 * 0.5,
+              width: MediaQuery.of(context).size.width * 0.25 * 1.1,
+              height: MediaQuery.of(context).size.width * 0.25 * 0.4,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(50),
                 gradient: const LinearGradient(
@@ -281,7 +281,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Change\nRequest ',
+                        'Edit Profile',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.white,
@@ -366,17 +366,65 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                           children: [
                             Column(
                               children: [
-                                CircleAvatar(
-                                  radius: MediaQuery.of(context).size.width * 0.08,
-                                  backgroundColor: Colors.grey[200],
-                                  backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null, // Use NetworkImage here
-                                  child: profileImage.isEmpty
-                                      ? Icon(
-                                    Icons.person,
-                                    color: Colors.white,
-                                    size: MediaQuery.of(context).size.width * 0.14,
-                                  )
-                                      : null,
+                                Container(
+                                  width: (MediaQuery.of(context).size.width * 0.80) / 4,  // 90% of screen width divided by 3 images
+                                  height: (MediaQuery.of(context).size.width * 0.80) / 4,  // Fixed height for each image
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(50),
+                                    border: Border.all(color: Colors.grey.shade400),
+                                    color: Colors.grey[200],
+                                    boxShadow: [
+                                      if(profileImage.isNotEmpty)
+                                        BoxShadow(
+                                          color: Color.fromRGBO(5, 50, 70, 1.0).withOpacity(0.5), // Grey shadow color with opacity
+                                          spreadRadius: 1, // Spread radius of the shadow
+                                          blurRadius: 7, // Blur radius of the shadow
+                                          offset: Offset(0, 4), // Shadow position (x, y)
+                                        ),
+                                      if(profileImage.isEmpty)
+                                        BoxShadow(
+                                          color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
+                                          spreadRadius: 1, // Spread radius of the shadow
+                                          blurRadius: 3, // Blur radius of the shadow
+                                          offset: Offset(0, 4), // Shadow position (x, y)
+                                        ),
+                                    ],
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(50),
+                                    child: (profileImage.isNotEmpty)
+                                        ? Image.network(
+                                      profileImage,  // Ensure the URL is encoded
+                                      fit: BoxFit.cover,
+                                      loadingBuilder: (context, child, loadingProgress) {
+                                        if (loadingProgress == null) {
+                                          return child;  // Image loaded successfully
+                                        } else {
+                                          return Center(
+                                            child: CircularProgressIndicator(
+                                              value: loadingProgress.expectedTotalBytes != null
+                                                  ? loadingProgress.cumulativeBytesLoaded /
+                                                  (loadingProgress.expectedTotalBytes ?? 1)
+                                                  : null,
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          color: Colors.red,  // Placeholder color for invalid image URLs
+                                          child: Center(
+                                            child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                                          ),
+                                        );
+                                      },
+                                    )
+                                        : Icon(
+                                      Icons.person,
+                                      color: Colors.white,
+                                      size: MediaQuery.of(context).size.width * 0.14,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -640,33 +688,56 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                               children: [
                                 Expanded(
                                   child: ListView.builder(
-                                    itemCount: tasks.length,  // The length of your tasks array
+                                    itemCount: tasks.length,
                                     itemBuilder: (context, index) {
-                                      var task = tasks[index];  // Get the task at the current index
+                                      var task = tasks[index];
                                       return Card(
                                         margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                                         child: ListTile(
-                                          title: Text(task['title']),  // Display the task title
-                                          trailing: IconButton(
-                                            icon: Icon(Icons.check_circle_outline,color: task['completed'] ? Colors.green : Colors.red,),
-
-                                              onPressed: () async {
-                                              // Call API to mark task as complete
-                                              bool isTaskCompleted = await apiService.markTaskComplete(task['id']);
-                                              if (isTaskCompleted) {
-                                                // Update the task status locally or refresh the task list
-                                                setState(() {
-                                                  task['completed'] = true;  // You can also update your task list state if needed
-                                                });
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(content: Text("Task marked as completed!")),
-                                                );
-                                              } else {
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(content: Text("Failed to mark task as completed")),
-                                                );
-                                              }
-                                            },
+                                          title: Text(task['title']),
+                                          trailing: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              IconButton(
+                                                icon: Icon(
+                                                  Icons.check_circle_outline,
+                                                  color: task['completed'] ? Colors.green : Colors.red,
+                                                ),
+                                                onPressed: () async {
+                                                  bool isTaskCompleted = await apiService.markTaskComplete(task['id']);
+                                                  if (isTaskCompleted) {
+                                                    setState(() {
+                                                      task['completed'] = true;
+                                                    });
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(content: Text("Task marked as completed!")),
+                                                    );
+                                                  } else {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(content: Text("Failed to mark task as completed")),
+                                                    );
+                                                  }
+                                                },
+                                              ),
+                                              IconButton(
+                                                icon: Icon(Icons.delete_outline, color: Colors.red),
+                                                onPressed: () async {
+                                                  bool isTaskDeleted = await apiService.deleteTask(task['id']);
+                                                  if (isTaskDeleted) {
+                                                    setState(() {
+                                                      tasks.removeAt(index);
+                                                    });
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(content: Text("Task deleted!")),
+                                                    );
+                                                  } else {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(content: Text("Failed to delete the task")),
+                                                    );
+                                                  }
+                                                },
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       );
@@ -682,36 +753,62 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                                 children: [
                                   Expanded(
                                     child: Column(
-                                      children: tasks.map<Widget>((task) {
+                                      children: tasks.asMap().entries.map<Widget>((entry) {
+                                        int index = entry.key;
+                                        var task = entry.value;
+
                                         return Card(
                                           margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                                           child: ListTile(
-                                            title: Text(task['title']),  // Display the task title
-                                            trailing: IconButton(
-                                              icon: Icon(Icons.check_circle_outline, color: task['completed'] ? Colors.green : Colors.red,),
-                                              onPressed: () async {
-                                                // Call API to mark task as complete
-                                                bool isTaskCompleted = await apiService.markTaskComplete(task['id']);
-                                                if (isTaskCompleted) {
-                                                  // Update the task status locally or refresh the task list
-                                                  setState(() {
-                                                    task['completed'] = true;  // You can also update your task list state if needed
-                                                  });
-                                                  ScaffoldMessenger.of(context).showSnackBar(
-                                                    SnackBar(content: Text("Task marked as completed!")),
-                                                  );
-                                                } else {
-                                                  ScaffoldMessenger.of(context).showSnackBar(
-                                                    SnackBar(content: Text("Failed to mark task as completed")),
-                                                  );
-                                                }
-                                              },
+                                            title: Text(task['title']),
+                                            trailing: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                IconButton(
+                                                  icon: Icon(
+                                                    Icons.check_circle_outline,
+                                                    color: task['completed'] ? Colors.green : Colors.red,
+                                                  ),
+                                                  onPressed: () async {
+                                                    bool isTaskCompleted = await apiService.markTaskComplete(task['id']);
+                                                    if (isTaskCompleted) {
+                                                      setState(() {
+                                                        task['completed'] = true;
+                                                      });
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        SnackBar(content: Text("Task marked as completed!")),
+                                                      );
+                                                    } else {
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        SnackBar(content: Text("Failed to mark task as completed")),
+                                                      );
+                                                    }
+                                                  },
+                                                ),
+                                                IconButton(
+                                                  icon: Icon(Icons.delete_outline, color: Colors.red),
+                                                  onPressed: () async {
+                                                    bool isTaskDeleted = await apiService.deleteTask(task['id']);
+                                                    if (isTaskDeleted) {
+                                                      setState(() {
+                                                        tasks.removeAt(index);
+                                                      });
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        SnackBar(content: Text("Task deleted!")),
+                                                      );
+                                                    } else {
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        SnackBar(content: Text("Failed to delete the task")),
+                                                      );
+                                                    }
+                                                  },
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         );
                                       }).toList(),
                                     ),
-
                                   ),
                                 ],
                               ),
@@ -803,7 +900,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                                         child: meetingCard(
                                           title: meeting['title']!,
                                           description: meeting['description']!,
-                                          dateTime: meeting['meeting_datetime']!,
+                                          dateTime: meeting['meeting_datetime']??'',
                                           id: meeting['id']!,
                                         ),
                                       );
@@ -1001,3 +1098,31 @@ class meetingCard extends StatelessWidget {
     );
   }
 }
+//delete Button
+/*
+TextButton.icon(
+  onPressed: () async {
+    bool confirm = await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('Delete Profile'),
+        content: Text('Are you sure you want to delete this GanyaVyakthi profile? This action cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Delete')),
+        ],
+      ),
+    );
+
+    if (confirm) {
+      bool success = await apiService.deleteGanyaVyakthi(GV_id);
+      if (success) {
+        Navigator.pop(context); // Or go to list page
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Profile deleted successfully.")));
+      }
+    }
+  },
+  icon: Icon(Icons.delete, color: Colors.red),
+  label: Text("Delete Profile", style: TextStyle(color: Colors.red)),
+)
+*/

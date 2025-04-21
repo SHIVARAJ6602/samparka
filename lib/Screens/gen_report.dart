@@ -9,19 +9,26 @@ import 'package:samparka/Screens/settings.dart';
 import 'package:samparka/Screens/team.dart';
 import 'package:samparka/Screens/view_report_meetings.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:open_file/open_file.dart';
 import '../Service/api_service.dart';
 import 'add_influencer.dart';
 import 'home.dart';
 import 'notifications.dart';
 
+//openfile
+  const types = {
+    "application/pdf": "pdf",
+    ".dwg": "application/x-autocad"
+  };
+
 class GenReportPage extends StatefulWidget {
   const GenReportPage({super.key});
 
   @override
-  _GenReportPageState createState() => _GenReportPageState();
+  GenReportPageState createState() => GenReportPageState();
 }
 
-class _GenReportPageState extends State<GenReportPage> {
+class GenReportPageState extends State<GenReportPage> {
 
   final apiService = ApiService();
 
@@ -32,18 +39,20 @@ class _GenReportPageState extends State<GenReportPage> {
   DateTime? selectedFromDate;
   DateTime? selectedToDate;
   late var selectedMeetingType = "Meeting";
-  int influencerCount = 450;
-  int influencerMet = 375;
-  int activeTeamMembers = 44;
-  int inactiveTeamMembers = 12;
-  int individualMeetings = 12;
-  int SGM = 12;
-  int programs = 12;
-  int baitek = 12;
-  int successfullMeetings = 550; //bt 25 meetin 550
+  int influencerCount = 0;
+  int influencerMet = 0;
+  int activeTeamMembers = 0;
+  int inactiveTeamMembers = 0;
+  int individualMeetings = 0;
+  int SGM = 0;
+  int programs = 0;
+  int baitek = 0;
+  int successfullMeetings = 0; //bt 25 meetin 550
 
   bool isGenerating = false;
   bool viewDocument = false;
+
+  var _openResult = 'Unknown';
 
   Future<void> _requestPermission() async {
     // Check the current status of storage permission
@@ -79,6 +88,10 @@ class _GenReportPageState extends State<GenReportPage> {
       final directory = await getApplicationDocumentsDirectory();
       return directory.path;
     }
+  }
+
+  void openDownloadedPDF(String filePath) {
+    OpenFile.open(filePath);
   }
 
   Future<bool> genReport() async {
@@ -117,6 +130,9 @@ class _GenReportPageState extends State<GenReportPage> {
 
       // Show the dialog with the file name
       _showDownloadedDialog(filePath);
+
+      //openDownloadedPDF(filePath);
+      
       return true;
     } catch (e) {
       print('Error: $e');
@@ -138,13 +154,18 @@ class _GenReportPageState extends State<GenReportPage> {
           ),
           actions: [
             // Open button
-
             TextButton(
               onPressed: () async {
                 final File file = File(filePath);
                 if (await file.exists()) {
                   // File exists, proceed to open it
                   try {
+                    try{
+                      openDownloadedPDF(filePath);
+                    }
+                    catch (e) {
+                      print('Error: $e');
+                    }
                     // For Android 7.0+ devices, use FileProvider if necessary
                     final Uri fileUri = Uri.file(filePath); // Use Uri.file() to generate a proper URI
                     if (await canLaunch(fileUri.toString())) {
@@ -204,7 +225,7 @@ class _GenReportPageState extends State<GenReportPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("You are trying to download a report"),
+          title: Text("You are trying to download the report"),
           content: Text(
             "Do you want to download it?",
           ),
@@ -279,7 +300,13 @@ class _GenReportPageState extends State<GenReportPage> {
 
   // Method to handle bottom navigation item tap
   void _onNavItemTapped(int index) {
-    if (index == 0) {
+    if (index == 5) {
+      // Navigate to AddInfluencerPage when index 1 is tapped
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => SettingsPage()),
+      );
+    } else if (index == 0) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const InfluencersPage()),
@@ -534,6 +561,7 @@ class _GenReportPageState extends State<GenReportPage> {
                   ],
                 ),
                 const SizedBox(height: 20),
+                //influencer and Team data
                 if ((selectedFromDate != null) && (selectedToDate != null) && (selectedToDate!.isAfter(selectedFromDate!)))
                   Row(
                     children: [
@@ -776,49 +804,6 @@ class _GenReportPageState extends State<GenReportPage> {
                           ],
                         ),
                       ),
-                      //choose baitaks or meeting
-                      /*Row(
-                //mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Expanded(
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            TextButton(
-                              onPressed: () {
-                                setState((){
-                                  selectedMeetingType = "Meeting";
-                                });
-                              },
-                              child: Text(
-                                "Meeting",
-                                style: selectedMeetingType == "Meeting"
-                                    ? TextStyle(color: const Color.fromRGBO(5, 50, 70, 1.0),fontWeight: FontWeight.w600, fontSize: largeFontSize,decoration: TextDecoration.underline)
-                                    : TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600, fontSize: largeFontSize),
-                              )
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                setState((){
-                                  selectedMeetingType = "Baitak";
-                                });
-                              },
-                              child: Text(
-                                "Baitak",
-                                style: selectedMeetingType == "Baitak"
-                                    ? TextStyle(color: const Color.fromRGBO(5, 50, 70, 1.0),fontWeight: FontWeight.w600, fontSize: largeFontSize,decoration: TextDecoration.underline)
-                                    : TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600, fontSize: largeFontSize),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),*/
                       //Meeting Summary
                       Container(
                         width: MediaQuery.of(context).size.width-20,
@@ -855,7 +840,9 @@ class _GenReportPageState extends State<GenReportPage> {
                                     ),
                                     child: TextButton(
                                       onPressed: (){
-                                        _viewMeets('individual');
+                                        if(individualMeetings>0){
+                                          _viewMeets('individual');
+                                        }
                                       },
                                       child: Column(
                                         children: [
@@ -880,7 +867,9 @@ class _GenReportPageState extends State<GenReportPage> {
                                     ),
                                     child: TextButton(
                                       onPressed: (){
-                                        _viewMeets('sgm');
+                                        if(SGM>0){
+                                          _viewMeets('sgm');
+                                        }
                                       },
                                       child: Column(
                                         children: [
@@ -909,7 +898,9 @@ class _GenReportPageState extends State<GenReportPage> {
                                     ),
                                     child: TextButton(
                                       onPressed: (){
-                                        _viewMeets('program');
+                                        if(programs>0){
+                                          _viewMeets('program');
+                                        }
                                       },
                                       child: Column(
                                         children: [
@@ -935,7 +926,9 @@ class _GenReportPageState extends State<GenReportPage> {
                                     ),
                                     child: TextButton(
                                       onPressed: (){
-                                        _viewMeets('baitak');
+                                        if(baitek>0){
+                                          _viewMeets('baitak');
+                                        }
                                       },
                                       child: Column(
                                         children: [
@@ -965,7 +958,7 @@ class _GenReportPageState extends State<GenReportPage> {
                             border: Border.all(color: Colors.grey), // Border color
                           ),
                           child: Text(
-                            '\'To\' date is greater than \'From\' Date',
+                            '\'To\' Date is greater than \'From\' Date',
                             style: TextStyle(
                               color: Colors.black, // Text color
                               fontSize: 18, // Text size
@@ -976,186 +969,6 @@ class _GenReportPageState extends State<GenReportPage> {
                       ],
                     ),
                   ),
-                //Meeting view
-                /*
-            Column(
-              children: [
-                Container(
-                  width: MediaQuery.of(context).size.width-20,
-                  padding: const EdgeInsets.all(10.0), // Padding around the container
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12), // Rounded corners for the border
-                    border: Border.all(
-                      color: Colors.grey.shade400,
-                      width: 1, // Border width
-                    ),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Color.fromRGBO(60, 245, 200, 1.0),
-                        Color.fromRGBO(2, 40, 60, 1),
-                      ],
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width*0.36,
-                        child: Column(
-                          children: [
-                            Text(
-                              successfullMeetings.toString(),
-                              style: TextStyle(
-                                fontSize: largeFontSize*3,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            Text(
-                              "Successful",
-                              style: TextStyle(
-                                fontSize: largeFontSize+5,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            Text(
-                              "Meeting",
-                              style: TextStyle(
-                                fontSize: largeFontSize+15,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width*0.5,
-                        child: Column(
-                          children: [
-                            Container(
-                              //width:170,
-                              padding: const EdgeInsets.all(0.0),
-                              decoration: BoxDecoration(
-                                //color: Colors.white, // Background color
-                                borderRadius: BorderRadius.circular(12), // Rounded corners for the border
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: MediaQuery.of(context).size.width*0.494,
-                                        padding: const EdgeInsets.all(6.0),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white, // Background color
-                                          borderRadius: BorderRadius.circular(12), // Rounded corners for the border
-                                          border: Border.all(
-                                            color: Colors.grey.shade400, // Border color
-                                            width: 1, // Border width
-                                          ),
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              "Meeting Name",
-                                              style: TextStyle(
-                                                fontSize: largeFontSize,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            Text(
-                                              "Date: DD/MM/YYYY",
-                                              style: TextStyle(
-                                                fontSize: smallFontSize,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            Text(
-                                              "Time: HH:MM",
-                                              style: TextStyle(
-                                                fontSize: smallFontSize,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            Text(
-                                              "Location: City, District",
-                                              style: TextStyle(
-                                                fontSize: smallFontSize,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: MediaQuery.of(context).size.width*0.494,
-                                        padding: const EdgeInsets.all(5.0),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white, // Background color
-                                          borderRadius: BorderRadius.circular(12), // Rounded corners for the border
-                                          border: Border.all(
-                                            color: Colors.grey.shade400, // Border color
-                                            width: 1, // Border width
-                                          ),
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              "Meeting Name",
-                                              style: TextStyle(
-                                                fontSize: largeFontSize,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            Text(
-                                              "Date: xx/xx/xxxx",
-                                              style: TextStyle(
-                                                fontSize: smallFontSize,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            Text(
-                                              "Time: HH:MM",
-                                              style: TextStyle(
-                                                fontSize: smallFontSize,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            Text(
-                                              "Location:City,District",
-                                              style: TextStyle(
-                                                fontSize: smallFontSize,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              ],
-            ),*/
               ],
             ),
           ),
@@ -1217,12 +1030,20 @@ class _GenReportPageState extends State<GenReportPage> {
                   isActive: _selectedIndex == 2,
                   onPressed: () => _onNavItemTapped(2),
                 ),
-                _buildBottomNavItem(
-                  label: "Report",
-                  iconPath: 'assets/icon/report.png',
-                  isActive: _selectedIndex == 3,
-                  onPressed: () => _onNavItemTapped(3),
-                ),
+                if(apiService.lvl>2)
+                  _buildBottomNavItem(
+                    label: "Report",
+                    iconPath: 'assets/icon/report.png',  // Use the PNG file path
+                    isActive: _selectedIndex == 3,
+                    onPressed: () => _onNavItemTapped(3),
+                  ),
+                if(apiService.lvl<=2)
+                  _buildBottomNavItem(
+                    label: "Profile",
+                    iconPath: 'assets/icon/report.png',  // Use the PNG file path
+                    isActive: _selectedIndex == 5,
+                    onPressed: () => _onNavItemTapped(5),
+                  ),
               ],
             ),
           ),

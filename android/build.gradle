@@ -1,3 +1,13 @@
+buildscript {
+    repositories {
+        google()  // Ensure this is present
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.google.gms:google-services:4.3.15'  // Ensure this version is present
+    }
+}
+/********^fire base************/
 allprojects {
     repositories {
         google()

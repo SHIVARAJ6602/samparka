@@ -10,14 +10,18 @@ class TempPage2 extends StatelessWidget {
         title: Text('Page Under Development'),
       ),
       body: Center(
-        child: Text(
-          'This page is under development.',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.blue,
-          ),
-        ),
+        child: Column(
+          children: [
+            Text(
+              'This page is under development.',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
+            ),
+          ],
+        )
       ),
     );
   }
