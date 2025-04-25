@@ -65,6 +65,9 @@ class _ChangeRequestPageState extends State<ChangeRequestPage> {
 
   late bool loading = true;
   late String GV_id = '';
+  List<dynamic> hashtags = [];
+  List<dynamic> selectedHashtags = [];
+  Set<int> selectedHashtagsIDs = {};
 
   Future<void> fetchShreni() async {
     try {
@@ -162,6 +165,88 @@ class _ChangeRequestPageState extends State<ChangeRequestPage> {
     }
   }
 
+  void getSelectedHashtags() {
+    // Store the names of selected hashtags only
+    selectedHashtags = hashtags
+        .where((hashtag) {
+      return selectedHashtagsIDs.contains(hashtag['id']);
+    })
+        .map((hashtag) => hashtag['name'])
+        .toList();
+
+    // Optionally, print or store the selected hashtag names
+    //print("Selected Hashtags Names: $selectedHashtags");
+  }
+
+  void toggleHashtagSelection(int id) {
+    setState(() {
+      if (selectedHashtagsIDs.contains(id)) {
+        selectedHashtagsIDs.remove(id);  // Deselect
+      } else {
+        selectedHashtagsIDs.add(id);  // Select
+      }
+      getSelectedHashtags();
+      print("selected hashtag IDs: $selectedHashtagsIDs , selected hashtags: $selectedHashtags");
+    });
+  }
+
+  Future<void> fetchHashtags() async {
+    try {
+      // Call the apiService.homePage() and store the result
+      result = await apiService.getHashtags();
+      setState(() {
+        hashtags = result;
+        print('hastags\'s $result');
+      });
+    } catch (e) {
+      print("Error fetching influencers: $e");
+    }
+  }
+
+  void addHashtagDialog() {
+    // Text editing controller to take input from user
+    TextEditingController newHashtagController = TextEditingController();
+
+    // Show dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Add New Hashtag'),
+          content: TextField(
+            controller: newHashtagController,
+            decoration: InputDecoration(hintText: 'Enter new hashtag name'),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                String newHashtagName = newHashtagController.text.trim();
+                if (newHashtagName.isNotEmpty) {
+                  // Create a new hashtag map with an incremented ID
+                  setState(() {
+                    hashtags.add({
+                      'id': hashtags.length + 1, // Simple way to increment ID
+                      'name': newHashtagName,
+                    });
+                    print('updated hastags: $hashtags');
+                  });
+                }
+                Navigator.pop(context); // Close the dialog
+              },
+              child: Text('Add'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close the dialog without adding
+              },
+              child: Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -174,6 +259,7 @@ class _ChangeRequestPageState extends State<ChangeRequestPage> {
     if(apiService.lvl>2){
       fetchShreni();
     }
+    fetchHashtags();
     // Initialize formData with default values if necessary
     Map<String, dynamic> formData = {
       "action": "CreateGanyaVyakti",
@@ -221,7 +307,10 @@ class _ChangeRequestPageState extends State<ChangeRequestPage> {
 
     apiService.UpdateGanyaVyakthi(updateData, GV_id).then((success) {
       String message = success ? "Update successful!" : "Update failed!";
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message),backgroundColor: success ? Colors.green : Colors.red,));
+      if (success){
+        Navigator.pop(context,true);
+      }
     });
   }
 
@@ -368,18 +457,43 @@ class _ChangeRequestPageState extends State<ChangeRequestPage> {
             const SizedBox(height: 16),
             _buildTextField(hint: "Designation", controller: designationController),
             const SizedBox(height: 16),
+            _buildTextField(hint: "Impact On Society - Not Set", controller: impactOnSocietyController),
+            const SizedBox(height: 16),
+            _buildTextField(hint: "Short description - Not Set", controller: descriptionController),
+            const SizedBox(height: 16),
             _buildTextField(hint: "E-mail Address", controller: emailController),
             const SizedBox(height: 16),
             _buildTextField(hint: "Phone Number", controller: phoneController),
             const SizedBox(height: 16),
             // Hashtag Section
             SingleChildScrollView(
-              scrollDirection: Axis.horizontal,  // Make the Row scrollable horizontally
+              scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
+                  // Wrap the tags in a Row to keep them in a single horizontal line
+                  if (hashtags.isNotEmpty)
+                    Row(
+                      children: List.generate(hashtags.length, (index) {
+                        bool isSelected = selectedHashtagsIDs.contains(hashtags[index]['id']);
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: GestureDetector(
+                            onTap: () {
+                              toggleHashtagSelection(hashtags[index]['id']);  // Toggle selection on tap
+                            },
+                            child: Chip(
+                              label: Text(hashtags[index]['name']),
+                              backgroundColor: isSelected ? Colors.green : Colors.blue[50],
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () {
-                      // Add hashtag functionality
+                      // Open the dialog to add a new hashtag
+                      addHashtagDialog();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
@@ -388,22 +502,9 @@ class _ChangeRequestPageState extends State<ChangeRequestPage> {
                       ),
                     ),
                     child: const Text(
-                      "+ Add Hashtags",
+                      "+ Add Hashtag",
                       style: TextStyle(color: Colors.white),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Wrap the tags in a Row instead of Wrap to keep them in a single horizontal line
-                  Row(
-                    children: List.generate(5, (index) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: Chip(
-                          label: Text("#Hash${index + 1}"),
-                          backgroundColor: Colors.blue[50],
-                        ),
-                      );
-                    }),
                   ),
                 ],
               ),

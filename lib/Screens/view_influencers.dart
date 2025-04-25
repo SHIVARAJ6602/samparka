@@ -174,6 +174,9 @@ class InfluencerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
+    double largeFontSize = normFontSize+4; //20
+    double smallFontSize = normFontSize-2; //14
     return Stack(
       children: [
         Container(
@@ -252,9 +255,9 @@ class InfluencerCard extends StatelessWidget {
                         },
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
-                            color: Colors.red,  // Placeholder color for invalid image URLs
+                            color: Colors.grey[200],  // Placeholder color for invalid image URLs
                             child: Center(
-                              child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                              child: Icon(Icons.error, color: Colors.grey[400]),  // Display error icon
                             ),
                           );
                         },
@@ -272,32 +275,46 @@ class InfluencerCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          name, // Dynamic name
-                          style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            color: Color.fromRGBO(5, 50, 70, 1.0),
-                          ),
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            double fontSize = largeFontSize + 6; // Default font size
+                            double availableWidth = name.length*largeFontSize;
+                            //print('$fontSize $availableWidth ${MediaQuery.of(context).size.width * 0.38*2}');
+
+                            if (availableWidth > MediaQuery.of(context).size.width * 0.38*2) {
+                              fontSize = normFontSize; // Adjust this to your needs
+                            }
+
+                            return Text(
+                              name,
+                              style: TextStyle(
+                                fontSize: fontSize, // Adjusted font size
+                                fontWeight: FontWeight.bold,
+                                color: Color.fromRGBO(5, 50, 70, 1.0),
+                              ),
+                              overflow: TextOverflow.ellipsis, // Truncate with ellipsis if the text overflows
+                              softWrap: false, // Prevent wrapping
+                            );
+                          },
                         ),
                         Text(
                           designation, // Dynamic designation
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: smallFontSize,
                             color: Color.fromRGBO(5, 50, 70, 1.0),
                           ),
                         ),
                         Text(
                           description, // Dynamic designation
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: smallFontSize,
                             color: Color.fromRGBO(5, 50, 70, 1.0),
                           ),
                         ),
                         Text(
                           hashtags, // Dynamic designation
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: smallFontSize,
                             color: Colors.teal,
                           ),
                         ),
@@ -329,7 +346,7 @@ class InfluencerCard extends StatelessWidget {
               child: Text(
                 soochi,  // The letter inside the circle
                 style: TextStyle(
-                  fontSize: 11,  // Font size for "L"
+                  fontSize: smallFontSize - 3,  // Font size for "L"
                   color: Colors.white,  // White color for the letter
                   fontWeight: FontWeight.bold,
                 ),
@@ -355,7 +372,7 @@ class InfluencerCard extends StatelessWidget {
               child: Text(
                 itrLvl,  // The letter inside the circle
                 style: TextStyle(
-                  fontSize: 11,  // Font size for "L"
+                  fontSize: smallFontSize - 3,  // Font size for "L"
                   color: Colors.white,  // White color for the letter
                   fontWeight: FontWeight.bold,
                 ),

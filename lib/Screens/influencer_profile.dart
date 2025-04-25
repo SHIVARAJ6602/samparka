@@ -334,7 +334,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
     print(widget.id);
     double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
     double largeFontSize = normFontSize+4; //20
-    double smallFontSize = normFontSize-2;
+    double smallFontSize = normFontSize-2; //14
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -367,8 +367,8 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                             Column(
                               children: [
                                 Container(
-                                  width: (MediaQuery.of(context).size.width * 0.80) / 4,  // 90% of screen width divided by 3 images
-                                  height: (MediaQuery.of(context).size.width * 0.80) / 4,  // Fixed height for each image
+                                  width: (MediaQuery.of(context).size.width * 0.80) / 3.0,  // 90% of screen width divided by 3 images
+                                  height: (MediaQuery.of(context).size.width * 0.80) / 3.0,  // Fixed height for each image
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(50),
                                     border: Border.all(color: Colors.grey.shade400),
@@ -412,9 +412,9 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                                       },
                                       errorBuilder: (context, error, stackTrace) {
                                         return Container(
-                                          color: Colors.red,  // Placeholder color for invalid image URLs
+                                          color: Colors.white,  // Placeholder color for invalid image URLs
                                           child: Center(
-                                            child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                                            child: Icon(Icons.error, color: Colors.grey),  // Display error icon
                                           ),
                                         );
                                       },
@@ -441,9 +441,9 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                                   children: [
                                     LayoutBuilder(
                                       builder: (context, constraints) {
-                                        double fontSize = 26; // Default font size
+                                        double fontSize = largeFontSize + 6; // Default font size
                                         double availableWidth = name.length*largeFontSize;
-                                        print('$fontSize $availableWidth ${MediaQuery.of(context).size.width * 0.38*2}');
+                                        //print('$fontSize $availableWidth ${MediaQuery.of(context).size.width * 0.38*2}');
 
                                         if (availableWidth > MediaQuery.of(context).size.width * 0.38*2) {
                                           fontSize = 16; // Adjust this to your needs

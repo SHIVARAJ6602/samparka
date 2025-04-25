@@ -193,6 +193,24 @@ class _InfluencersPageState extends State<InfluencersPage> {
       // Call the apiService.homePage() and store the result
       result = await apiService.get_unapproved_profiles();
       if (result.isNotEmpty) {
+        result.forEach((inf) {
+          if (inf['soochi'] == 'AkhilaBharthiya') {
+            inf['soochi'] = 'AB';
+          } else if (inf['soochi'] == 'PranthyaSampark') {
+            inf['soochi'] = 'PS';
+          } else if (inf['soochi'] == 'JillaSampark') {
+            inf['soochi'] = 'JS';
+          }
+          if (inf['interaction_level'] == 'Sampark') {
+            inf['interaction_level'] = 'S1';
+          } else if (inf['interaction_level'] == 'Sahavas') {
+            inf['interaction_level'] = 'S2';
+          } else if (inf['interaction_level'] == 'Samarthan') {
+            inf['interaction_level'] = 'S3';
+          } else if (inf['interaction_level'] == 'Sahabhag') {
+            inf['interaction_level'] = 'S4';
+          }
+        });
         setState(() {
           // Update the influencers list with the fetched data
           unApprovedInfluencers = result;
@@ -645,8 +663,8 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                       ),
                                                       child: ApprovalCard(
                                                         name: '${influencer['fname']} ${influencer['lname']}',
-                                                        designation: influencer['designation']!,
-                                                        description: influencer['description']!,
+                                                        designation: influencer['designation']??"Not Set",
+                                                        description: influencer['description']??"Not Set",
                                                         //hashtags: influencer['hashtags']!,
                                                         hashtags: '',
                                                         imageUrl: influencer['profile_image'] != null && influencer['profile_image']!.isNotEmpty
@@ -654,6 +672,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                             : '',
                                                         onPress: () {
                                                           setState(() {
+                                                            fetchTeam();
                                                             selectedIndex = index;
                                                             ApproveMember = unApprovedInfluencers[index];
                                                             print(ApproveMember);
@@ -661,6 +680,8 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                           });
                                                           print('Selected index: $selectedIndex'); // Print selected index
                                                         },
+                                                        soochi: influencer['soochi']??'',
+                                                        itrLvl: influencer['interaction_level']??'',
                                                       ),
                                                     ),
                                                   );
@@ -867,7 +888,8 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                   Row(
                                     children: [
                                       // Profile Picture (placeholder)
-                                      /*CircleAvatar(
+                                      /*
+                                      CircleAvatar(
                                     radius: MediaQuery.of(context).size.width * 0.10,
                                     backgroundColor: Colors.grey[200],
                                     //backgroundImage: ApproveMember.isNotEmpty ? NetworkImage(ApproveMember['profile_image']) : null,
@@ -879,25 +901,101 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                       size: MediaQuery.of(context).size.width * 0.14,
                                     )
                                         : null,
-                                  ),*/
+                                  ),
+                                      */
+                                      Container(
+                                        width: (MediaQuery.of(context).size.width * 0.80) / 4.3,  // 90% of screen width divided by 3 images
+                                        height: (MediaQuery.of(context).size.width * 0.80) / 4.3,  // Fixed height for each image
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(50),
+                                          border: Border.all(color: Colors.grey.shade400),
+                                          color: Colors.grey[200],
+                                          boxShadow: [
+                                            if (ApproveMember.isNotEmpty && (ApproveMember['profile_image'] ?? '').isNotEmpty)
+                                              BoxShadow(
+                                                color: Colors.white10.withOpacity(0.5), // Grey shadow color with opacity
+                                                spreadRadius: 1, // Spread radius of the shadow
+                                                blurRadius: 6, // Blur radius of the shadow
+                                                offset: Offset(0, 4), // Shadow position (x, y)
+                                              ),
+                                            if (ApproveMember.isNotEmpty && (ApproveMember['profile_image'] ?? '').isEmpty)
+                                              BoxShadow(
+                                                color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
+                                                spreadRadius: 1, // Spread radius of the shadow
+                                                blurRadius: 3, // Blur radius of the shadow
+                                                offset: Offset(0, 4), // Shadow position (x, y)
+                                              ),
+                                          ],
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(50),
+                                          child: (ApproveMember.isNotEmpty && (ApproveMember['profile_image'] ?? '').isNotEmpty)
+                                              ? Image.network(
+                                            ApproveMember['profile_image'],  // Ensure the URL is encoded
+                                            fit: BoxFit.cover,
+                                            loadingBuilder: (context, child, loadingProgress) {
+                                              if (loadingProgress == null) {
+                                                return child;  // Image loaded successfully
+                                              } else {
+                                                return Center(
+                                                  child: CircularProgressIndicator(
+                                                    value: loadingProgress.expectedTotalBytes != null
+                                                        ? loadingProgress.cumulativeBytesLoaded /
+                                                        (loadingProgress.expectedTotalBytes ?? 1)
+                                                        : null,
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return Container(
+                                                color: Colors.red,  // Placeholder color for invalid image URLs
+                                                child: Center(
+                                                  child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                                                ),
+                                              );
+                                            },
+                                          )
+                                              : Icon(
+                                            Icons.person,
+                                            color: Colors.white,
+                                            size: MediaQuery.of(context).size.width * 0.14,
+                                          ),
+                                        ),
+                                      ),
                                       SizedBox(width: 16),
                                       // Influencer Details
                                       Expanded(
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Text(
-                                              '${ApproveMember['fname']} ${ApproveMember['lname']}'??'', // Dynamic name
-                                              style: TextStyle(
-                                                fontSize: largeFontSize + 6,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white,
-                                              ),
+                                            LayoutBuilder(
+                                              builder: (context, constraints) {
+                                                double fontSize = largeFontSize + 6; // Default font size
+                                                var tmpname = "${ApproveMember['fname']} ${ApproveMember['lname']}"??'';
+                                                double availableWidth = tmpname.length*largeFontSize;
+                                                print('$fontSize $availableWidth ${MediaQuery.of(context).size.width * 0.38*2}');
+
+                                                if (availableWidth > MediaQuery.of(context).size.width * 0.38*2) {
+                                                  fontSize = normFontSize; // Adjust this to your needs
+                                                }
+
+                                                return Text(
+                                                  tmpname,
+                                                  style: TextStyle(
+                                                    fontSize: fontSize, // Adjusted font size
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis, // Truncate with ellipsis if the text overflows
+                                                  softWrap: false, // Prevent wrapping
+                                                );
+                                              },
                                             ),
                                             Row(
                                               children: [
                                                 Text(
-                                                  ApproveMember['designation']??'', // Dynamic designation
+                                                  ApproveMember['designation']??'',
                                                   style: TextStyle(
                                                     fontSize: smallFontSize,
                                                     color: Colors.white,
@@ -913,7 +1011,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                     )),
                                                 SizedBox(width: 5),
                                                 Text(
-                                                  'shreni', // Dynamic designation
+                                                  'shreni',
                                                   style: TextStyle(
                                                     fontSize: smallFontSize,
                                                     color: Colors.white,
@@ -923,7 +1021,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                             ),
                                             SizedBox(height: 1),
                                             Text(
-                                              ApproveMember['description']??'', // Dynamic description
+                                              ApproveMember['description']??'',
                                               style: TextStyle(
                                                 fontSize: smallFontSize - 2,
                                                 color: Colors.white,
@@ -933,7 +1031,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                             ),
                                             SizedBox(height: 1),
                                             Text(
-                                              'hashtags', // Dynamic hashtags
+                                              'hashtags',
                                               style: TextStyle(
                                                 fontSize: smallFontSize - 2,
                                                 color: Colors.teal,
@@ -945,11 +1043,10 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                     ],
                                   ),
                                   SizedBox(height: 8),
-
                                   // List of Team Members (Selectable)
                                   Center(
                                     child: Container(
-                                      height: MediaQuery.of(context).size.height * 0.38,
+                                      height: MediaQuery.of(context).size.height * 0.40,
                                       width: MediaQuery.of(context).size.width * 0.85,
                                       child: ListView.builder(
                                         padding: const EdgeInsets.all(1),
@@ -969,6 +1066,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                 first_name: member['first_name']!,
                                                 last_name: member['last_name']!,
                                                 designation: member['designation']!,
+                                                description: member['description']??"Not Set",
                                                 profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
                                                     ? member['profile_image']!
                                                     : '',
@@ -1089,17 +1187,48 @@ class _InfluencersPageState extends State<InfluencersPage> {
                               top: 15,
                               right: 15,
                               child: Container(
-                                width: 30,  // Diameter of the circle
-                                height: 30,
+                                width: 22,  // Diameter of the circle
+                                height: 22,
+                                decoration: BoxDecoration(
+                                  color: Color.fromRGBO(59, 171, 144, 1.0),  // Blue background color
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: const Color.fromRGBO(198, 198, 198, 1.0), // Border color
+                                    width: 0.8, // Border width
+                                  ),
+                                ),
+
+                                child: Center(
+                                  child: Text(
+                                    ApproveMember['soochi']??'',  // The letter inside the circle
+                                    style: TextStyle(
+                                      fontSize: smallFontSize - 3,  // Font size for "L"
+                                      color: Colors.white,  // White color for the letter
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 15,
+                              right: 32,
+                              child: Container(
+                                width: 22,  // Diameter of the circle
+                                height: 22,
                                 decoration: BoxDecoration(
                                   color: Colors.blue,  // Blue background color
                                   shape: BoxShape.circle,  // Make it a circle
+                                  border: Border.all(
+                                    color: const Color.fromRGBO(198, 198, 198, 1.0), // Border color
+                                    width: 0.8, // Border width
+                                  ),
                                 ),
                                 child: Center(
                                   child: Text(
-                                    'L1',  // The letter inside the circle
+                                    ApproveMember['interaction_level']??'',  // The letter inside the circle
                                     style: TextStyle(
-                                      fontSize: smallFontSize,  // Font size for "L"
+                                      fontSize: smallFontSize - 3,  // Font size for "L"
                                       color: Colors.white,  // White color for the letter
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -1293,12 +1422,13 @@ class _InfluencersPageState extends State<InfluencersPage> {
                       isActive: _selectedIndex == 1,
                       onPressed: () => _onNavItemTapped(1),
                     ),
-                    _buildBottomNavItem(
-                      label: "Events",
-                      iconPath: 'assets/icon/meeting.png',  // Use the PNG file path
-                      isActive: _selectedIndex == 2,
-                      onPressed: () => _onNavItemTapped(2),
-                    ),
+                    if(apiService.lvl>2)
+                      _buildBottomNavItem(
+                        label: "Events",
+                        iconPath: 'assets/icon/meeting.png',  // Use the PNG file path
+                        isActive: _selectedIndex == 2,
+                        onPressed: () => _onNavItemTapped(2),
+                      ),
                     if(apiService.lvl>2)
                       _buildBottomNavItem(
                         label: "Report",
@@ -1311,7 +1441,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                         label: "Profile",
                         iconPath: 'assets/icon/report.png',  // Use the PNG file path
                         isActive: _selectedIndex == 5,
-                        onPressed: () => _onNavItemTapped(3),
+                        onPressed: () => _onNavItemTapped(5),
                       ),
                     /*_buildBottomNavItem(
                   label: "API",
@@ -1537,9 +1667,9 @@ class InfluencerCard extends StatelessWidget {
                           },
                           errorBuilder: (context, error, stackTrace) {
                             return Container(
-                              color: Colors.red,  // Placeholder color for invalid image URLs
+                              color: Colors.white,  // Placeholder color for invalid image URLs
                               child: Center(
-                                child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                                child: Icon(Icons.error, color: Colors.grey),  // Display error icon
                               ),
                             );
                           },
@@ -1660,6 +1790,8 @@ class ApprovalCard extends StatelessWidget {
   final String description;
   final String hashtags;
   final String imageUrl;
+  final String soochi;
+  final String itrLvl;
   final VoidCallback onPress; // Callback to handle button press
 
   const ApprovalCard({
@@ -1669,7 +1801,9 @@ class ApprovalCard extends StatelessWidget {
     required this.description,
     required this.hashtags,
     required this.imageUrl,
-    required this.onPress, // Handle button press in parent
+    required this.onPress,
+    required this.soochi,
+    required this.itrLvl, // Handle button press in parent
   });
 
   @override
@@ -1680,162 +1814,232 @@ class ApprovalCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          // First Row: Profile Picture and Influencer Details
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Profile Picture (placeholder)
-              Container(
-                width: (MediaQuery.of(context).size.width * 0.80) / 5,  // 90% of screen width divided by 3 images
-                height: (MediaQuery.of(context).size.width * 0.80) / 5,  // Fixed height for each image
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(50),
-                  border: Border.all(color: Colors.grey.shade400),
-                  color: Colors.grey[200],
-                  boxShadow: [
-                    if(imageUrl.isNotEmpty)
-                      BoxShadow(
-                        color: Color.fromRGBO(5, 50, 70, 1.0).withOpacity(0.5), // Grey shadow color with opacity
-                        spreadRadius: 1, // Spread radius of the shadow
-                        blurRadius: 7, // Blur radius of the shadow
-                        offset: Offset(0, 4), // Shadow position (x, y)
-                      ),
-                    if(imageUrl.isEmpty)
-                      BoxShadow(
-                        color: Color.fromRGBO(59, 171, 144, 1.0).withOpacity(0.5), // Grey shadow color with opacity
-                        spreadRadius: 1, // Spread radius of the shadow
-                        blurRadius: 7, // Blur radius of the shadow
-                        offset: Offset(0, 2), // Shadow position (x, y)
-                      ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(50),
-                  child: (imageUrl.isNotEmpty)
-                      ? Image.network(
-                    imageUrl,  // Ensure the URL is encoded
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) {
-                        return child;  // Image loaded successfully
-                      } else {
-                        return Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                (loadingProgress.expectedTotalBytes ?? 1)
-                                : null,
+              // First Row: Profile Picture and Influencer Details
+              Row(
+                children: [
+                  // Profile Picture (placeholder)
+                  Container(
+                    width: (MediaQuery.of(context).size.width * 0.80) / 5,  // 90% of screen width divided by 3 images
+                    height: (MediaQuery.of(context).size.width * 0.80) / 5,  // Fixed height for each image
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(50),
+                      border: Border.all(color: Colors.grey.shade400),
+                      color: Colors.grey[200],
+                      boxShadow: [
+                        if(imageUrl.isNotEmpty)
+                          BoxShadow(
+                            color: Color.fromRGBO(5, 50, 70, 1.0).withOpacity(0.5), // Grey shadow color with opacity
+                            spreadRadius: 1, // Spread radius of the shadow
+                            blurRadius: 7, // Blur radius of the shadow
+                            offset: Offset(0, 4), // Shadow position (x, y)
                           ),
-                        );
-                      }
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.red,  // Placeholder color for invalid image URLs
-                        child: Center(
-                          child: Icon(Icons.error, color: Colors.white),  // Display error icon
-                        ),
-                      );
-                    },
-                  )
-                      : Icon(
-                    Icons.person,
-                    color: Colors.white,
-                    size: MediaQuery.of(context).size.width * 0.14,
-                  ),
-                ),
-              ),
-              SizedBox(width: 16),
-              // Influencer Details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name, // Dynamic name
-                      style: TextStyle(
-                        fontSize: largeFontSize + 6,
-                        fontWeight: FontWeight.bold,
+                        if(imageUrl.isEmpty)
+                          BoxShadow(
+                            color: Color.fromRGBO(59, 171, 144, 1.0).withOpacity(0.5), // Grey shadow color with opacity
+                            spreadRadius: 1, // Spread radius of the shadow
+                            blurRadius: 7, // Blur radius of the shadow
+                            offset: Offset(0, 2), // Shadow position (x, y)
+                          ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(50),
+                      child: (imageUrl.isNotEmpty)
+                          ? Image.network(
+                        imageUrl,  // Ensure the URL is encoded
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) {
+                            return child;  // Image loaded successfully
+                          } else {
+                            return Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                    (loadingProgress.expectedTotalBytes ?? 1)
+                                    : null,
+                              ),
+                            );
+                          }
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.white,  // Placeholder color for invalid image URLs
+                            child: Center(
+                              child: Icon(Icons.error, color: Colors.grey),  // Display error icon
+                            ),
+                          );
+                        },
+                      )
+                          : Icon(
+                        Icons.person,
                         color: Colors.white,
+                        size: MediaQuery.of(context).size.width * 0.14,
                       ),
                     ),
-                    Text(
-                      designation, // Dynamic designation
-                      style: TextStyle(
-                        fontSize: smallFontSize,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 1),
-                    Text(
-                      description, // Dynamic description
-                      style: TextStyle(
-                        fontSize: smallFontSize - 2,
-                        color: Colors.white,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 1),
-                    Text(
-                      hashtags, // Dynamic hashtags
-                      style: TextStyle(
-                        fontSize: smallFontSize - 2,
-                        color: Colors.teal,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8), // Space between the two rows
-          // Second Row: Approval Button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center, // Align button to the end
-            children: [
-              Container(
-                width: MediaQuery.of(context).size.width * 0.65,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  gradient: const LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      Color.fromRGBO(133, 1, 1, 1.0),
-                      Color.fromRGBO(237, 62, 62, 1.0),
-                    ],
                   ),
-                ),
-                child: TextButton(
-                  onPressed: onPress, // Trigger the parent function
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.all(10),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  SizedBox(width: 16),
+                  // Influencer Details
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            double fontSize = largeFontSize + 4; // Default font size
+                            double availableWidth = name.length*largeFontSize;
+                            //print('$fontSize $availableWidth ${MediaQuery.of(context).size.width * 0.38*2}');
+
+                            if (availableWidth > MediaQuery.of(context).size.width * 0.38*2) {
+                              fontSize = normFontSize; // Adjust this to your needs
+                            }
+
+                            return Text(
+                              name,
+                              style: TextStyle(
+                                fontSize: fontSize, // Adjusted font size
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                              overflow: TextOverflow.ellipsis, // Truncate with ellipsis if the text overflows
+                              softWrap: false, // Prevent wrapping
+                            );
+                          },
+                        ),
                         Text(
-                          'Approve and Assign',
+                          designation,
                           style: TextStyle(
-                            fontSize: largeFontSize,
+                            fontSize: smallFontSize,
                             color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 1),
+                        Text(
+                          description,
+                          style: TextStyle(
+                            fontSize: smallFontSize - 2,
+                            color: Colors.white,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: 1),
+                        Text(
+                          hashtags,
+                          style: TextStyle(
+                            fontSize: smallFontSize - 2,
+                            color: Colors.teal,
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
+                ],
+              ),
+              SizedBox(height: 8),
+              // Second Row: Approval Button
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center, // Align button to the end
+                children: [
+                  Container(
+                    width: MediaQuery.of(context).size.width * 0.65,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      gradient: const LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          Color.fromRGBO(133, 1, 1, 1.0),
+                          Color.fromRGBO(237, 62, 62, 1.0),
+                        ],
+                      ),
+                    ),
+                    child: TextButton(
+                      onPressed: onPress, // Trigger the parent function
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.all(10),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Approve and Assign',
+                              style: TextStyle(
+                                fontSize: largeFontSize,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Container(
+              width: 18,  // Diameter of the circle
+              height: 18,
+              decoration: BoxDecoration(
+                color: Color.fromRGBO(59, 171, 144, 1.0),  // Blue background color
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color.fromRGBO(198, 198, 198, 1.0), // Border color
+                  width: 0.8, // Border width
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  soochi,  // The letter inside the circle
+                  style: TextStyle(
+                    fontSize: smallFontSize - 3,  // Font size for "L"
+                    color: Colors.white,  // White color for the letter
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 0,
+            right: 13,
+            child: Container(
+              width: 18,  // Diameter of the circle
+              height: 18,
+              decoration: BoxDecoration(
+                color: Colors.blue,  // Blue background color
+                shape: BoxShape.circle,  // Make it a circle
+                border: Border.all(
+                  color: const Color.fromRGBO(198, 198, 198, 1.0), // Border color
+                  width: 0.8, // Border width
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  itrLvl,  // The letter inside the circle
+                  style: TextStyle(
+                    fontSize: smallFontSize-3,  // Font size for "L"
+                    color: Colors.white,  // White color for the letter
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
-      ),
+      )
     );
   }
 }
@@ -1915,9 +2119,9 @@ class AssignCard extends StatelessWidget {
                     },
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
-                        color: Colors.red,  // Placeholder color for invalid image URLs
+                        color: Colors.white,  // Placeholder color for invalid image URLs
                         child: Center(
-                          child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                          child: Icon(Icons.error, color: Colors.grey),  // Display error icon
                         ),
                       );
                     },
@@ -1935,16 +2139,30 @@ class AssignCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      name, // Dynamic name
-                      style: TextStyle(
-                        fontSize: largeFontSize+6,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        double fontSize = largeFontSize + 6; // Default font size
+                        double availableWidth = name.length*largeFontSize;
+                        //print('$fontSize $availableWidth ${MediaQuery.of(context).size.width * 0.38*2}');
+
+                        if (availableWidth > MediaQuery.of(context).size.width * 0.38*2) {
+                          fontSize = normFontSize; // Adjust this to your needs
+                        }
+
+                        return Text(
+                          name,
+                          style: TextStyle(
+                            fontSize: fontSize, // Adjusted font size
+                            fontWeight: FontWeight.bold,
+                            color: Color.fromRGBO(5, 50, 70, 1.0),
+                          ),
+                          overflow: TextOverflow.ellipsis, // Truncate with ellipsis if the text overflows
+                          softWrap: false, // Prevent wrapping
+                        );
+                      },
                     ),
                     Text(
-                      designation, // Dynamic designation
+                      designation,
                       style: TextStyle(
                         fontSize: smallFontSize,
                         color: Colors.white,
@@ -1952,7 +2170,7 @@ class AssignCard extends StatelessWidget {
                     ),
                     SizedBox(height: 1),
                     Text(
-                      description, // Dynamic description
+                      description,
                       style: TextStyle(
                         fontSize: smallFontSize-2,
                         color: Colors.white,
@@ -1962,7 +2180,7 @@ class AssignCard extends StatelessWidget {
                     ),
                     SizedBox(height: 1),
                     Text(
-                      hashtags, // Dynamic hashtags
+                      hashtags,
                       style: TextStyle(
                         fontSize: smallFontSize-2,
                         color: Colors.teal,
@@ -1973,10 +2191,10 @@ class AssignCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 8), // Space between the two rows
+          SizedBox(height: 8),
           // Second Row: Approval Button
           Row(
-            mainAxisAlignment: MainAxisAlignment.center, // Align button to the end
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
                 width: MediaQuery.of(context).size.width*0.65,
@@ -2027,6 +2245,7 @@ class MemberCard extends StatelessWidget {
   final String first_name;
   final String last_name;
   final String designation;
+  final String description;
   final String profileImage;
   final bool isSelected;
 
@@ -2038,6 +2257,7 @@ class MemberCard extends StatelessWidget {
     required this.designation,
     required this.profileImage,
     required this.isSelected,
+    required this.description,
   });
 
   @override

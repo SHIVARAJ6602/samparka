@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:samparka/Screens/upload_kr_excel.dart';
 import 'package:samparka/Service/api_service.dart';
 
 class RegisterUserPage extends StatefulWidget {
@@ -188,9 +189,13 @@ class _RegisterUserState extends State<RegisterUserPage> {
 
   @override
   Widget build(BuildContext context) {
+    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
+    double largeFontSize = normFontSize+4; //20
+    double smallFontSize = normFontSize-2; //14
     return Scaffold(
       appBar: AppBar(
-        title: Text("User Registration"),
+        //title: Text("User Registration"),
+        title: Text(" "),
       ),
       body: Stack(
         children: [
@@ -199,6 +204,92 @@ class _RegisterUserState extends State<RegisterUserPage> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween, // Distribute space between the columns
+                    children: [
+                      // First Column: "Add New" and "Influencer"
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start, // Align the text to the start
+                        children: [
+                          Text(
+                            "Register New",
+                            style: TextStyle(
+                              fontSize: largeFontSize,
+                              fontWeight: FontWeight.w600,
+                              color: const Color.fromRGBO(5, 50, 70, 1.0),
+                            ),
+                          ),
+                          Text(
+                            "Karyakartha",
+                            style: TextStyle(
+                              fontSize: largeFontSize * 2,
+                              fontWeight: FontWeight.bold,
+                              color: const Color.fromRGBO(5, 50, 70, 1.0),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Expanded(child: SizedBox()),
+                      // Second Column: Button with Upload and Rotated Arrow Icon (pushed to the right)
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          gradient: const LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: [
+                              Color.fromRGBO(16, 115, 65, 1.0),
+                              Color.fromRGBO(60, 170, 145, 1.0)
+                            ],
+                          ),
+                        ),
+                        child: Align(
+                          alignment: Alignment.centerRight,  // Align the button to the right
+                          child: TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => UploadKRExcel()),
+                                );
+                              },
+                              style: TextButton.styleFrom(
+                                //backgroundColor: Colors.blue, // Background color for the button
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12), // Rounded corners for the button
+                                ),
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.all(6),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center, // Center the row content inside the button
+                                  children: [
+                                    Text(
+                                      'Upload Excel',
+                                      style: TextStyle(
+                                        fontSize: normFontSize,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),  // Add space between the text and the image
+                                    Transform.rotate(
+                                      angle: 4.7124,  // Rotate the arrow 90 degrees
+                                      child: Image.asset(
+                                        'assets/icon/arrow.png',
+                                        color: Colors.white,
+                                        width: 15,  // Adjust the size of the image
+                                        height: 15, // Adjust the size of the image
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10),
                   //profile Pic
                   Center(
                     child: Stack(

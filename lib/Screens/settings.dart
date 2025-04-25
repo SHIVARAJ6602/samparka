@@ -137,7 +137,7 @@ class _SettingsPageState extends State<SettingsPage> {
           SizedBox(height: 30),
           // Username Section
           Text(
-            'Username: $username',
+            'Username: ${apiService.first_name} ${apiService.last_name}',
             style: TextStyle(fontSize: largeFontSize, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 8),

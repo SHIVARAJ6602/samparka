@@ -77,8 +77,21 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
     bool status = await apiService.submitReport(widget.id, widget.type, _imageFiles, reportDataController.text);
     if(status){
       print('successful');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Event Scheduled'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context,true);
     }else{
       print('failed');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed TO Schedule Event'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 

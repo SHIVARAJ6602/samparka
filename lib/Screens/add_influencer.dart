@@ -231,8 +231,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
   }
 
   void registerInfluencer() {
-    setState(() {
-
+    setState(() async {
       List<dynamic> registrationData = [
         phoneController.text,//0
         fnameController.text,//1
@@ -251,12 +250,25 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
         _image!,//14
         selectedShreniId,//15
       ];
-      print(_image);
+      bool result = await apiService.CreateGanyaVyakthi(registrationData);
 
-      apiService.CreateGanyaVyakthi(registrationData);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("User registered successfully!")),
-      );
+      if (result){
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ganyavyakthi registered successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context,true);
+      }
+      else{
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to Register Ganyavyakthi!'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     });
   }
 
@@ -290,20 +302,20 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start, // Align the text to the start
                   children: [
-                    const Text(
+                    Text(
                       "Add New",
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: largeFontSize,
                         fontWeight: FontWeight.w600,
-                        color: Color.fromRGBO(5, 50, 70, 1.0),
+                        color: const Color.fromRGBO(5, 50, 70, 1.0),
                       ),
                     ),
-                    const Text(
+                    Text(
                       "Influencer",
                       style: TextStyle(
-                        fontSize: 40,
+                        fontSize: largeFontSize * 2,
                         fontWeight: FontWeight.bold,
-                        color: Color.fromRGBO(5, 50, 70, 1.0),
+                        color: const Color.fromRGBO(5, 50, 70, 1.0),
                       ),
                     ),
                   ],
@@ -342,10 +354,10 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center, // Center the row content inside the button
                           children: [
-                            const Text(
+                            Text(
                               'Upload',
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: normFontSize,
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -472,6 +484,10 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
             const SizedBox(height: 16),
             _buildTextField(hint: "Designation", controller: designationController),
             const SizedBox(height: 16),
+            _buildTextField(hint: "Impact On Society", controller: impactOnSocietyController),
+            const SizedBox(height: 16),
+            _buildTextField(hint: "Short description", controller: descriptionController),
+            const SizedBox(height: 16),
             _buildTextField(hint: "E-mail Address", controller: emailController),
             const SizedBox(height: 16),
             _buildTextField(hint: "Phone Number", controller: phoneController),
@@ -521,7 +537,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
               ),
             ),
             const SizedBox(height: 24),
-            _buildTextField(hint: "Address 1", controller: address1Controller),
+            _buildTextField(hint: "Address", controller: address1Controller),
             const SizedBox(height: 16),
             Row(
               children: [

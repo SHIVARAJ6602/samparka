@@ -100,7 +100,7 @@ class _TeamPageState extends State<TeamPage> {
     try {
       // Call the apiService.homePage() and store the result
       result = await apiService.mySupervisor();
-      //print('$result');
+      print('$result');
       setState(() {
         // Update the influencers list with the fetched data
         supervisor = result;
@@ -115,7 +115,7 @@ class _TeamPageState extends State<TeamPage> {
     try {
       // Call the apiService.homePage() and store the result
       result = await apiService.myLead();
-      //print('$result');
+      print('$result');
       setState(() {
         // Update the influencers list with the fetched data
         lead = result;
@@ -452,7 +452,7 @@ class _TeamPageState extends State<TeamPage> {
                                                         crossAxisAlignment: CrossAxisAlignment.start,
                                                         children: [
                                                           Text(
-                                                            supervisor[0]['first_name']!, // Dynamic name
+                                                            "${supervisor[0]['first_name']!} ${supervisor[0]['last_name']}", // Dynamic name
                                                             style: TextStyle(
                                                               fontSize: largeFontSize+6,
                                                               fontWeight: FontWeight.bold,
@@ -460,7 +460,7 @@ class _TeamPageState extends State<TeamPage> {
                                                             ),
                                                           ),
                                                           Text(
-                                                            supervisor[0]['last_name'], // Dynamic designation
+                                                            supervisor[0]['designation']??'', // Dynamic designation
                                                             style: TextStyle(
                                                               fontSize: smallFontSize,
                                                               color: Colors.white,
@@ -468,7 +468,7 @@ class _TeamPageState extends State<TeamPage> {
                                                           ),
                                                           SizedBox(height: 1),
                                                           Text(
-                                                            supervisor[0]['designation']??"", // Dynamic description
+                                                            supervisor[0]['district']??"", // Dynamic description
                                                             style: TextStyle(
                                                               fontSize: smallFontSize-2,
                                                               color: Colors.white,
@@ -484,6 +484,172 @@ class _TeamPageState extends State<TeamPage> {
                                               ]
                                           ),
                                         ),
+                                    ],
+                                  ),
+                                ),
+                                //My Shreni Pramukh
+                                if(apiService.lvl<2)
+                                Container(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      //My Supervisor / Pramukh
+                                      Text(
+                                        'My Sherni Pramukh',
+                                        style: TextStyle(
+                                          fontSize: largeFontSize*1.5,
+                                          fontWeight: FontWeight.bold,
+                                          color: const Color.fromRGBO(5, 50, 70, 1.0),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 1),
+                                      //My Shreni Pramukh Pramukh
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          //borderRadius: BorderRadius.circular(30),
+                                          borderRadius: lead.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
+                                          gradient: const LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              Color.fromRGBO(60, 170, 145, 1.0),
+                                              Color.fromRGBO(2, 40, 60, 1),
+                                            ],
+                                          ),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            // If the list is empty, show a message
+                                            if (lead.isEmpty)
+                                              Container(
+                                                padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    'No Shreni Pramukh Assigned',
+                                                    style: TextStyle(
+                                                      fontSize: largeFontSize,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                            // If the list is not empty, build a ListView of InfluencerCards
+                                            else
+                                              Container(
+                                                padding: const EdgeInsets.all(16),
+                                                child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      // First Row: Profile Picture and Influencer Details
+                                                      Row(
+                                                        children: [
+                                                          // Profile Picture (placeholder)
+                                                          Container(
+                                                            width: (MediaQuery.of(context).size.width * 0.80) / 5,  // 90% of screen width divided by 3 images
+                                                            height: (MediaQuery.of(context).size.width * 0.80) / 5,  // Fixed height for each image
+                                                            decoration: BoxDecoration(
+                                                              borderRadius: BorderRadius.circular(50),
+                                                              border: Border.all(color: Colors.grey.shade400),
+                                                              color: Colors.grey[200],
+                                                              boxShadow: [
+                                                                if (lead.isNotEmpty && (lead[0]['profile_image'] ?? '').isNotEmpty)
+                                                                  BoxShadow(
+                                                                    color: Colors.white10.withOpacity(0.5), // Grey shadow color with opacity
+                                                                    spreadRadius: 1, // Spread radius of the shadow
+                                                                    blurRadius: 6, // Blur radius of the shadow
+                                                                    offset: Offset(0, 4), // Shadow position (x, y)
+                                                                  ),
+                                                                if (lead.isNotEmpty && (lead[0]['profile_image'] ?? '').isEmpty)
+                                                                  BoxShadow(
+                                                                    color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
+                                                                    spreadRadius: 1, // Spread radius of the shadow
+                                                                    blurRadius: 3, // Blur radius of the shadow
+                                                                    offset: Offset(0, 4), // Shadow position (x, y)
+                                                                  ),
+                                                              ],
+                                                            ),
+                                                            child: ClipRRect(
+                                                              borderRadius: BorderRadius.circular(50),
+                                                              child: (lead.isNotEmpty && (lead[0]['profile_image'] ?? '').isNotEmpty)
+                                                                  ? Image.network(
+                                                                lead[0]['profile_image'],  // Ensure the URL is encoded
+                                                                fit: BoxFit.cover,
+                                                                loadingBuilder: (context, child, loadingProgress) {
+                                                                  if (loadingProgress == null) {
+                                                                    return child;  // Image loaded successfully
+                                                                  } else {
+                                                                    return Center(
+                                                                      child: CircularProgressIndicator(
+                                                                        value: loadingProgress.expectedTotalBytes != null
+                                                                            ? loadingProgress.cumulativeBytesLoaded /
+                                                                            (loadingProgress.expectedTotalBytes ?? 1)
+                                                                            : null,
+                                                                      ),
+                                                                    );
+                                                                  }
+                                                                },
+                                                                errorBuilder: (context, error, stackTrace) {
+                                                                  return Container(
+                                                                    color: Colors.red,  // Placeholder color for invalid image URLs
+                                                                    child: Center(
+                                                                      child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                                                                    ),
+                                                                  );
+                                                                },
+                                                              )
+                                                                  : Icon(
+                                                                Icons.person,
+                                                                color: Colors.white,
+                                                                size: MediaQuery.of(context).size.width * 0.14,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          SizedBox(width: 16),
+                                                          // Influencer Details
+                                                          Expanded(
+                                                            child: Column(
+                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                              children: [
+                                                                Text(
+                                                                  "${lead[0]['first_name']} ${lead[0]['last_name']}", // Dynamic name
+                                                                  style: TextStyle(
+                                                                    fontSize: largeFontSize+6,
+                                                                    fontWeight: FontWeight.bold,
+                                                                    color: Colors.white,
+                                                                  ),
+                                                                ),
+                                                                Text(
+                                                                  lead[0]['designation'],
+                                                                  style: TextStyle(
+                                                                    fontSize: smallFontSize,
+                                                                    color: Colors.white,
+                                                                  ),
+                                                                ),
+                                                                SizedBox(height: 1),
+                                                                Text(
+                                                                  lead[0]['district']??"",
+                                                                  style: TextStyle(
+                                                                    fontSize: smallFontSize-2,
+                                                                    color: Colors.white,
+                                                                  ),
+                                                                  maxLines: 2,
+                                                                  overflow: TextOverflow.ellipsis,
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ]
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),

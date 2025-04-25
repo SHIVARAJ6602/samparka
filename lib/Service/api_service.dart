@@ -1432,10 +1432,18 @@ class ApiService {
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           ) == true) {
         // Get external directory
-        final directory = Directory('/storage/emulated/0/Download/samparka');
-        await directory.create(recursive: true);
+        String fileName = 'failed_ganyavyakthi_uploads.xlsx';
+        var exPath = await _getExternalDirectory();
+        await Directory(exPath).create(recursive: true);
+        print("Saved Path: $exPath");
+        String filePath = '$exPath/$fileName';
 
-        final filePath = '${directory.path}/failed_ganyavyakthi_uploads.xlsx';
+        int count = 1;
+        while (await File(filePath).exists()) {
+          filePath = '$exPath/failed_ganyavyakthi_uploads_${count}.xlsx';
+          count++;
+        }
+
         final File failedFile = File(filePath);
         await failedFile.writeAsBytes(response.data);
 
@@ -1449,6 +1457,56 @@ class ApiService {
 
     } catch (e) {
       print("Error during addGV: $e");
+      return null;
+    }
+  }
+
+  Future<File?> addKR(File file) async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      FormData formData = FormData.fromMap({
+        'action': 'add_Karyakartha_Excel',
+        'file': await MultipartFile.fromFile(file.path, filename: file.uri.pathSegments.last),
+      });
+
+      final response = await dio.post(
+        '$baseUrl/callHandler/',
+        data: formData,
+        options: Options(responseType: ResponseType.bytes), // Expect bytes if Excel returned
+      );
+
+      // If the response is an Excel file (failures present)
+      if (response.statusCode == 200 &&
+          response.headers.map['content-type']?.contains(
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          ) == true) {
+        // Get external directory
+        String fileName = 'failed_Karyakartha_uploads.xlsx';
+        var exPath = await _getExternalDirectory();
+        await Directory(exPath).create(recursive: true);
+        print("Saved Path: $exPath");
+        String filePath = '$exPath/$fileName';
+
+        int count = 1;
+        while (await File(filePath).exists()) {
+          filePath = '$exPath/failed_Karyakartha_uploads_${count}.xlsx';
+          count++;
+        }
+
+        final File failedFile = File(filePath);
+        await failedFile.writeAsBytes(response.data);
+
+        print("Failed Excel saved to: $filePath");
+        return failedFile;
+      }
+
+      // If upload is successful and no file is returned
+      print("File uploaded successfully with no failures.");
+      return null;
+
+    } catch (e) {
+      print("Error during addKR: $e");
       return null;
     }
   }

@@ -350,9 +350,9 @@ class _ViewEventPageState extends State<ViewEventPage> {
                                         },
                                         errorBuilder: (context, error, stackTrace) {
                                           return Container(
-                                            color: Colors.red,
+                                            color: Colors.white,
                                             child: Center(
-                                              child: Icon(Icons.error, color: Colors.white),
+                                              child: Icon(Icons.error, color: Colors.grey),
                                             ),
                                           );
                                         },
