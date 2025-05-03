@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 
 import '../Service/api_service.dart';
+import '../widgets/influencer_card.dart';
 import 'user_profile_page.dart';
 import 'influencer_profile.dart';
 
@@ -403,6 +404,7 @@ class _ViewEventPageState extends State<ViewEventPage> {
                                                 hashtags: '',
                                                 //hashtags: influencer[0]['hashtags']??'',
                                                 soochi: influencer[0]['soochi']??'',
+                                                shreni: influencer[0]['shreni']??'',
                                                 itrLvl: influencer[0]['interaction_level']??'',
                                                 profileImage: influencer[0]['profile_image'] != null && influencer[0]['profile_image']!.isNotEmpty
                                                     ? apiService.baseUrl.substring(0,40)+influencer[0]['profile_image']!
@@ -651,180 +653,6 @@ class MemberCard extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class InfluencerCard extends StatelessWidget {
-  final String id;
-  final String name;
-  final String designation;
-  final String description;
-  final String hashtags;
-  final String soochi;
-  final String itrLvl;
-  final String profileImage;
-
-  const InfluencerCard({
-    super.key,
-    required this.name,
-    required this.designation,
-    required this.description,
-    required this.hashtags,
-    required this.profileImage,
-    required this.id,
-    required this.soochi,
-    required this.itrLvl,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Center(
-          child: Container(
-            padding: const EdgeInsets.all(0), // Container padding
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(25),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 8,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => InfluencerProfilePage(id)),
-                );
-              },
-              style: ButtonStyle(
-                shape: WidgetStateProperty.all(RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
-                )),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.only(left: 0,right: 0,bottom: 8,top: 8), // Add padding to the content
-                child: Row(
-                  children: [
-                    // Profile Picture (placeholder)
-                    CircleAvatar(
-                      radius: MediaQuery.of(context).size.width * 0.08,
-                      backgroundColor: Colors.grey[200],
-                      //backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-                      backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null,
-                      //backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null, // Use NetworkImage here
-                      child: profileImage.isEmpty
-                          ? Icon(
-                        Icons.person,
-                        color: Colors.white,
-                        size: MediaQuery.of(context).size.width * 0.14,
-                      )
-                          : null,
-                    ),
-                    SizedBox(width: 16),
-                    // Influencer Details
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            name, // Dynamic name
-                            style: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.bold,
-                              color: Color.fromRGBO(5, 50, 70, 1.0),
-                            ),
-                          ),
-                          Text(
-                            designation, // Dynamic designation
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Color.fromRGBO(5, 50, 70, 1.0),
-                            ),
-                          ),
-                          Text(
-                            description, // Dynamic designation
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Color.fromRGBO(5, 50, 70, 1.0),
-                            ),
-                          ),
-                          Text(
-                            hashtags, // Dynamic designation
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.teal,
-                            ),
-                          ),
-                          SizedBox(height: 1),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 10,
-          right: 15,
-          child: Container(
-            width: 25,  // Diameter of the circle
-            height: 25,
-            decoration: BoxDecoration(
-              color: Color.fromRGBO(59, 171, 144, 1.0),  // Blue background color
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: const Color.fromRGBO(198, 198, 198, 1.0), // Border color
-                width: 0.8, // Border width
-              ),
-            ),
-            child: Center(
-              child: Text(
-                soochi,  // The letter inside the circle
-                style: TextStyle(
-                  fontSize: 13,  // Font size for "L"
-                  color: Colors.white,  // White color for the letter
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 10,
-          right: 35,
-          child: Container(
-            width: 25,  // Diameter of the circle
-            height: 25,
-            decoration: BoxDecoration(
-              color: Colors.blue,  // Blue background color
-              shape: BoxShape.circle,  // Make it a circle
-              border: Border.all(
-                color: const Color.fromRGBO(198, 198, 198, 1.0), // Border color
-                width: 0.8, // Border width
-              ),
-            ),
-            child: Center(
-              child: Text(
-                itrLvl,  // The letter inside the circle
-                style: TextStyle(
-                  fontSize: 13,  // Font size for "L"
-                  color: Colors.white,  // White color for the letter
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ),
-
-      ],
     );
   }
 }

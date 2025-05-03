@@ -1,12 +1,16 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:samparka/Screens/meeting.dart';
 import 'package:samparka/Screens/my_team.dart';
 import 'package:samparka/Screens/settings.dart';
 import 'package:samparka/Screens/team.dart';
+import '../widgets/approval_card.dart';
+import '../widgets/influencer_card.dart';
 import 'Temp2.dart';
 import 'add_influencer.dart';
 import 'gen_report.dart';
@@ -90,19 +94,23 @@ class _InfluencersPageState extends State<InfluencersPage> {
   late List<dynamic> result;
   bool loading = true;
   bool assign = false;
+  bool assignGatanayak = false;
 
   List<dynamic> TeamMembers = [];
+  List<dynamic> Gatanayaks = [];
   //List<dynamic> ApproveMember = [];
   Map<String, dynamic> ApproveMember = {};
   int selectedMemberIndex = -1;
   int? selectedIndex;
+  List<dynamic> hashtags = [];
+  Timer? _debounce;
+
 
   late String soochi;
 
   @override
   void initState() {
     super.initState();
-
     handleAuth();
     //handleButtonPress();
     username = apiService.first_name;
@@ -110,14 +118,34 @@ class _InfluencersPageState extends State<InfluencersPage> {
     token = apiService.token;
     level = apiService.lvl;
     currentUrl = apiService.baseUrl;
+    fetchHashtags();
     fetchInfluencers();
     if(apiService.lvl>2){
       getUnapprovedProfile();
     }
     //fetchTeam();
-    setState(() {});
-    loading = false;
+    setState(() {loading = false;});
   }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  Future<void> fetchHashtags() async {
+    try {
+      // Call the apiService.homePage() and store the result
+      result = await apiService.getHashtags();
+      setState(() {
+        hashtags = result;
+        print('hastags\'s $result');
+      });
+    } catch (e) {
+      print("Error fetching influencers: $e");
+    }
+  }
+
   // State variables for radio buttons
   String? selectedRadio = 'url1';
 
@@ -155,6 +183,9 @@ class _InfluencersPageState extends State<InfluencersPage> {
   // Define a function to fetch data
   Future<bool> fetchInfluencers() async {
     try {
+      setState(() {
+        loading = true;
+      });
       // Call the apiService.homePage() and store the result
       result = await apiService.homePage();
       setState(() {
@@ -214,6 +245,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
         setState(() {
           // Update the influencers list with the fetched data
           unApprovedInfluencers = result;
+          print('UnApproved Profile: $unApprovedInfluencers');
         });
       } else {
         setState(() {
@@ -232,15 +264,32 @@ class _InfluencersPageState extends State<InfluencersPage> {
     return false;
   }
 
+  String getHashtagNames(dynamic influencerHashtagIds, dynamic allHashtags) {
+    final List<int> ids = List<int>.from(influencerHashtagIds ?? []);
+    final List<Map<String, dynamic>> hashtags =
+    List<Map<String, dynamic>>.from(allHashtags ?? []);
+
+    final matchedNames = ids.map((id) {
+      final tag = hashtags.firstWhere(
+            (tag) => tag['id'] == id,
+        orElse: () => {},
+      );
+      final name = tag['name'];
+      return name != null ? '#$name' : '';
+    }).where((name) => name.isNotEmpty).join(', ');
+
+    return matchedNames;
+  }
+
   Future<void> fetchTeam() async {
     try {
       // Call the apiService.homePage() and store the result
-      result = await apiService.myTeam(0, 100);
+      result = await apiService.getShreniPramukhs();
       setState(() {
         // Update the influencers list with the fetched data
         TeamMembers = result;
         TeamMembers.add({'id':apiService.UserId,'first_name':'${apiService.first_name}(self)','last_name':apiService.last_name,'designation':apiService.designation,'profileImage':apiService.profileImage});
-
+        print('ShreniPramukhs: $TeamMembers');
       });
     } catch (e) {
       // Handle any errors here
@@ -248,29 +297,128 @@ class _InfluencersPageState extends State<InfluencersPage> {
     }
   }
 
-  Future<void> search(String str) async {
+  Future<void> fetchGatanayak(String KR_id) async {
     try {
-      // Call the API service with the search query
+      setState(() {
+        loading=true;
+      });
+      // Call the apiService.homePage() and store the result
+      result = await apiService.getGatanayak(KR_id);
+      setState(() {
+        // Update the influencers list with the fetched data
+        Gatanayaks = result;
+        //TeamMembers.add({'id':apiService.UserId,'first_name':'${apiService.first_name}(self)','last_name':apiService.last_name,'designation':apiService.designation,'profileImage':apiService.profileImage});
+        print('Gatanayaks: $Gatanayaks');
+        loading=false;
+        if(Gatanayaks.isEmpty){
+          assignGatanayak=false;
+          assign=true;
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('Information'),
+                content: Text('No Gatanayak Found for the Profile'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text('OK'),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      });
+    } catch (e) {
+      // Handle any errors here
+      loading=false;
+      print("Error fetching influencers: $e");
+    }
+  }
+
+  String _latestSearch = '';
+
+  Future<void> search(String str) async {
+    _latestSearch = str; // Save the latest user input
+
+    try {
       var inf = await apiService.searchGV(str);
-      if (inf is List) {  // Check if inf is a List (data returned)
-        setState(() {
-          print("searched before assign:");
-          infSearched = [];
-          print("result: $inf");
-          infSearched = inf;  // Assign the list data to infSearched
-          print("search: ");
+
+      // Check if this result still matches the latest search input
+      if (_latestSearch != str) {
+        return; // Ignore stale results
+      }
+
+      if (inf is List) {
+        print("inf length: ${inf.length}");
+        inf.forEach((inf) {
+          if (inf['soochi'] == 'AkhilaBharthiya') inf['soochi'] = 'AB';
+          else if (inf['soochi'] == 'PranthyaSampark') inf['soochi'] = 'PS';
+          else if (inf['soochi'] == 'JillaSampark') inf['soochi'] = 'JS';
+
+          if (inf['interaction_level'] == 'Sampark') inf['interaction_level'] = 'S1';
+          else if (inf['interaction_level'] == 'Sahavas') inf['interaction_level'] = 'S2';
+          else if (inf['interaction_level'] == 'Samarthan') inf['interaction_level'] = 'S3';
+          else if (inf['interaction_level'] == 'Sahabhag') inf['interaction_level'] = 'S4';
         });
-        setState(() {});
-      } else if (inf == false) {  // If inf is false (no content or error)
+
         setState(() {
-          infSearched = [];  // Clear the list since no results were found
+          infSearched = inf;
+        });
+      } else if (inf == false) {
+        setState(() {
+          infSearched = [];
         });
       }
     } catch (e) {
-      // Handle any errors here
       print("Error fetching Karyakartha: $e");
     }
   }
+
+  Future<bool> getKaryakartha(String KR_id) async{
+    try {
+      // Call the apiService.homePage() and store the result
+      var resultKR = await apiService.getKaryakartha(KR_id);
+      setState(() {
+        // Update the influencers list with the fetched data
+        //meetings = result;
+        print(resultKR[0]['first_name']);
+        print("getKR KR data: $resultKR");
+        print(resultKR[0]['profile_image']);
+
+        setState(() {});
+
+      });
+      return true;
+    } catch (e) {
+      // Handle any errors here
+      print("Error fetching karyakartha: $e");
+    }
+    return false;
+  }
+
+  void createdmember(String id) {
+    print('Team Members: $TeamMembers');
+    print('Team Members: ${TeamMembers[0]['id']}');
+    TeamMembers.forEach((member) {
+      print(member['id']); // or do something else with member['id']
+    });
+
+
+    final index = TeamMembers.indexWhere((member) => member['id'] == id);
+
+    if (index != -1) {
+      selectedMemberIndex = index;
+      print('Selected member index: $selectedMemberIndex');
+    } else {
+      print('Member with ID $id not found.');
+    }
+  }
+
+
 
   /******************************************************/
 
@@ -526,7 +674,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                         ),
                       );
                     },
-                    child: Text('LogOut'),
+                    child: Text('Logout'),
                   ),
                 ),
                 ListTile(
@@ -666,18 +814,20 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                         designation: influencer['designation']??"Not Set",
                                                         description: influencer['description']??"Not Set",
                                                         //hashtags: influencer['hashtags']!,
-                                                        hashtags: '',
+                                                        shreni: influencer['shreni']??"Not Set",
+                                                        hashtags: getHashtagNames(influencer['hashtags'], hashtags),
                                                         imageUrl: influencer['profile_image'] != null && influencer['profile_image']!.isNotEmpty
-                                                            ? apiService.baseUrl.substring(0, 40) + influencer['profile_image']!
+                                                            ? influencer['profile_image']!
                                                             : '',
                                                         onPress: () {
                                                           setState(() {
                                                             fetchTeam();
                                                             selectedIndex = index;
                                                             ApproveMember = unApprovedInfluencers[index];
-                                                            print(ApproveMember);
+                                                            print('index $selectedIndex');
                                                             assign = true;
                                                           });
+                                                          createdmember(ApproveMember['created_by']);
                                                           print('Selected index: $selectedIndex'); // Print selected index
                                                         },
                                                         soochi: influencer['soochi']??'',
@@ -764,8 +914,9 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                     designation: influencer['designation']??'',
                                                     description: influencer['description']??'',
                                                     //hashtags: influencer['hashtags']??'',
-                                                    hashtags: '',
+                                                    hashtags: getHashtagNames(influencer['hashtags'], hashtags),
                                                     soochi: influencer['soochi']??'',
+                                                    shreni: influencer['shreni']??'',
                                                     itrLvl: influencer['interaction_level']??'',
                                                     profileImage: influencer['profile_image'] != null && influencer['profile_image']!.isNotEmpty
                                                         ? influencer['profile_image']!
@@ -887,22 +1038,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                   // First Row: Profile Picture and Influencer Details
                                   Row(
                                     children: [
-                                      // Profile Picture (placeholder)
-                                      /*
-                                      CircleAvatar(
-                                    radius: MediaQuery.of(context).size.width * 0.10,
-                                    backgroundColor: Colors.grey[200],
-                                    //backgroundImage: ApproveMember.isNotEmpty ? NetworkImage(ApproveMember['profile_image']) : null,
-                                    backgroundImage: ApproveMember.isNotEmpty? FileImage(File(ApproveMember['profile_image'])): null,
-                                    child: ApproveMember.isEmpty
-                                        ? Icon(
-                                      Icons.person,
-                                      color: Colors.white,
-                                      size: MediaQuery.of(context).size.width * 0.14,
-                                    )
-                                        : null,
-                                  ),
-                                      */
+                                      // Profile Picture
                                       Container(
                                         width: (MediaQuery.of(context).size.width * 0.80) / 4.3,  // 90% of screen width divided by 3 images
                                         height: (MediaQuery.of(context).size.width * 0.80) / 4.3,  // Fixed height for each image
@@ -1011,7 +1147,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                     )),
                                                 SizedBox(width: 5),
                                                 Text(
-                                                  'shreni',
+                                                  ApproveMember['shreni']??'Not Set',
                                                   style: TextStyle(
                                                     fontSize: smallFontSize,
                                                     color: Colors.white,
@@ -1031,10 +1167,10 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                             ),
                                             SizedBox(height: 1),
                                             Text(
-                                              'hashtags',
+                                              getHashtagNames(ApproveMember['hashtags'], hashtags),
                                               style: TextStyle(
                                                 fontSize: smallFontSize - 2,
-                                                color: Colors.teal,
+                                                color: Colors.white,
                                               ),
                                             ),
                                           ],
@@ -1065,7 +1201,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                               child: MemberCard(
                                                 first_name: member['first_name']!,
                                                 last_name: member['last_name']!,
-                                                designation: member['designation']!,
+                                                designation: member['designation']??"Not Set",
                                                 description: member['description']??"Not Set",
                                                 profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
                                                     ? member['profile_image']!
@@ -1104,16 +1240,86 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                             onPressed: () async {
                                               // Handle the approval logic here
                                               //print('Selected Member Index: $selectedMemberIndex');
-                                              if(selectedMemberIndex>-1) {
-                                                print(ApproveMember['id']);
-                                                print(TeamMembers[selectedMemberIndex]['id']);
-                                                await apiService.approveGanyavyakthi(ApproveMember['id'],TeamMembers[selectedMemberIndex]['id']);
-                                                await getUnapprovedProfile();
-                                                setState((){
-                                                  assign = false;
-                                                });
-                                              }
+                                              if (selectedMemberIndex == -1) {
+                                                // Show an error dialog if no member is selected
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (BuildContext context) {
+                                                    return AlertDialog(
+                                                      title: Text('Error'),
+                                                      content: Text('Please choose a member before proceeding.'),
+                                                      actions: <Widget>[
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            Navigator.of(context).pop(); // Close the dialog
+                                                          },
+                                                          child: Text('OK'),
+                                                        ),
+                                                      ],
+                                                    );
+                                                  },
+                                                );
+                                              } else {
+                                                // Reset state if a member is selected
+                                                bool Status = await showDialog(
+                                                  context: context,
+                                                  builder: (context) => AlertDialog(
+                                                    title: Text('Action Required'),
+                                                    content: Text('Add ${TeamMembers[selectedMemberIndex]['first_name']} ${TeamMembers[selectedMemberIndex]['last_name']} as the manager, or choose a Gatanayak from their Gatanayak group.'),
+                                                    actions: <Widget>[
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          setState(() {
+                                                            assign = false;
+                                                            fetchGatanayak(TeamMembers[selectedMemberIndex]['id']);
+                                                            assignGatanayak = true;
+                                                          });
 
+                                                          Navigator.of(context).pop(false);  // Close dialog when choosing Gatanayak
+                                                        },
+                                                        child: Text('Choose Gatanayak'),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () async {
+                                                          if (selectedMemberIndex > -1) {
+                                                            try {
+                                                              // Log the IDs for debugging purposes
+                                                              print(ApproveMember['id']);
+                                                              print(TeamMembers[selectedMemberIndex]['id']);
+
+                                                              await apiService.approveGanyavyakthi(ApproveMember['id'], TeamMembers[selectedMemberIndex]['id']);
+
+                                                              // Fetch unapproved profiles again
+                                                              await getUnapprovedProfile();
+
+                                                              // Reset the assign state
+                                                              setState(() {
+                                                                assign = false;
+                                                              });
+
+                                                              // Close the dialog with a successful result
+                                                              Navigator.of(context).pop(true);
+                                                            } catch (e) {
+                                                              // Error handling for API failure
+                                                              print('Error during approval: $e');
+                                                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                                                content: Text('An error occurred. Please try again later.'),
+                                                              ));
+                                                            }
+                                                          }
+                                                        },
+                                                        child: Text('Approve and Assign'),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          Navigator.of(context).pop(false);  // Close dialog when clicking Close
+                                                        },
+                                                        child: Text('Close'),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              }
                                             },
                                             style: TextButton.styleFrom(
                                               padding: const EdgeInsets.all(10),
@@ -1242,27 +1448,408 @@ class _InfluencersPageState extends State<InfluencersPage> {
                     ),
                   ),
                 ),
-              if(loading)
+              if(assignGatanayak)
                 Positioned.fill(
                   child: Container(
-                    color: Colors.black.withOpacity(0.5), // Semi-transparent overlay
+                    color: Colors.black.withOpacity(0.5),
                     child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CircularProgressIndicator(
-                            color: Colors.white,
+                      child: Container(
+                        height: MediaQuery.of(context).size.height * 0.65,
+                        width: MediaQuery.of(context).size.width * 0.9,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(30),
+                          gradient: const LinearGradient(
+                            begin: Alignment.centerRight,
+                            end: Alignment.centerLeft,
+                            colors: [
+                              Color.fromRGBO(60, 170, 145, 1.0),
+                              Color.fromRGBO(2, 40, 60, 1),
+                            ],
                           ),
-                          const SizedBox(height: 10), // Space between the indicator and text
-                          Text(
-                            'Loading...',
-                            style: TextStyle(
-                              fontSize: MediaQuery.of(context).size.width * 0.041,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                        ),
+                        child: Stack(
+                          children: [
+                            // Main content here (Profile, button, etc.)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 16,right: 16,top: 16,bottom: 1),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // First Row: Profile Picture and Influencer Details
+                                  Row(
+                                    children: [
+                                      // Profile Picture
+                                      Container(
+                                        width: (MediaQuery.of(context).size.width * 0.80) / 4.3,  // 90% of screen width divided by 3 images
+                                        height: (MediaQuery.of(context).size.width * 0.80) / 4.3,  // Fixed height for each image
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(50),
+                                          border: Border.all(color: Colors.grey.shade400),
+                                          color: Colors.grey[200],
+                                          boxShadow: [
+                                            if (ApproveMember.isNotEmpty && (ApproveMember['profile_image'] ?? '').isNotEmpty)
+                                              BoxShadow(
+                                                color: Colors.white10.withOpacity(0.5), // Grey shadow color with opacity
+                                                spreadRadius: 1, // Spread radius of the shadow
+                                                blurRadius: 6, // Blur radius of the shadow
+                                                offset: Offset(0, 4), // Shadow position (x, y)
+                                              ),
+                                            if (ApproveMember.isNotEmpty && (ApproveMember['profile_image'] ?? '').isEmpty)
+                                              BoxShadow(
+                                                color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
+                                                spreadRadius: 1, // Spread radius of the shadow
+                                                blurRadius: 3, // Blur radius of the shadow
+                                                offset: Offset(0, 4), // Shadow position (x, y)
+                                              ),
+                                          ],
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(50),
+                                          child: (ApproveMember.isNotEmpty && (ApproveMember['profile_image'] ?? '').isNotEmpty)
+                                              ? Image.network(
+                                            ApproveMember['profile_image'],  // Ensure the URL is encoded
+                                            fit: BoxFit.cover,
+                                            loadingBuilder: (context, child, loadingProgress) {
+                                              if (loadingProgress == null) {
+                                                return child;  // Image loaded successfully
+                                              } else {
+                                                return Center(
+                                                  child: CircularProgressIndicator(
+                                                    value: loadingProgress.expectedTotalBytes != null
+                                                        ? loadingProgress.cumulativeBytesLoaded /
+                                                        (loadingProgress.expectedTotalBytes ?? 1)
+                                                        : null,
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return Container(
+                                                color: Colors.red,  // Placeholder color for invalid image URLs
+                                                child: Center(
+                                                  child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                                                ),
+                                              );
+                                            },
+                                          )
+                                              : Icon(
+                                            Icons.person,
+                                            color: Colors.white,
+                                            size: MediaQuery.of(context).size.width * 0.14,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 16),
+                                      // Influencer Details
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            LayoutBuilder(
+                                              builder: (context, constraints) {
+                                                double fontSize = largeFontSize + 6; // Default font size
+                                                var tmpname = "${ApproveMember['fname']} ${ApproveMember['lname']}"??'';
+                                                double availableWidth = tmpname.length*largeFontSize;
+                                                print('$fontSize $availableWidth ${MediaQuery.of(context).size.width * 0.38*2}');
+
+                                                if (availableWidth > MediaQuery.of(context).size.width * 0.38*2) {
+                                                  fontSize = normFontSize; // Adjust this to your needs
+                                                }
+
+                                                return Text(
+                                                  tmpname,
+                                                  style: TextStyle(
+                                                    fontSize: fontSize, // Adjusted font size
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis, // Truncate with ellipsis if the text overflows
+                                                  softWrap: false, // Prevent wrapping
+                                                );
+                                              },
+                                            ),
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  ApproveMember['designation']??'',
+                                                  style: TextStyle(
+                                                    fontSize: smallFontSize,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                                SizedBox(width: 5),
+                                                SizedBox(
+                                                    width: 2,
+                                                    child: Container(
+                                                      width: 1,
+                                                      height: smallFontSize,
+                                                      color: Colors.white,
+                                                    )),
+                                                SizedBox(width: 5),
+                                                Text(
+                                                  'shreni',
+                                                  style: TextStyle(
+                                                    fontSize: smallFontSize,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 1),
+                                            Text(
+                                              ApproveMember['description']??'',
+                                              style: TextStyle(
+                                                fontSize: smallFontSize - 2,
+                                                color: Colors.white,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            SizedBox(height: 1),
+                                            Text(
+                                              getHashtagNames(ApproveMember['hashtags'], hashtags),
+                                              style: TextStyle(
+                                                fontSize: smallFontSize - 2,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 8),
+                                  // List of Team Members (Selectable)
+                                  Center(
+                                    child: Container(
+                                      height: MediaQuery.of(context).size.height * 0.40,
+                                      width: MediaQuery.of(context).size.width * 0.85,
+                                      child: ListView.builder(
+                                        padding: const EdgeInsets.all(1),
+                                        itemCount: Gatanayaks.length,
+                                        itemBuilder: (context, index) {
+                                          final member = Gatanayaks[index];
+                                          bool isSelected = selectedMemberIndex == index; // Check if this member is selected
+                                          return Padding(
+                                            padding: const EdgeInsets.only(top: 5),
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  selectedMemberIndex = isSelected ? -1 : index; // Toggle selection
+                                                });
+                                              },
+                                              child: MemberCard(
+                                                first_name: member['first_name']!,
+                                                last_name: member['last_name']!,
+                                                designation: member['designation']!,
+                                                description: member['description']??"Not Set",
+                                                profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
+                                                    ? member['profile_image']!
+                                                    : '',
+                                                isSelected: isSelected,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  // Spacer to push the button to the bottom
+                                  Expanded(child: SizedBox()),
+                                  // Second Row: Approval Button
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 0), // 10px margin from bottom
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center, // Align button to the center
+                                      children: [
+                                        Container(
+                                          width: MediaQuery.of(context).size.width * 0.8,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(10),
+                                            gradient: const LinearGradient(
+                                              begin: Alignment.centerLeft,
+                                              end: Alignment.centerRight,
+                                              colors: [
+                                                Color.fromRGBO(133, 1, 1, 1.0),
+                                                Color.fromRGBO(237, 62, 62, 1.0),
+                                              ],
+                                            ),
+                                          ),
+                                          child: TextButton(
+                                            onPressed: () async {
+                                              // Handle the approval logic here
+                                              //print('Selected Member Index: $selectedMemberIndex');
+                                              bool Status = await showDialog(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: Text('Confirmation!'),
+                                                  content: Text('Add ${Gatanayaks[selectedMemberIndex]['first_name']} ${Gatanayaks[selectedMemberIndex]['last_name']} as the manager.'),
+                                                  actions: <Widget>[
+                                                    TextButton(
+                                                      onPressed: () async {
+                                                        if (selectedMemberIndex > -1) {
+                                                          try {
+                                                            // Log the IDs for debugging purposes
+                                                            print(ApproveMember['id']);
+                                                            print(Gatanayaks[selectedMemberIndex]['id']);
+
+                                                            // API call to approve the member
+                                                            await apiService.approveGanyavyakthi(ApproveMember['id'], Gatanayaks[selectedMemberIndex]['id']);
+
+                                                            // Fetch unapproved profiles again
+                                                            await getUnapprovedProfile();
+
+                                                            // Reset the assign state
+                                                            setState(() {
+                                                              assignGatanayak = false;
+                                                            });
+
+                                                            // Close the dialog with a successful result
+                                                            Navigator.of(context).pop(true);
+                                                          } catch (e) {
+                                                            // Error handling for API failure
+                                                            print('Error during approval: $e');
+                                                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                                              content: Text('An error occurred. Please try again later.'),
+                                                            ));
+                                                          }
+                                                        }
+                                                      },
+                                                      child: Text('Approve and Assign'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        Navigator.of(context).pop(false);  // Close dialog when clicking Close
+                                                      },
+                                                      child: Text('Close'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                            style: TextButton.styleFrom(
+                                              padding: const EdgeInsets.all(10),
+                                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                            ),
+                                            child: Center(
+                                              child: Column(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Text(
+                                                    'Select Gatanayak',
+                                                    style: TextStyle(
+                                                      fontSize: largeFontSize,
+                                                      color: Colors.white,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  //assign cancel button
+                                  TextButton(
+                                    onPressed: () async {
+                                      setState((){
+                                        assignGatanayak = false;
+                                        selectedMemberIndex = -1;
+                                      });
+                                    },
+                                    style: TextButton.styleFrom(
+                                      padding: const EdgeInsets.all(1),
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: Center(
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.center, // Center align the row content
+                                            children: [
+                                              // Text and Icon Row
+                                              Text(
+                                                'Cancel', // The cancel text
+                                                style: TextStyle(
+                                                  fontSize: smallFontSize,
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              SizedBox(width: 8), // A small gap between the text and the icon
+                                              Icon(
+                                                Icons.cancel, // Cancel icon
+                                                color: Colors.white, // Set the icon color to white
+                                                size: smallFontSize, // You can adjust the size of the icon here
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                            // Circular "L" at the top right
+                            Positioned(
+                              top: 15,
+                              right: 15,
+                              child: Container(
+                                width: 22,  // Diameter of the circle
+                                height: 22,
+                                decoration: BoxDecoration(
+                                  color: Color.fromRGBO(59, 171, 144, 1.0),  // Blue background color
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: const Color.fromRGBO(198, 198, 198, 1.0), // Border color
+                                    width: 0.8, // Border width
+                                  ),
+                                ),
+
+                                child: Center(
+                                  child: Text(
+                                    ApproveMember['soochi']??'',  // The letter inside the circle
+                                    style: TextStyle(
+                                      fontSize: smallFontSize - 3,  // Font size for "L"
+                                      color: Colors.white,  // White color for the letter
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 15,
+                              right: 32,
+                              child: Container(
+                                width: 22,  // Diameter of the circle
+                                height: 22,
+                                decoration: BoxDecoration(
+                                  color: Colors.blue,  // Blue background color
+                                  shape: BoxShape.circle,  // Make it a circle
+                                  border: Border.all(
+                                    color: const Color.fromRGBO(198, 198, 198, 1.0), // Border color
+                                    width: 0.8, // Border width
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    ApproveMember['interaction_level']??'',  // The letter inside the circle
+                                    style: TextStyle(
+                                      fontSize: smallFontSize - 3,  // Font size for "L"
+                                      color: Colors.white,  // White color for the letter
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -1314,15 +1901,21 @@ class _InfluencersPageState extends State<InfluencersPage> {
                             ),
                           ),
                           onChanged: (text) {
-                            if (text.isNotEmpty) {
-                              search(text); // Call the search function whenever text changes
-                            }
+                            if (_debounce?.isActive ?? false) _debounce!.cancel();
+
+                            _debounce = Timer(Duration(milliseconds: 300), () {
+                              if (text.isNotEmpty) {
+                                infSearched = [];
+                                search(text);
+                              }
+                            });
                           },
+
                           onTap: () {
                             isSearching = true;
                           },
                         ),
-                        SizedBox(height: 30),
+                        SizedBox(height: 25),
                         //Search Profiles
                         Container(
                           decoration: BoxDecoration(
@@ -1364,33 +1957,90 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                     ),
                                   )
                                 else
-                                  Column(
-                                    children: List.generate(
-                                      (infSearched.length < 4) ? infSearched.length : 3, // Display either all members or just 3
-                                          (index) {
-                                        final influencer = infSearched[index]; // Access the member data
-                                        return Padding(
-                                          padding: const EdgeInsets.only(left: 8, right: 8, top: 20,bottom: 10),
-                                          child: InfluencerCard(
-                                            id: influencer['id']??'',
-                                            name: "${influencer['fname']} ${influencer['lname']}",
-                                            designation: influencer['designation']??'',
-                                            description: influencer['description']??'',
-                                            hashtags: influencer['hashtags'].toString()??'',
-                                            soochi: influencer['soochi']??'',
-                                            itrLvl: influencer['interaction_level']??'',
-                                            profileImage: influencer['profile_image'] != null && influencer['profile_image']!.isNotEmpty
-                                                ? apiService.baseUrl.substring(0,40)+influencer['profile_image']!
-                                                : '',
-                                          ),
-                                        );
-                                      },
+                                  Container(
+                                    height: (infSearched.length <= 3) ? MediaQuery.of(context).size.height * 0.52 : MediaQuery.of(context).size.height * 0.62,
+                                    padding: const EdgeInsets.all(1), // Optional, for spacing inside the container
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: (infSearched.length <= 3)
+                                        ? Column(
+                                      children: List.generate(
+                                        infSearched.length,
+                                            (index) {
+                                          final influencer = infSearched[index];
+                                          return Padding(
+                                            padding: const EdgeInsets.only(left: 8, right: 8, top: 20, bottom: 10),
+                                            child: InfluencerCard(
+                                              id: influencer['id'] ?? '',
+                                              name: "${influencer['fname'] ?? ''} ${influencer['lname'] ?? ''}".trim(),
+                                              designation: influencer['designation'] ?? '',
+                                              description: influencer['description'] ?? '',
+                                              hashtags: getHashtagNames(influencer['hashtags'], hashtags),
+                                              soochi: influencer['soochi'] ?? '',
+                                              shreni: influencer['shreni'] ?? '',
+                                              itrLvl: influencer['interaction_level'] ?? '',
+                                              profileImage: (influencer['profile_image'] ?? '').toString(),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    )
+                                        : SingleChildScrollView(
+                                      child: Column(
+                                        children: List.generate(
+                                          infSearched.length,
+                                              (index) {
+                                            final influencer = infSearched[index];
+                                            return Padding(
+                                              padding: const EdgeInsets.only(left: 8, right: 8, top: 10, bottom: 10),
+                                              child: InfluencerCard(
+                                                id: influencer['id'] ?? '',
+                                                name: "${influencer['fname'] ?? ''} ${influencer['lname'] ?? ''}".trim(),
+                                                designation: influencer['designation'] ?? '',
+                                                description: influencer['description'] ?? '',
+                                                hashtags: getHashtagNames(influencer['hashtags'], hashtags),
+                                                soochi: influencer['soochi'] ?? '',
+                                                shreni: influencer['shreni'] ?? '',
+                                                itrLvl: influencer['interaction_level'] ?? '',
+                                                profileImage: (influencer['profile_image'] ?? '').toString(),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
                                     ),
                                   ),
                             ],
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                ),
+              if(loading)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black.withOpacity(0.5), // Semi-transparent overlay
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CupertinoActivityIndicator(
+                            color: Colors.white,
+                            radius: 20, // Customize the radius of the activity indicator
+                          ),
+                          const SizedBox(height: 10), // Space between the indicator and text
+                          const Text(
+                            'Loading...',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -1458,16 +2108,32 @@ class _InfluencersPageState extends State<InfluencersPage> {
         onWillPop: () async {
           // If searching, do not show the exit dialog
           if (isSearching) {
-            setState(() {
-              isSearching = false; // Reset the searching state
-            });
-            return false; // Prevent back action if still searching
+            final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+
+            if (isKeyboardOpen) {
+              FocusScope.of(context).unfocus();
+              return false;
+            } else {
+              setState(() {
+                infSearched = [];
+                _searchController.text = '';
+                isSearching = false;
+              });
+              return false; // Intercept back action
+            }
           } else if (assign) {
             setState(() {
               assign = false;
             });
             return false;
+          } else if (assignGatanayak) {
+            setState(() {
+              assignGatanayak = false;
+              assign = true;
+            });
+            return false;
           }
+
 
           // Show the dialog to confirm exit
           bool exit = await showDialog(
@@ -1558,689 +2224,6 @@ class _InfluencersPageState extends State<InfluencersPage> {
   }
 
 }
-
-
-
-class InfluencerCard extends StatelessWidget {
-  final String id;
-  final String name;
-  final String designation;
-  final String description;
-  final String hashtags;
-  final String soochi;
-  final String itrLvl;
-  final String profileImage;
-
-  const InfluencerCard({
-    super.key,
-    required this.name,
-    required this.designation,
-    required this.description,
-    required this.hashtags,
-    required this.profileImage,
-    required this.id,
-    required this.soochi,
-    required this.itrLvl,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
-    double largeFontSize = normFontSize+4; //20
-    double smallFontSize = normFontSize-2; //14
-    return Stack(
-      children: [
-        Center(
-          child: Container(
-            padding: const EdgeInsets.all(0), // Container padding
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(25),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 8,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => InfluencerProfilePage(id)),
-                );
-              },
-              style: ButtonStyle(
-                shape: WidgetStateProperty.all(RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
-                )),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.only(left: 0,right: 0,bottom: 8,top: 8), // Add padding to the content
-                child: Row(
-                  children: [
-                    // Profile Picture (placeholder)
-                    Container(
-                      width: (MediaQuery.of(context).size.width * 0.80) / 5,  // 90% of screen width divided by 3 images
-                      height: (MediaQuery.of(context).size.width * 0.80) / 5,  // Fixed height for each image
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(50),
-                        border: Border.all(color: Colors.grey.shade400),
-                        color: Colors.grey[200],
-                        boxShadow: [
-                          if(profileImage.isNotEmpty)
-                            BoxShadow(
-                              color: Color.fromRGBO(5, 50, 70, 1.0).withOpacity(0.5), // Grey shadow color with opacity
-                              spreadRadius: 1, // Spread radius of the shadow
-                              blurRadius: 7, // Blur radius of the shadow
-                              offset: Offset(0, 4), // Shadow position (x, y)
-                            ),
-                          if(profileImage.isEmpty)
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
-                              spreadRadius: 1, // Spread radius of the shadow
-                              blurRadius: 3, // Blur radius of the shadow
-                              offset: Offset(0, 4), // Shadow position (x, y)
-                            ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(50),
-                        child: (profileImage.isNotEmpty)
-                            ? Image.network(
-                          profileImage,  // Ensure the URL is encoded
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) {
-                              return child;  // Image loaded successfully
-                            } else {
-                              return Center(
-                                child: CircularProgressIndicator(
-                                  value: loadingProgress.expectedTotalBytes != null
-                                      ? loadingProgress.cumulativeBytesLoaded /
-                                      (loadingProgress.expectedTotalBytes ?? 1)
-                                      : null,
-                                ),
-                              );
-                            }
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.white,  // Placeholder color for invalid image URLs
-                              child: Center(
-                                child: Icon(Icons.error, color: Colors.grey),  // Display error icon
-                              ),
-                            );
-                          },
-                        )
-                            : Icon(
-                          Icons.person,
-                          color: Colors.white,
-                          size: MediaQuery.of(context).size.width * 0.14,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 16),
-                    // Influencer Details
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            name, // Dynamic name
-                            style: TextStyle(
-                              fontSize: largeFontSize+6,
-                              fontWeight: FontWeight.bold,
-                              color: Color.fromRGBO(5, 50, 70, 1.0),
-                            ),
-                          ),
-                          Text(
-                            designation, // Dynamic designation
-                            style: TextStyle(
-                              fontSize: smallFontSize-2,
-                              color: Color.fromRGBO(5, 50, 70, 1.0),
-                            ),
-                          ),
-                          Text(
-                            description, // Dynamic designation
-                            style: TextStyle(
-                              fontSize: smallFontSize,
-                              color: Color.fromRGBO(5, 50, 70, 1.0),
-                            ),
-                          ),
-                          Text(
-                            hashtags, // Dynamic designation
-                            style: TextStyle(
-                              fontSize: smallFontSize,
-                              color: Colors.teal,
-                            ),
-                          ),
-                          SizedBox(height: 1),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 10,
-          right: 15,
-          child: Container(
-            width: 25,  // Diameter of the circle
-            height: 25,
-            decoration: BoxDecoration(
-              color: Color.fromRGBO(59, 171, 144, 1.0),  // Blue background color
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: const Color.fromRGBO(198, 198, 198, 1.0), // Border color
-                width: 0.8, // Border width
-              ),
-            ),
-            child: Center(
-              child: Text(
-                soochi,  // The letter inside the circle
-                style: TextStyle(
-                  fontSize: smallFontSize - 1,  // Font size for "L"
-                  color: Colors.white,  // White color for the letter
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 10,
-          right: 35,
-          child: Container(
-            width: 25,  // Diameter of the circle
-            height: 25,
-            decoration: BoxDecoration(
-              color: Colors.blue,  // Blue background color
-              shape: BoxShape.circle,  // Make it a circle
-              border: Border.all(
-                color: const Color.fromRGBO(198, 198, 198, 1.0), // Border color
-                width: 0.8, // Border width
-              ),
-            ),
-            child: Center(
-              child: Text(
-                itrLvl,  // The letter inside the circle
-                style: TextStyle(
-                  fontSize: smallFontSize-1,  // Font size for "L"
-                  color: Colors.white,  // White color for the letter
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ),
-
-      ],
-    );
-  }
-}
-
-class ApprovalCard extends StatelessWidget {
-  final String name;
-  final String designation;
-  final String description;
-  final String hashtags;
-  final String imageUrl;
-  final String soochi;
-  final String itrLvl;
-  final VoidCallback onPress; // Callback to handle button press
-
-  const ApprovalCard({
-    super.key,
-    required this.name,
-    required this.designation,
-    required this.description,
-    required this.hashtags,
-    required this.imageUrl,
-    required this.onPress,
-    required this.soochi,
-    required this.itrLvl, // Handle button press in parent
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
-    double largeFontSize = normFontSize + 4; //20
-    double smallFontSize = normFontSize - 2; //14
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Stack(
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // First Row: Profile Picture and Influencer Details
-              Row(
-                children: [
-                  // Profile Picture (placeholder)
-                  Container(
-                    width: (MediaQuery.of(context).size.width * 0.80) / 5,  // 90% of screen width divided by 3 images
-                    height: (MediaQuery.of(context).size.width * 0.80) / 5,  // Fixed height for each image
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(50),
-                      border: Border.all(color: Colors.grey.shade400),
-                      color: Colors.grey[200],
-                      boxShadow: [
-                        if(imageUrl.isNotEmpty)
-                          BoxShadow(
-                            color: Color.fromRGBO(5, 50, 70, 1.0).withOpacity(0.5), // Grey shadow color with opacity
-                            spreadRadius: 1, // Spread radius of the shadow
-                            blurRadius: 7, // Blur radius of the shadow
-                            offset: Offset(0, 4), // Shadow position (x, y)
-                          ),
-                        if(imageUrl.isEmpty)
-                          BoxShadow(
-                            color: Color.fromRGBO(59, 171, 144, 1.0).withOpacity(0.5), // Grey shadow color with opacity
-                            spreadRadius: 1, // Spread radius of the shadow
-                            blurRadius: 7, // Blur radius of the shadow
-                            offset: Offset(0, 2), // Shadow position (x, y)
-                          ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(50),
-                      child: (imageUrl.isNotEmpty)
-                          ? Image.network(
-                        imageUrl,  // Ensure the URL is encoded
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) {
-                            return child;  // Image loaded successfully
-                          } else {
-                            return Center(
-                              child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                    (loadingProgress.expectedTotalBytes ?? 1)
-                                    : null,
-                              ),
-                            );
-                          }
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.white,  // Placeholder color for invalid image URLs
-                            child: Center(
-                              child: Icon(Icons.error, color: Colors.grey),  // Display error icon
-                            ),
-                          );
-                        },
-                      )
-                          : Icon(
-                        Icons.person,
-                        color: Colors.white,
-                        size: MediaQuery.of(context).size.width * 0.14,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  // Influencer Details
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            double fontSize = largeFontSize + 4; // Default font size
-                            double availableWidth = name.length*largeFontSize;
-                            //print('$fontSize $availableWidth ${MediaQuery.of(context).size.width * 0.38*2}');
-
-                            if (availableWidth > MediaQuery.of(context).size.width * 0.38*2) {
-                              fontSize = normFontSize; // Adjust this to your needs
-                            }
-
-                            return Text(
-                              name,
-                              style: TextStyle(
-                                fontSize: fontSize, // Adjusted font size
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                              overflow: TextOverflow.ellipsis, // Truncate with ellipsis if the text overflows
-                              softWrap: false, // Prevent wrapping
-                            );
-                          },
-                        ),
-                        Text(
-                          designation,
-                          style: TextStyle(
-                            fontSize: smallFontSize,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(height: 1),
-                        Text(
-                          description,
-                          style: TextStyle(
-                            fontSize: smallFontSize - 2,
-                            color: Colors.white,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        SizedBox(height: 1),
-                        Text(
-                          hashtags,
-                          style: TextStyle(
-                            fontSize: smallFontSize - 2,
-                            color: Colors.teal,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 8),
-              // Second Row: Approval Button
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center, // Align button to the end
-                children: [
-                  Container(
-                    width: MediaQuery.of(context).size.width * 0.65,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      gradient: const LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [
-                          Color.fromRGBO(133, 1, 1, 1.0),
-                          Color.fromRGBO(237, 62, 62, 1.0),
-                        ],
-                      ),
-                    ),
-                    child: TextButton(
-                      onPressed: onPress, // Trigger the parent function
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.all(10),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Center(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Approve and Assign',
-                              style: TextStyle(
-                                fontSize: largeFontSize,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          Positioned(
-            top: 0,
-            right: 0,
-            child: Container(
-              width: 18,  // Diameter of the circle
-              height: 18,
-              decoration: BoxDecoration(
-                color: Color.fromRGBO(59, 171, 144, 1.0),  // Blue background color
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: const Color.fromRGBO(198, 198, 198, 1.0), // Border color
-                  width: 0.8, // Border width
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  soochi,  // The letter inside the circle
-                  style: TextStyle(
-                    fontSize: smallFontSize - 3,  // Font size for "L"
-                    color: Colors.white,  // White color for the letter
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 0,
-            right: 13,
-            child: Container(
-              width: 18,  // Diameter of the circle
-              height: 18,
-              decoration: BoxDecoration(
-                color: Colors.blue,  // Blue background color
-                shape: BoxShape.circle,  // Make it a circle
-                border: Border.all(
-                  color: const Color.fromRGBO(198, 198, 198, 1.0), // Border color
-                  width: 0.8, // Border width
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  itrLvl,  // The letter inside the circle
-                  style: TextStyle(
-                    fontSize: smallFontSize-3,  // Font size for "L"
-                    color: Colors.white,  // White color for the letter
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      )
-    );
-  }
-}
-
-class AssignCard extends StatelessWidget {
-  final String name;
-  final String designation;
-  final String description;
-  final String hashtags;
-  final String imageUrl;
-
-  const AssignCard({
-    super.key,
-    required this.name,
-    required this.designation,
-    required this.description,
-    required this.hashtags, required this.imageUrl,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
-    double largeFontSize = normFontSize+4; //20
-    double smallFontSize = normFontSize-2; //14
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // First Row: Profile Picture and Influencer Details
-          Row(
-            children: [
-              // Profile Picture
-              Container(
-                width: (MediaQuery.of(context).size.width * 0.80) / 5,  // 90% of screen width divided by 3 images
-                height: (MediaQuery.of(context).size.width * 0.80) / 5,  // Fixed height for each image
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(50),
-                  border: Border.all(color: Colors.grey.shade400),
-                  color: Colors.grey[200],
-                  boxShadow: [
-                    if(imageUrl.isNotEmpty)
-                      BoxShadow(
-                        color: Color.fromRGBO(5, 50, 70, 1.0).withOpacity(0.5), // Grey shadow color with opacity
-                        spreadRadius: 1, // Spread radius of the shadow
-                        blurRadius: 7, // Blur radius of the shadow
-                        offset: Offset(0, 4), // Shadow position (x, y)
-                      ),
-                    if(imageUrl.isEmpty)
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
-                        spreadRadius: 1, // Spread radius of the shadow
-                        blurRadius: 3, // Blur radius of the shadow
-                        offset: Offset(0, 4), // Shadow position (x, y)
-                      ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(50),
-                  child: (imageUrl.isNotEmpty)
-                      ? Image.network(
-                    imageUrl,  // Ensure the URL is encoded
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) {
-                        return child;  // Image loaded successfully
-                      } else {
-                        return Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                (loadingProgress.expectedTotalBytes ?? 1)
-                                : null,
-                          ),
-                        );
-                      }
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.white,  // Placeholder color for invalid image URLs
-                        child: Center(
-                          child: Icon(Icons.error, color: Colors.grey),  // Display error icon
-                        ),
-                      );
-                    },
-                  )
-                      : Icon(
-                    Icons.person,
-                    color: Colors.white,
-                    size: MediaQuery.of(context).size.width * 0.14,
-                  ),
-                ),
-              ),
-              SizedBox(width: 16),
-              // Influencer Details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        double fontSize = largeFontSize + 6; // Default font size
-                        double availableWidth = name.length*largeFontSize;
-                        //print('$fontSize $availableWidth ${MediaQuery.of(context).size.width * 0.38*2}');
-
-                        if (availableWidth > MediaQuery.of(context).size.width * 0.38*2) {
-                          fontSize = normFontSize; // Adjust this to your needs
-                        }
-
-                        return Text(
-                          name,
-                          style: TextStyle(
-                            fontSize: fontSize, // Adjusted font size
-                            fontWeight: FontWeight.bold,
-                            color: Color.fromRGBO(5, 50, 70, 1.0),
-                          ),
-                          overflow: TextOverflow.ellipsis, // Truncate with ellipsis if the text overflows
-                          softWrap: false, // Prevent wrapping
-                        );
-                      },
-                    ),
-                    Text(
-                      designation,
-                      style: TextStyle(
-                        fontSize: smallFontSize,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 1),
-                    Text(
-                      description,
-                      style: TextStyle(
-                        fontSize: smallFontSize-2,
-                        color: Colors.white,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 1),
-                    Text(
-                      hashtags,
-                      style: TextStyle(
-                        fontSize: smallFontSize-2,
-                        color: Colors.teal,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8),
-          // Second Row: Approval Button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: MediaQuery.of(context).size.width*0.65,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  gradient: const LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      Color.fromRGBO(133, 1, 1, 1.0),
-                      Color.fromRGBO(237, 62, 62, 1.0),
-                    ],
-                  ),
-                ),
-                child: TextButton(
-                  onPressed: () {},
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.all(10),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Approve and Assign',
-                          style: TextStyle(
-                            fontSize: largeFontSize,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-}
-
 class MemberCard extends StatelessWidget {
   final String first_name;
   final String last_name;

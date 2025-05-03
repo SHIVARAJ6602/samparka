@@ -11,7 +11,9 @@ import 'gen_report.dart';
 import 'home.dart';
 
 class MyTeamPage extends StatefulWidget {
-  const MyTeamPage({super.key});
+  final String type;
+
+  const MyTeamPage({super.key, required this.type});
 
   @override
   _MyTeamPageState createState() => _MyTeamPageState();
@@ -21,7 +23,8 @@ class _MyTeamPageState extends State<MyTeamPage> {
   final apiService = ApiService();
 
   int _selectedIndex = 1;
-  List<dynamic> TeamMembers = [];
+  List<dynamic> Members = [];
+  List<dynamic> Gatanayaks = [];
   late List<dynamic> result;
   bool loading = true;
 
@@ -29,7 +32,12 @@ class _MyTeamPageState extends State<MyTeamPage> {
   @override
   void initState() {
     super.initState();
-    fetchTeam();
+    if(widget.type == 'Gatanayaks'){
+      fetchGatanayak();
+    }
+    else{
+      fetchTeam();
+    }
     Future.delayed(const Duration(milliseconds: 10000));
   }
 
@@ -73,9 +81,26 @@ class _MyTeamPageState extends State<MyTeamPage> {
       result = await apiService.myTeam(0, 100);
       setState(() {
         // Update the influencers list with the fetched data
-        TeamMembers = result;
+        Members = result;
       });
       loading = false;
+    } catch (e) {
+      // Handle any errors here
+      print("Error fetching influencers: $e");
+    }
+  }
+
+  Future<void> fetchGatanayak() async {
+    try {
+      // Call the apiService.homePage() and store the result
+      result = await apiService.getGatanayak(apiService.UserId);
+      setState(() {
+        // Update the influencers list with the fetched data
+        Members = result;
+        //TeamMembers.add({'id':apiService.UserId,'first_name':'${apiService.first_name}(self)','last_name':apiService.last_name,'designation':apiService.designation,'profileImage':apiService.profileImage});
+        print('Gatanayaks: $Members');
+        loading = false;
+      });
     } catch (e) {
       // Handle any errors here
       print("Error fetching influencers: $e");
@@ -89,22 +114,22 @@ class _MyTeamPageState extends State<MyTeamPage> {
     double smallFontSize = normFontSize-2; //14
     return Scaffold(
       appBar: AppBar(
-        title: Text('My Team'),
+        title: widget.type=="Gatanayaks"? Text('My Gatanayak\'S'):Text('My Team'),
       ),
       body: Stack(
         children: [
           ListView.builder(
             padding: const EdgeInsets.all(1),
-            itemCount: TeamMembers.length,
+            itemCount: Members.length,
             itemBuilder: (context, index) {
-              final member = TeamMembers[index];
+              final member = Members[index];
               return Padding(
                 padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
                 child: MemberCard(
                   id: member['id']!,
                   first_name: member['first_name']!,
                   last_name: member['last_name']!,
-                  designation: member['designation']!,
+                  designation: member['designation']??'Not Set',
                   profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
                       ? member['profile_image']!
                       //? apiService.baseUrl.substring(0,40)+member['profile_image']!
@@ -297,8 +322,8 @@ class MemberCard extends StatelessWidget {
             children: [
               // Profile Picture (placeholder)
               Container(
-                width: (MediaQuery.of(context).size.width * 0.80) / 5,  // 90% of screen width divided by 3 images
-                height: (MediaQuery.of(context).size.width * 0.80) / 5,  // Fixed height for each image
+                width: (MediaQuery.of(context).size.width * 0.80) / 4.3,  // 90% of screen width divided by 3 images
+                height: (MediaQuery.of(context).size.width * 0.80) / 4.3,  // Fixed height for each image
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(50),
                   border: Border.all(color: Colors.grey.shade400),
@@ -342,9 +367,9 @@ class MemberCard extends StatelessWidget {
                     },
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
-                        color: Colors.red,  // Placeholder color for invalid image URLs
+                        color: Colors.white,  // Placeholder color for invalid image URLs
                         child: Center(
-                          child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                          child: Icon(Icons.error, color: Colors.grey[400],size: MediaQuery.of(context).size.width * 0.075),  // Display error icon
                         ),
                       );
                     },

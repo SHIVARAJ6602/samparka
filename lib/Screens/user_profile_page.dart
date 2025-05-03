@@ -7,6 +7,7 @@ import 'package:samparka/Screens/view_influencers.dart';
 import 'package:samparka/Screens/view_interaction.dart';
 
 import '../Service/api_service.dart';
+import '../widgets/influencer_card.dart';
 
 class UserProfilePage extends StatefulWidget {
 
@@ -33,7 +34,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
   late String name = '';
   late String designation = '';
   late String description = '';
-  late String hashtags = 'hastags';
+  late String hashtags = '';
   late String profileImage = '';
   late String KR_id = '';
 
@@ -47,6 +48,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     try {
       // Call the apiService.homePage() and store the result
       resultGV = await apiService.getInfluencer(0, 100,widget.id);
+      result = [];
       print('Influencers User Screen $result');
       setState(() {
         resultGV.forEach((inf) {
@@ -76,20 +78,56 @@ class _UserProfilePageState extends State<UserProfilePage> {
     }
   }
 
+  List<dynamic> fetchedHashtags = [];
+  bool isTagsLoaded = false;
+  Future<void> fetchHashtags() async {
+    try {
+      // Call the apiService.homePage() and store the result
+      var tags = await apiService.getHashtags();
+      setState(() {
+        fetchedHashtags = tags;
+        //print('hastags\'s $result');
+        isTagsLoaded = true;
+      });
+
+    } catch (e) {
+      print("Error fetching tags: $e");
+    }
+  }
+
+  String getHashtagNames(dynamic influencerHashtagIds, dynamic allHashtags) {
+    final List<int> ids = List<int>.from(influencerHashtagIds ?? []);
+    final List<Map<String, dynamic>> hashtags =
+    List<Map<String, dynamic>>.from(allHashtags ?? []);
+
+    final matchedNames = ids.map((id) {
+      final tag = hashtags.firstWhere(
+            (tag) => tag['id'] == id,
+        orElse: () => {},
+      );
+      final name = tag['name'];
+      return name != null ? '#$name' : '';
+    }).where((name) => name.isNotEmpty).join(', ');
+
+    return matchedNames;
+  }
+
+
 
   @override
   void initState() {
     super.initState();
-    fetchInfluencers();
+    fetchHashtags();
     setState(() {loading = true;});
     KR_id = widget.id;
     print(KR_id[0][0]);
     getKaryakartha();
+    fetchInfluencers();
     fetchTasks(KR_id);
     setState(() {});
-    Future.delayed(Duration(seconds: 2), () {
+    Future.delayed(Duration(milliseconds: 1000), () {
       setState(() {
-        loading = false; // Set loading to false after 2 seconds
+        loading = false;
       });
     });
   }
@@ -107,15 +145,15 @@ class _UserProfilePageState extends State<UserProfilePage> {
         name = '${resultKR[0]['first_name']} ${resultKR[0]['last_name']}';
         designation = resultKR[0]['designation'];
         description = resultKR[0]['description']??'';
-        profileImage = resultKR[0]['profile_image'];
-        print('Image: ${resultKR[0]['profile_image']}');
+        profileImage = resultKR[0]['profile_image']??'';
+        print('Image: ${profileImage}');
         setState(() {});
 
       });
       return true;
     } catch (e) {
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      print("Error fetching karyakartha: $e");
     }
     return false;
   }
@@ -175,18 +213,27 @@ class _UserProfilePageState extends State<UserProfilePage> {
                           Column(
                             children: [
                               Container(
-                                width: (MediaQuery.of(context).size.width * 0.80) / 3,  // 90% of screen width divided by 3 images
-                                height: (MediaQuery.of(context).size.width * 0.80) / 3,  // Fixed height for each image
+                                width: (MediaQuery.of(context).size.width * 0.80) / 3.0,  // 90% of screen width divided by 3 images
+                                height: (MediaQuery.of(context).size.width * 0.80) / 3.0,  // Fixed height for each image
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(50),
                                   border: Border.all(color: Colors.grey.shade400),
+                                  color: Colors.grey[200],
                                   boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
-                                      spreadRadius: 2, // Spread radius of the shadow
-                                      blurRadius: 7, // Blur radius of the shadow
-                                      offset: Offset(0, 4), // Shadow position (x, y)
-                                    ),
+                                    if(profileImage.isNotEmpty)
+                                      BoxShadow(
+                                        color: Color.fromRGBO(5, 50, 70, 1.0).withOpacity(0.5), // Grey shadow color with opacity
+                                        spreadRadius: 1, // Spread radius of the shadow
+                                        blurRadius: 7, // Blur radius of the shadow
+                                        offset: Offset(0, 4), // Shadow position (x, y)
+                                      ),
+                                    if(profileImage.isEmpty)
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
+                                        spreadRadius: 1, // Spread radius of the shadow
+                                        blurRadius: 3, // Blur radius of the shadow
+                                        offset: Offset(0, 4), // Shadow position (x, y)
+                                      ),
                                   ],
                                 ),
                                 child: ClipRRect(
@@ -211,15 +258,17 @@ class _UserProfilePageState extends State<UserProfilePage> {
                                     },
                                     errorBuilder: (context, error, stackTrace) {
                                       return Container(
-                                        color: Colors.red,  // Placeholder color for invalid image URLs
+                                        color: Colors.white,  // Placeholder color for invalid image URLs
                                         child: Center(
-                                          child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                                          child: Icon(Icons.error, color: Colors.grey),  // Display error icon
                                         ),
                                       );
                                     },
                                   )
-                                      : Container(
-                                    color: Colors.grey[200],  // Default background color if no image
+                                      : Icon(
+                                    Icons.person,
+                                    color: Colors.white,
+                                    size: MediaQuery.of(context).size.width * 0.22,
                                   ),
                                 ),
                               ),
@@ -326,6 +375,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
                                     (influencers.length < 4) ? influencers.length : 3, // Display either all members or just 3
                                         (index) {
                                       final influencer = influencers[index]; // Access the member data
+                                      print(influencer['hashtags']);
+                                      print('influencer ${influencer??[]}');
                                       return Padding(
                                         padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
                                         child: InfluencerCard(
@@ -333,11 +384,13 @@ class _UserProfilePageState extends State<UserProfilePage> {
                                           name: influencer['fname']??'',
                                           designation: influencer['designation']!,
                                           description: influencer['description']??'',
-                                          hashtags: influencer['hashtags']??'',
+                                          //hashtags: influencer['hashtags']??'',
+                                          hashtags: getHashtagNames(influencer['hashtags'], fetchedHashtags),
                                           soochi: influencer['soochi']??'',
+                                          shreni: influencer['shreni']??'',
                                           itrLvl: influencer['interaction_level']??'',
                                           profileImage: influencer['profile_image'] != null && influencer['profile_image']!.isNotEmpty
-                                              ? apiService.baseUrl.substring(0,40)+influencer['profile_image']!
+                                              ? influencer['profile_image']!
                                               : '',
                                         ),
                                       );

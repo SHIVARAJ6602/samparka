@@ -34,14 +34,25 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController impactOnSocietyController = TextEditingController();
   final TextEditingController interactionLevelController = TextEditingController();
-  final TextEditingController address1Controller = TextEditingController();
-  final TextEditingController city1Controller = TextEditingController();
-  final TextEditingController district1Controller = TextEditingController();
+  final TextEditingController addressController = TextEditingController();
+  final TextEditingController cityController = TextEditingController();
+  final TextEditingController districtController = TextEditingController();
   final TextEditingController state1Controller = TextEditingController();
   final TextEditingController address2Controller = TextEditingController();
   final TextEditingController city2Controller = TextEditingController();
   final TextEditingController district2Controller = TextEditingController();
   final TextEditingController state2Controller = TextEditingController();
+  final TextEditingController soochiController = TextEditingController();
+  final TextEditingController shreniController = TextEditingController();
+
+  TextEditingController _myController = TextEditingController();
+
+  String? selectedShreni;
+  List<String> shrenis = ["Administration","Art and Award Winners","Economic","Healthcare","Intellectuals","Law and Judiciary","Religious","Science and Research","Social Leaders and Organizations","Sports"];
+  String? selectedSoochi;
+  List<String> soochis = ["AkhilaBharthiya","JillaSampark","PranthyaSampark"];
+  String? selectedInteractionLevel;
+  List<String> interactionLevels = ["Sahabhag","Sahavas","Samarthan","Sampark"];
 
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await _picker.pickImage(source: source);
@@ -54,11 +65,11 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
   }
 
   late List<dynamic> result;
-  List<dynamic> shreni = [];
+  List<dynamic> karyakartha = [];
   List<dynamic> hashtags = [];
   List<dynamic> selectedHashtags = [];
   Set<int> selectedHashtagsIDs = {};
-  String? selectedShreniId;
+  String? selectedKaryakarthaId;
 
   void toggleHashtagSelection(int id) {
     setState(() {
@@ -86,15 +97,13 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
     //print("Selected Hashtags Names: $selectedHashtags");
   }
 
-
-
   Future<void> fetchShreni() async {
     try {
       // Call the apiService.homePage() and store the result
       result = await apiService.myTeam(0, 100);
       if (result.isEmpty) {
         setState(() {
-          selectedShreniId = apiService.UserId;
+          selectedKaryakarthaId = apiService.UserId;
         });
         showDialog(
           context: context,
@@ -116,11 +125,11 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
       }
       result.add({'id': apiService.UserId,'first_name': 'self(${apiService.first_name})','last_name': ''});
       setState(() {
-        print('shreni\'s $result');
-        shreni = result;
+        print('karyakartha\'s $result');
+        karyakartha = result;
       });
     } catch (e) {
-      print("Error fetching influencers: $e");
+      print("Error fetching karyakarthas: $e");
     }
   }
 
@@ -133,7 +142,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
         print('hastags\'s $result');
       });
     } catch (e) {
-      print("Error fetching influencers: $e");
+      print("Error fetching tags: $e");
     }
   }
 
@@ -180,7 +189,6 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
       },
     );
   }
-
 
   void _onNavItemTapped(int index) {
     if (index == 0) {
@@ -230,47 +238,78 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
     };
   }
 
-  void registerInfluencer() {
-    setState(() async {
-      List<dynamic> registrationData = [
-        phoneController.text,//0
-        fnameController.text,//1
-        lnameController.text,//2
-        emailController.text,//3
-        designationController.text,//4
-        descriptionController.text,//5
-        selectedHashtags,//6
-        organizationController.text,//7
-        impactOnSocietyController.text,//8
-        interactionLevelController.text,//9
-        address1Controller.text,//10
-        city1Controller.text,//11
-        district1Controller.text,//12
-        state1Controller.text,//13
-        _image!,//14
-        selectedShreniId,//15
-      ];
-      bool result = await apiService.CreateGanyaVyakthi(registrationData);
+  void registerInfluencer() async {
+    // Validate all required fields
+    if (_image == null ||
+        fnameController.text.trim().isEmpty ||
+        lnameController.text.trim().isEmpty ||
+        phoneController.text.trim().isEmpty ||
+        designationController.text.trim().isEmpty ||
+        descriptionController.text.trim().isEmpty ||
+        organizationController.text.trim().isEmpty ||
+        impactOnSocietyController.text.trim().isEmpty ||
+        addressController.text.trim().isEmpty ||
+        cityController.text.trim().isEmpty ||
+        districtController.text.trim().isEmpty ||
+        state1Controller.text.trim().isEmpty ||
+        selectedHashtagsIDs.isEmpty ||
+        selectedShreni == null ||
+        selectedSoochi == null ||
+        selectedInteractionLevel == null ||
+        (apiService.lvl > 2 && selectedKaryakarthaId == null)) {
 
-      if (result){
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ganyavyakthi registered successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context,true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Please fill all required fields."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Continue if all validations pass
+    List<dynamic> registrationData = [
+      phoneController.text.trim(),
+      fnameController.text.trim(),
+      lnameController.text.trim(),
+      emailController.text.trim(),
+      designationController.text.trim(),
+      descriptionController.text.trim(),
+      selectedHashtags,
+      organizationController.text.trim(),
+      impactOnSocietyController.text.trim(),
+      selectedInteractionLevel,
+      addressController.text.trim(),
+      cityController.text.trim(),
+      districtController.text.trim(),
+      state1Controller.text.trim(),
+      _image,
+      selectedKaryakarthaId,
+      selectedShreni,
+      selectedSoochi,
+    ];
+
+    try {
+      bool success = await apiService.CreateGanyaVyakthi(context, registrationData);
+      String message = success ? "Registered successfully!" : "Failed to register!";
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: success ? Colors.green : Colors.red,
+        ),
+      );
+      if (success) {
+        Navigator.pop(context, true);
       }
-      else{
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to Register Ganyavyakthi!'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    });
+    } catch (e) {
+      print("Error during registration: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+      );
+    }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -380,7 +419,6 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                 ),
               ],
             ),
-
             //influencer image
             Center(
               child: Stack(
@@ -470,6 +508,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
             ),
             const SizedBox(height: 24),
             // Input Fields
+            // f and l name
             Row(
               children: [
                 Expanded(
@@ -482,15 +521,114 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
               ],
             ),
             const SizedBox(height: 16),
+            _buildTextField(hint: "Phone Number", controller: phoneController),
+            const SizedBox(height: 16),
             _buildTextField(hint: "Designation", controller: designationController),
+            const SizedBox(height: 16),
+            _buildTextField(hint: "Organization", controller: organizationController),
             const SizedBox(height: 16),
             _buildTextField(hint: "Impact On Society", controller: impactOnSocietyController),
             const SizedBox(height: 16),
             _buildTextField(hint: "Short description", controller: descriptionController),
             const SizedBox(height: 16),
-            _buildTextField(hint: "E-mail Address", controller: emailController),
+            //Shreni
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: Colors.grey.shade400, width: 1.0),
+              ),
+              child: DropdownButton<String>(
+                hint: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10),
+                  child: Text('Select Shreni'),
+                ),
+                value: selectedShreni,
+                onChanged: (String? newShreni) {
+                  setState(() {
+                    selectedShreni = newShreni;
+                  });
+                },
+                items: shrenis.map<DropdownMenuItem<String>>((shreni) {
+                  return DropdownMenuItem<String>(
+                    value: shreni,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: Text(shreni),
+                    ),
+                  );
+                }).toList(),
+                isExpanded: true,
+                underline: Container(),
+              ),
+            ),
             const SizedBox(height: 16),
-            _buildTextField(hint: "Phone Number", controller: phoneController),
+            //Soochi
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: Colors.grey.shade400, width: 1.0),
+              ),
+              child: DropdownButton<String>(
+                hint: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10),
+                  child: Text('Select Soochi'),
+                ),
+                value: selectedSoochi,
+                onChanged: (String? newSoochi) {
+                  setState(() {
+                    selectedSoochi = newSoochi;
+                    print(selectedSoochi!+selectedInteractionLevel!+selectedShreni!);
+                  });
+                },
+                items: soochis.map<DropdownMenuItem<String>>((soochi) {
+                  return DropdownMenuItem<String>(
+                    value: soochi,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: Text(soochi),
+                    ),
+                  );
+                }).toList(),
+                isExpanded: true,
+                underline: Container(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            //Level of Interaction
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: Colors.grey.shade400, width: 1.0),
+              ),
+              child: DropdownButton<String>(
+                hint: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10),
+                  child: Text('Select Interaction Level'),
+                ),
+                value: selectedInteractionLevel,
+                onChanged: (String? newSoochi) {
+                  setState(() {
+                    selectedInteractionLevel = newSoochi;
+                  });
+                },
+                items: interactionLevels.map<DropdownMenuItem<String>>((interactionLevel) {
+                  return DropdownMenuItem<String>(
+                    value: interactionLevel,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: Text(interactionLevel),
+                    ),
+                  );
+                }).toList(),
+                isExpanded: true,
+                underline: Container(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(hint: "E-mail Address(optional)", controller: emailController),
             const SizedBox(height: 16),
             // Hashtag Section
             SingleChildScrollView(
@@ -517,6 +655,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                       }),
                     ),
                   const SizedBox(width: 8),
+                  if(apiService.lvl>2)
                   ElevatedButton(
                     onPressed: () {
                       // Open the dialog to add a new hashtag
@@ -536,38 +675,24 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                 ],
               ),
             ),
+            //Address
             const SizedBox(height: 24),
-            _buildTextField(hint: "Address", controller: address1Controller),
+            _buildTextField(hint: "Address", controller: addressController),
+            //city and district
             const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
-                  child: _buildTextField(hint: "City", controller: city1Controller),
+                  child: _buildTextField(hint: "City", controller: cityController),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: _buildTextField(hint: "District", controller: district1Controller),
+                  child: _buildTextField(hint: "District", controller: districtController),
                 ),
               ],
             ),
             const SizedBox(height: 16),
             _buildTextField(hint: "State", controller: state1Controller),
-            /*const SizedBox(height: 16),
-            _buildTextField(hint: "Address 2", controller: address2Controller),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTextField(hint: "City", controller: city2Controller),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildTextField(hint: "District", controller: district2Controller),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(hint: "State", controller: state2Controller),*/
             //shreni
             if(apiService.lvl>2)
               Container(
@@ -586,15 +711,20 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                       child: DropdownButton<String>(
                         hint: Padding(
                           padding: EdgeInsets.symmetric(horizontal: 10),
-                          child: Text(shreni.isNotEmpty ? 'Select ShreniPramuhk' : 'Loading ShreniPramuhk..'),
+                          child: Text(
+                            karyakartha.isNotEmpty
+                                ? 'Assign Karyakartha'
+                                : 'Loading Karyakartha\'s..',
+                            style: TextStyle(color: Colors.grey.shade700),
+                          ),
                         ),
-                        value: selectedShreniId,
+                        value: selectedKaryakarthaId,
                         onChanged: (String? newValue) {
                           setState(() {
-                            selectedShreniId = newValue;
+                            selectedKaryakarthaId = newValue;
                           });
                         },
-                        items: shreni.map<DropdownMenuItem<String>>((member) {
+                        items: karyakartha.map<DropdownMenuItem<String>>((member) {
                           return DropdownMenuItem<String>(
                             value: member['id'].toString(),
                             child: Padding(
@@ -670,33 +800,42 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
 
   Widget _buildTextField({required String hint, required TextEditingController controller}) {
     return TextField(
-      controller: controller, // Assign the dynamic controller
+      controller: controller,
       decoration: InputDecoration(
-        hintText: hint,
+        labelText: controller.text.isNotEmpty ? hint : null,
+        hintText: controller.text.isNotEmpty ? null : hint,
+        alignLabelWithHint: true,
         filled: true,
         fillColor: Colors.grey[200],
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: BorderSide(
-            color: Colors.grey.shade400, // Set the grey border color
-            width: 1.0,  // Set the border width
+            color: Colors.grey.shade400,
+            width: 1.0,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: BorderSide(
-            color: Colors.grey.shade600, // Darker grey when focused
-            width: 1.5, // Slightly thicker border when focused
+            color: Colors.grey.shade600,
+            width: 1.5,
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: BorderSide(
-            color: Colors.grey.shade400, // Light grey when not focused
+            color: Colors.grey.shade400,
             width: 1.0,
           ),
         ),
       ),
+      onChanged: (_) {
+        // Force rebuild to update label visibility
+        // You'll need to call setState in the parent where this widget is used
+        _myController.addListener(() {
+          setState(() {}); // Rebuild to show/hide label dynamically
+        });
+      },
     );
   }
 }

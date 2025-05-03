@@ -5,8 +5,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:no_screenshot/no_screenshot.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:samparka/Screens/PrivacyPolicyScreen.dart';
 import 'package:samparka/Screens/home.dart'; //InfluencersPage()
 import 'package:samparka/Screens/login.dart'; //LoginPage()
 import 'package:samparka/Screens/error_page.dart'; //ErrorPage()
@@ -52,7 +54,7 @@ class MyApp extends StatelessWidget {
         }
 
         // Once initialization is complete, return the actual MaterialApp
-        return _buildApp(apiService);
+        return _buildApp(apiService,context);
       },
     );
   }
@@ -98,12 +100,24 @@ class MyApp extends StatelessWidget {
   }
 
   // Helper function to build the actual app depending on authentication
-  Widget _buildApp(ApiService apiService) {
+  Widget _buildApp(ApiService apiService,BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Samparka',
       //home: InfluencersPage(),
-      home: apiService.isAuthenticated ? const InfluencersPage() : const LoginPage(),
+      //home: apiService.isAuthenticated ? const InfluencersPage() : const LoginPage(),
+      home: apiService.privacyPolicyAgreed
+          ? (apiService.isAuthenticated
+          ? const InfluencersPage()
+          : const LoginPage())
+          : PrivacyPolicyScreen(
+            onAccept: () {
+              apiService.privacyPolicyAgreed = true;
+            },
+            onDecline: () {
+                  SystemNavigator.pop();
+                  },
+          ),
     );
   }
 

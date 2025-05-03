@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:image/image.dart' as img;
 import 'dart:typed_data';
@@ -34,6 +36,7 @@ class ApiService {
   late String state = '';
   late bool isAuthenticated = false;
   late bool shouldUpdate = false;
+  late bool privacyPolicyAgreed = false;
   late Dio dio;
   late CookieJar cookieJar;
   late FirebaseMessaging messaging;
@@ -158,6 +161,7 @@ class ApiService {
       await prefs.setString("token", token ?? '');
       await prefs.setString('baseUrl', baseUrl ?? '');
       await prefs.setBool("isAuthenticated", isAuthenticated ?? false);
+      await prefs.setBool("privacyPolicyAgreed", privacyPolicyAgreed ?? false);
       await prefs.setString("userName", first_name ?? '');
       await prefs.setInt("level", lvl ?? 1);
       await prefs.setString("city", city ?? '');
@@ -180,6 +184,7 @@ class ApiService {
     first_name = prefs.getString("userName") ?? '';
     lvl = prefs.getInt("level")??1;
     isAuthenticated = prefs.getBool("isAuthenticated") ?? isAuthenticated;
+    privacyPolicyAgreed = prefs.getBool("privacyPolicyAgreed") ?? privacyPolicyAgreed;
     profileImage = prefs.getString("profile_image") ?? profileImage;
     city = prefs.getString('city') ?? city;
     district = prefs.getString('district') ?? district;
@@ -346,7 +351,6 @@ class ApiService {
       return false;
     }
   }
-
 
   ApiService._privateConstructor();
 
@@ -576,27 +580,101 @@ class ApiService {
     }
   }
 
-  Future<bool> CreateGanyaVyakthi(List<dynamic> UserData) async {
+  Future<List<dynamic>> getGatanayak(String KR_id) async{
     try {
       // Check if token is null or empty before making the request
       if (token.isEmpty) {
         print('Error: Authorization token is missing');
+        throw Exception('Failed: No Auth Token');
+      }
+      dio.options.headers['Authorization'] = 'Token $token';
+      // Send registration request to the server
+      final response = await dio.post(
+        '$baseUrl/callHandler/',
+        data: {
+          "action":"getGatanayak",
+          "KR_id":KR_id,
+        },
+      );
+      // Handle server response status
+      if (response.statusCode == 200) {
+        print(response.data);
+        if (response.data is List<dynamic>) {
+          return response.data;
+        } else if (response.data is String) {
+          final parsedData = List<dynamic>.from(response.data);
+          return parsedData;
+        } else {
+          throw Exception('Expected a List, but got ${response.data.runtimeType}');
+        }
+      } else {
+        throw Exception('Failed to load tasks. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle unexpected errors such as network issues or invalid responses
+      print('Error: $e');
+      throw Exception('Failed to load tasks: $e');
+    }
+  }
+
+  Future<List<dynamic>> getShreniPramukhs() async{
+    try {
+      // Check if token is null or empty before making the request
+      if (token.isEmpty) {
+        print('Error: Authorization token is missing');
+        throw Exception('Failed: No Auth Token');
+      }
+      dio.options.headers['Authorization'] = 'Token $token';
+      // Send registration request to the server
+      final response = await dio.post(
+        '$baseUrl/callHandler/',
+        data: {
+          "action":"getShreniPramukhs",
+        },
+      );
+      // Handle server response status
+      if (response.statusCode == 200) {
+        print(response.data);
+        if (response.data is List<dynamic>) {
+          return response.data;
+        } else if (response.data is String) {
+          final parsedData = List<dynamic>.from(response.data);
+          return parsedData;
+        } else {
+          throw Exception('Expected a List, but got ${response.data.runtimeType}');
+        }
+      } else {
+        throw Exception('Failed to load tasks. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle unexpected errors such as network issues or invalid responses
+      print('Error: $e');
+      throw Exception('Failed to load tasks: $e');
+    }
+  }
+
+  Future<bool> CreateGanyaVyakthi(BuildContext context, List<dynamic> UserData) async {
+    try {
+      if (token.isEmpty) {
+        print('Error: Authorization token is missing');
+        showDialogMsg(context, 'Authorization Error', 'Token is missing. Please login again.');
         return false;
       }
 
-      print("registration Start");
+      print("Registration started");
+
       File orgImage = await UserData[14];
       List<int> resizedImageBytes = await imageResize(orgImage, true, 600);
       String tempFilePath = '${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
       File tempFile = File(tempFilePath)..writeAsBytesSync(resizedImageBytes);
 
-      // Create a MultipartFile from the resized temporary file
-      MultipartFile resizedImage = await MultipartFile.fromFile(tempFile.path, filename: tempFile.uri.pathSegments.last);
-
-      print("Resized Image Size: ${resizedImage.length}");
+      MultipartFile resizedImage = await MultipartFile.fromFile(
+        tempFile.path,
+        filename: tempFile.uri.pathSegments.last,
+      );
 
       FormData formData = FormData.fromMap({
-        "action":"CreateGanyaVyakti",
+        "action": "CreateGanyaVyakti",
         "fname": UserData[1],
         "lname": UserData[2],
         "phone_number": UserData[0],
@@ -617,30 +695,40 @@ class ApiService {
         "district_2": UserData[12],
         "state_2": UserData[13],
         "profile_image": resizedImage,
+        "shreni": UserData[16],
+        "soochi": UserData[17],
       });
 
       dio.options.headers['Authorization'] = 'Token $token';
-      // Send registration request to the server
+
       final response = await dio.post(
         '$baseUrl/callHandler/',
         data: formData,
       );
-      // Handle server response status
+
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print("GanyaVyakthi registered successfully");
-        print("message: ${response.data['message']} user: ${response.data['user']}");
+        final message = response.data['message'] ?? 'Profile created successfully.';
+        showDialogMsg(context, 'Registration Successful', message);
         return true;
       } else {
-        // Capture error message from the server response, if available
-        var errorData = response.data;
-        String errorMessage = errorData['message'] ?? 'Unknown error';
-        print('Registration failed: $errorMessage');
-        throw Exception('Registration failed: $errorMessage');
+        final errorMessage = response.data['message'] ?? 'Registration failed. Please try again.';
+        showDialogMsg(context, 'Registration Failed', errorMessage);
+        return false;
       }
     } catch (e) {
-      // Handle unexpected errors such as network issues or invalid responses
-      print('Error during registration: $e');
-      return false;
+      if (e is DioException) {
+        final response = e.response;
+        final errorMessage = response?.data['message'] ??
+            'Make sure all fields are filled! \n code ${response?.statusCode ?? 'unknown'}';
+
+        showDialogMsg(context, 'Registration Failed', errorMessage);
+        print('DioException: $errorMessage');
+        return false;
+      } else {
+        showDialogMsg(context, 'Unexpected Error', 'An error occurred: $e');
+        print('Unexpected error during registration: $e');
+        return false;
+      }
     }
   }
 
@@ -688,6 +776,8 @@ class ApiService {
       addIfValid("district", UserData[12]);
       addIfValid("state", UserData[13]);
       addIfValid("GVid", gvId);
+      addIfValid("shreni", UserData[16]);
+      addIfValid("soochi", UserData[17]);
 
       updatePayload["action"] = "UpdateGanyaVyakti";
 
@@ -860,7 +950,7 @@ class ApiService {
     }
   }
 
-  Future<Response> login(String phone, String otp) async {
+  Future<Response> login(BuildContext context, String phone, String otp) async {
     Response? response;
     try {
       // Make the POST request
@@ -883,7 +973,7 @@ class ApiService {
           print(responseData);
           token = responseData['token'];
           first_name = responseData['userName'];
-          lvl = responseData['level']??1;
+          lvl = responseData['level'] ?? 1;
           //profile_image = responseData["profile_image"]??'';
 
           if (responseData['token'] != null) {
@@ -892,28 +982,38 @@ class ApiService {
             isAuthenticated = true;
             await saveData(); // Save the data as needed
             await loadData();
+
+            // Show success dialog
+            showDialogMsg(context, 'Samparka', 'Login successful!');
           } else {
+            // Show failure dialog
+            showDialogMsg(context, 'Samparka', 'Failed to Login!');
             throw Exception('Login failed: Token not received');
           }
         } else {
+          // Show failure dialog
+          showDialogMsg(context, 'Samparka', 'Failed to Login!');
           throw Exception('Unexpected response format');
         }
       }
+
       return response;
 
     } catch (e) {
       if (e is DioException) {
-        // Check if the error is caused by a 401 Unauthorized error
+        // Handle specific Dio exceptions
         if (e.response?.statusCode == 401) {
           print('Login failed: Invalid OTP or authentication issue');
+          showDialogMsg(context, 'Samparka', 'Invalid OTP or authentication issue');
           return Response(
             requestOptions: RequestOptions(path: ''), // Dummy RequestOptions
             statusCode: 401,
             data: {'message': 'Invalid OTP or authentication issue'},
           );
         } else {
-          // For other Dio errors, handle them here
+          // Handle other Dio errors
           print('Dio error: ${e.message}');
+          showDialogMsg(context, 'Samparka', 'Dio error: ${e.message}');
           return Response(
             requestOptions: RequestOptions(path: ''), // Dummy RequestOptions
             statusCode: 400,
@@ -921,8 +1021,9 @@ class ApiService {
           );
         }
       } else {
-        // Catch any other types of errors
+        // Handle non-Dio errors
         print('Error during login: $e');
+        showDialogMsg(context, 'Samparka', 'Unexpected error occurred: $e');
         return Response(
           requestOptions: RequestOptions(path: ''), // Dummy RequestOptions
           statusCode: 400,
@@ -968,7 +1069,9 @@ class ApiService {
       isAuthenticated = false;
       token = '';
       first_name = '';
+      privacyPolicyAgreed = false;
       saveData();
+      SystemNavigator.pop();
       /************/
       //await Future.delayed(const Duration(milliseconds: 1000));
     }
@@ -977,17 +1080,19 @@ class ApiService {
 
   }
 
-  Future<void> userAuth() async {
+  Future<void> userAuth(BuildContext context) async {
     dio.options.headers['Authorization'] = 'Token $token';
 
     try {
       final response = await dio.get('$baseUrl/callHandler/');
       print(response.data);
 
+
       if (response.statusCode == 200) {
-        print(response.data);
+        showDialogMsg(context, 'Success', '$first_name $last_name is authenticated!');
       } else {
         print("UnAuthorized");
+        showDialogMsg(context, 'Failed', '$first_name $last_name is not authenticated!');
         throw Exception('Failed to check user auth. Status code: ${response.statusCode}');
       }
 
@@ -995,6 +1100,7 @@ class ApiService {
       print('Error: $e');
     }
   }
+
 
   Future<void> Subordinates() async {
     dio.options.headers['Authorization'] = 'Token $token';
@@ -2089,6 +2195,23 @@ class ApiService {
       print('Error: $e');
       throw Exception('Failed to submit report: $e');
     }
+  }
+
+  Future<void> showDialogMsg(BuildContext context,String alert, String info)async {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent user from closing it manually
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(alert),
+          content: Text(info, style: TextStyle(fontSize: 18,),),
+        );
+      },
+    );
+    // Dismiss the dialog after 2 seconds
+    Future.delayed(Duration(seconds: 2), () {
+      Navigator.of(context).pop();
+    });
   }
 
 }

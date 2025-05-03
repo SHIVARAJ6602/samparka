@@ -34,6 +34,7 @@ class _TeamPageState extends State<TeamPage> {
   final TextEditingController _searchController = TextEditingController();
 
   List<dynamic> members = [];
+  List<dynamic> Gatanayaks = [];
   List<dynamic> membersSearched = [];
   List<dynamic> supervisor = [];
   List<dynamic> lead = [];
@@ -111,6 +112,22 @@ class _TeamPageState extends State<TeamPage> {
     }
   }
 
+  Future<void> fetchGatanayak(String KR_id) async {
+    try {
+      // Call the apiService.homePage() and store the result
+      result = await apiService.getGatanayak(KR_id);
+      setState(() {
+        // Update the influencers list with the fetched data
+        Gatanayaks = result;
+        //TeamMembers.add({'id':apiService.UserId,'first_name':'${apiService.first_name}(self)','last_name':apiService.last_name,'designation':apiService.designation,'profileImage':apiService.profileImage});
+        print('Gatanayaks: $Gatanayaks');
+      });
+    } catch (e) {
+      // Handle any errors here
+      print("Error fetching influencers: $e");
+    }
+  }
+
   Future<void> fetchLead() async {
     try {
       // Call the apiService.homePage() and store the result
@@ -157,6 +174,7 @@ class _TeamPageState extends State<TeamPage> {
     fetchSupervisor();
     if(apiService.lvl > 1) {
       fetchMembers();
+      fetchGatanayak(apiService.UserId);
     }
     if(apiService.lvl == 1){
       fetchLead();
@@ -623,7 +641,7 @@ class _TeamPageState extends State<TeamPage> {
                                                                   ),
                                                                 ),
                                                                 Text(
-                                                                  lead[0]['designation'],
+                                                                  lead[0]['designation']??'Not Set',
                                                                   style: TextStyle(
                                                                     fontSize: smallFontSize,
                                                                     color: Colors.white,
@@ -654,14 +672,14 @@ class _TeamPageState extends State<TeamPage> {
                                   ),
                                 ),
                                 //My team
-                                if(apiService.lvl > 1)
+                                if(apiService.lvl > 2)
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'My Team',
+                                        'My Shreni-Pramukh\'s',
                                         style: TextStyle(
-                                          fontSize: largeFontSize*2.5,
+                                          fontSize: largeFontSize*2,
                                           fontWeight: FontWeight.bold,
                                           color: const Color.fromRGBO(5, 50, 70, 1.0),
                                         ),
@@ -713,7 +731,7 @@ class _TeamPageState extends State<TeamPage> {
                                                         id: member['id']!,
                                                         first_name: member['first_name']!,
                                                         last_name: member['last_name']!,
-                                                        designation: member['designation']!,
+                                                        designation: member['designation']??"Not Set",
                                                         profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
                                                             ? member['profile_image']!
                                                             : '',
@@ -729,7 +747,112 @@ class _TeamPageState extends State<TeamPage> {
                                                 onPressed: () async {
                                                   Navigator.push(
                                                     context,
-                                                    MaterialPageRoute(builder: (context) => const MyTeamPage()),
+                                                    MaterialPageRoute(builder: (context) => const MyTeamPage(type: 'ShreniPramukh')),
+                                                  );
+                                                },
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    Text(
+                                                      'View all Members',
+                                                      style: TextStyle(
+                                                        fontSize: largeFontSize,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Image.asset(
+                                                      'assets/icon/arrow.png',
+                                                      color: Colors.white,
+                                                      width: 12,
+                                                      height: 12,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                if(apiService.lvl>1)
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        'My Gatanayak\'s',
+                                        style: TextStyle(
+                                          fontSize: largeFontSize*2,
+                                          fontWeight: FontWeight.bold,
+                                          color: const Color.fromRGBO(5, 50, 70, 1.0),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 1),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          //borderRadius: BorderRadius.circular(30),
+                                          borderRadius: members.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
+                                          gradient: const LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              Color.fromRGBO(60, 170, 145, 1.0),
+                                              Color.fromRGBO(2, 40, 60, 1),
+                                            ],
+                                          ),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            // If the list is empty, show a message
+                                            if (members.isEmpty)
+                                              Container(
+                                                padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    'No Gatanayak Assigned',
+                                                    style: TextStyle(
+                                                      fontSize: largeFontSize,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                            // If the list is not empty, build a ListView of InfluencerCards
+                                            else
+                                              Column(
+                                                children: List.generate(
+                                                  (Gatanayaks.length < 4) ? Gatanayaks.length : 3, // Display either all members or just 3
+                                                      (index) {
+                                                    final member = Gatanayaks[index]; // Access the member data
+                                                    return Padding(
+                                                      padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
+                                                      child: MemberCard(
+                                                        id: member['id']!,
+                                                        first_name: member['first_name']!,
+                                                        last_name: member['last_name']!,
+                                                        designation: member['designation']??"Not Set",
+                                                        profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
+                                                            ? member['profile_image']!
+                                                            : '',
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+
+                                            if (Gatanayaks.isNotEmpty)
+                                            // View All Influencers Button
+                                              TextButton(
+                                                onPressed: () async {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(builder: (context) => const MyTeamPage(type: 'Gatanayaks',)),
                                                   );
                                                 },
                                                 child: Row(
@@ -1106,9 +1229,9 @@ class MemberCard extends StatelessWidget {
                     },
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
-                        color: Colors.red,  // Placeholder color for invalid image URLs
+                        color: Colors.white,  // Placeholder color for invalid image URLs
                         child: Center(
-                          child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                          child: Icon(Icons.error, color: Colors.grey[400],size: MediaQuery.of(context).size.width * 0.075),  // Display error icon
                         ),
                       );
                     },

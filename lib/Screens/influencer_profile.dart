@@ -38,7 +38,9 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
   late String interactionLevel = '';
   late String soochi = '';
   late String shreni = '';
-  late String hashtags = 'hastags';
+  late String hashtags = '';
+  List<dynamic> fetchedHashtags = [];
+  bool isTagsLoaded = false;
   late String profileImage = '';
   late String GV_id = '';
   late String IOS = '';
@@ -59,6 +61,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
     setState(() {loading = true;});
     GV_id = widget.id;
     print(GV_id[0][0]);
+    fetchHashtags();
     getGanyavyakthi();
     fetchTasks(GV_id);
     fetchInteraction(GV_id);
@@ -69,6 +72,39 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
       });
     });
   }
+
+  Future<void> fetchHashtags() async {
+    try {
+      // Call the apiService.homePage() and store the result
+      var tags = await apiService.getHashtags();
+      setState(() {
+        fetchedHashtags = tags;
+        //print('hastags\'s $result');
+        isTagsLoaded = true;
+      });
+
+    } catch (e) {
+      print("Error fetching tags: $e");
+    }
+  }
+
+  String getHashtagNames(dynamic influencerHashtagIds, dynamic allHashtags) {
+    final List<int> ids = List<int>.from(influencerHashtagIds ?? []);
+    final List<Map<String, dynamic>> hashtags =
+    List<Map<String, dynamic>>.from(allHashtags ?? []);
+
+    final matchedNames = ids.map((id) {
+      final tag = hashtags.firstWhere(
+            (tag) => tag['id'] == id,
+        orElse: () => {},
+      );
+      final name = tag['name'];
+      return name != null ? '#$name' : '';
+    }).where((name) => name.isNotEmpty).join(', ');
+
+    return matchedNames;
+  }
+
 
   String soochi1 = "AkhilaBharthiya";
   String abbreviation1 = "AB";
@@ -88,12 +124,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
       setState(() {
         // Update the influencers list with the fetched data
         //meetings = result;
-        print('object');
-        print(result[0]['fname']);
-        print('object');
         name = '${result[0]['fname'] ?? ''} ${result[0]['lname'] ?? '.'}';
-        //name = '${result[0]['fname'] ?? '' + result[0]['last_name'] ?? ''}';
-        print('object');
         designation = result[0]['designation']??'';
         description = result[0]['description']??'';
         IOS = result[0]['impact_on_society']??'';
@@ -113,10 +144,19 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
         organisation = result[0]['Organization']??'';
         interactionLevel = result[0]['interaction_level']??'';
         profileImage = result[0]['profile_image']??'';
+        hashtags = getHashtagNames(result[0]['hashtags'], fetchedHashtags);
         print('Image: ${result[0]['profile_image']??''}');
         setState(() {});
 
       });
+      await waitForTagsToLoad(); // Wait until tags are loaded
+
+      final resolvedHashtags = getHashtagNames(result[0]['hashtags'], fetchedHashtags);
+      setState(() {
+        hashtags = resolvedHashtags;
+      });
+
+
       return true;
     } catch (e) {
       // Handle any errors here
@@ -125,10 +165,16 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
     return false;
   }
 
+  Future<void> waitForTagsToLoad() async {
+    while (!isTagsLoaded) {
+      await Future.delayed(Duration(milliseconds: 1000));
+    }
+  }
+
   Future<void> fetchTasks(GV_id) async {
     try {
       // Call the apiService.homePage() and store the result
-      result = await apiService.getTasks(GV_id);
+      var result = await apiService.getTasks(GV_id);
       setState(() {
         // Update the influencers list with the fetched data
         tasks = result;
@@ -142,11 +188,11 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
   Future<void> fetchInteraction(GV_id) async {
     try {
       // Call the apiService.homePage() and store the result
-      result = await apiService.getInteraction(GV_id);
+      var result = await apiService.getInteraction(GV_id);
       setState(() {
         // Update the influencers list with the fetched data
         meetings = result;
-        print('interactions: $meetings');
+        //print('interactions: $meetings');
       });
     } catch (e) {
       // Handle any errors here
@@ -157,7 +203,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
   Future<bool> fetchInfluencers() async {
     try {
       // Call the apiService.homePage() and store the result
-      result = await apiService.homePage();
+      var result = await apiService.homePage();
       setState(() {
         // Update the influencers list with the fetched data
         //meetings = result;
@@ -175,13 +221,6 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
     double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
     double largeFontSize = normFontSize+4; //20
     double smallFontSize = normFontSize-2;
-    // Simulated data
-    //String name = "John Doe";
-    String phoneNumber = "+1 234 567 890";
-    //String email = "johndoe@example.com";
-    //String address = "123 Main St, Springfield";
-    //String state = "California";
-    //String district = "District 9";
 
     showDialog(
       context: context,
@@ -229,7 +268,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                     SizedBox(width: 10),
                     ElevatedButton(
                       onPressed: () async {
-                        final web = Uri.parse('https://wa.me/$phoneNumber');
+                        final web = Uri.parse('https://wa.me/$Phno');
                         if (await canLaunchUrl(web)) {
                           launchUrl(web);
                         } else {
@@ -267,11 +306,18 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
               ),
               child: TextButton(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ChangeRequestPage(GV_id)),
-                  );
-                },
+                  Navigator.of(context).pop(); // First pop the current screen/dialog
+                  Future.delayed(Duration(milliseconds: 30), () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ChangeRequestPage(GV_id)),
+                    ).then((result) {
+                      if (result == true) {
+                        getGanyavyakthi(); // Refresh after returning
+                      }
+                    });
+                  });
+                } ,
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,

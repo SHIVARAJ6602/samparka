@@ -247,7 +247,7 @@ class _LoginPageState extends State<LoginPage> {
                   textInputAction: TextInputAction.done,  // "Done" button for final submission
                   focusNode: _otpFocusNode,  // Link to the OTP field focus
                   onSubmitted: (_) async {
-                    await apiService.login(_phoneNumber, _otpEntered);
+                    await apiService.login(context,_phoneNumber, _otpEntered);
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -269,7 +269,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   child: ElevatedButton(
                     onPressed: () async {
-                      Response response = await apiService.login(_phoneNumber, _otpEntered);
+                      Response response = await apiService.login(context,_phoneNumber, _otpEntered);
                       String message = '';
                       print(response.statusCode);
                       if (response.statusCode == 200) {
@@ -343,7 +343,7 @@ class _LoginPageState extends State<LoginPage> {
                       }else if(response == 404){
                         show_Dialog(context, 'Number not registered');
                       }else if(response==500){
-                        show_Dialog(context, 'Internal Server Error');
+                        show_Dialog(context, 'Sorry, Something went wrong!');
                       }
                       setState(() {
                         _isLoading = false;

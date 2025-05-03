@@ -116,7 +116,7 @@ class _ApiScreenState extends State<ApiScreen> {
               children: [
                 TextButton(
                     onPressed: () {
-                      apiService.userAuth();
+                      apiService.userAuth(context);
                     },
                     child: Text('userAuthTest'))
               ],
