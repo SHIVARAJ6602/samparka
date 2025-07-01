@@ -7,13 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:samparka/Screens/meeting.dart';
 import 'package:samparka/Screens/my_team.dart';
-import 'package:samparka/Screens/settings.dart';
+import 'package:samparka/Screens/ProfilePage.dart';
 import 'package:samparka/Screens/team.dart';
 import '../widgets/approval_card.dart';
 import '../widgets/influencer_card.dart';
 import 'Temp2.dart';
 import 'add_influencer.dart';
 import 'gen_report.dart';
+import 'help.dart';
 import 'influencer_profile.dart';
 import 'login.dart';
 import 'API_TEST.dart'; //TaskListScreen()
@@ -41,7 +42,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
       // Navigate to AddInfluencerPage when index 1 is tapped
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => SettingsPage()),
+        MaterialPageRoute(builder: (context) => ProfilePage()),
       );
     } else if (index == 4) {
       // Navigate to AddInfluencerPage when index 1 is tapped
@@ -111,7 +112,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
   @override
   void initState() {
     super.initState();
-    handleAuth();
+    handleAuth(context);
     //handleButtonPress();
     username = apiService.first_name;
     isAuthenticated = apiService.isAuthenticated;
@@ -149,9 +150,21 @@ class _InfluencersPageState extends State<InfluencersPage> {
   // State variables for radio buttons
   String? selectedRadio = 'url1';
 
-  Future<void> handleAuth() async {
-    await apiService.getUser();
+  Future<void> handleAuth(BuildContext context) async {
+    if (!await apiService.getUser(context)) {
+      // Wait for 2 seconds before dismissing and navigating
+      await Future.delayed(const Duration(seconds: 2));
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pop(context); // Pop the current screen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
+        );
+      });
+    }
   }
+
   // Function to handle button press logic
   void handleButtonPress() {
     setState(() {
@@ -431,31 +444,46 @@ class _InfluencersPageState extends State<InfluencersPage> {
         child: Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
-            /*
             leading: apiService.lvl > 2
                 ? IconButton(
               icon: const Icon(Icons.person, color: Color.fromRGBO(5, 50, 70, 1.0)),
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => SettingsPage()),
+                  MaterialPageRoute(builder: (context) => ProfilePage()),
                 );
               },
             )
                 : IconButton(
-              icon: const Icon(Icons.arrow_back_ios, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
-              onPressed: () {
+              icon: Transform.rotate(
+                      angle: 3.1416,
+                      child: const Icon(
+                        Icons.exit_to_app_rounded,
+                        color: Color.fromRGBO(5, 50, 70, 1.0),
+                      ),
+                    ),
+                onPressed: () {
                 SystemNavigator.pop(); // This exits the app
               },
             ),
-            */
-            backgroundColor: Colors.transparent, // Make the app bar background transparent
-            elevation: 0, // Remove the app bar shadow
+            backgroundColor: Colors.transparent,
+            systemOverlayStyle: SystemUiOverlayStyle.dark,
+            elevation: 0,
             title: Text('Samparka',style: TextStyle(fontWeight: FontWeight.bold)),
             actions: [
-              // Add the notification icon to the right side of the app bar
+              // 🆕 Help icon added before notification
               IconButton(
-                icon: const Icon(Icons.notifications, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
+                icon: const Icon(Icons.bug_report, color: Color.fromRGBO(5, 50, 70, 1.0)),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => HelpPage()), // Your help/feedback screen
+                  );
+                },
+              ),
+              // Notification icon
+              IconButton(
+                icon: const Icon(Icons.notifications, color: Color.fromRGBO(5, 50, 70, 1.0)),
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -608,7 +636,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => SettingsPage()),
+                        MaterialPageRoute(builder: (context) => ProfilePage()),
                       );
                     },
                     child: Row(
@@ -1085,9 +1113,9 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                             },
                                             errorBuilder: (context, error, stackTrace) {
                                               return Container(
-                                                color: Colors.red,  // Placeholder color for invalid image URLs
+                                                color: Colors.grey,  // Placeholder color for invalid image URLs
                                                 child: Center(
-                                                  child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                                                  child: Icon(Icons.error, color: Colors.grey[400]),  // Display error icon
                                                 ),
                                               );
                                             },
@@ -1110,7 +1138,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                 double fontSize = largeFontSize + 6; // Default font size
                                                 var tmpname = "${ApproveMember['fname']} ${ApproveMember['lname']}"??'';
                                                 double availableWidth = tmpname.length*largeFontSize;
-                                                print('$fontSize $availableWidth ${MediaQuery.of(context).size.width * 0.38*2}');
+                                                //print('$fontSize $availableWidth ${MediaQuery.of(context).size.width * 0.38*2}');
 
                                                 if (availableWidth > MediaQuery.of(context).size.width * 0.38*2) {
                                                   fontSize = normFontSize; // Adjust this to your needs
@@ -1525,9 +1553,9 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                             },
                                             errorBuilder: (context, error, stackTrace) {
                                               return Container(
-                                                color: Colors.red,  // Placeholder color for invalid image URLs
+                                                color: Colors.grey,  // Placeholder color for invalid image URLs
                                                 child: Center(
-                                                  child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                                                  child: Icon(Icons.error, color: Colors.grey[400]),  // Display error icon
                                                 ),
                                               );
                                             },
@@ -2089,7 +2117,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                     if(apiService.lvl<=2)
                       _buildBottomNavItem(
                         label: "Profile",
-                        iconPath: 'assets/icon/report.png',  // Use the PNG file path
+                        iconPath: 'assets/icon/user.png',  // Use the PNG file path
                         isActive: _selectedIndex == 5,
                         onPressed: () => _onNavItemTapped(5),
                       ),
@@ -2312,9 +2340,9 @@ class MemberCard extends StatelessWidget {
                     },
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
-                        color: Colors.red,  // Placeholder color for invalid image URLs
+                        color: Colors.white,  // Placeholder color for invalid image URLs
                         child: Center(
-                          child: Icon(Icons.error, color: Colors.white),  // Display error icon
+                          child: Icon(Icons.error, color: Colors.grey[400]),  // Display error icon
                         ),
                       );
                     },
@@ -2435,7 +2463,6 @@ class SearchCard extends StatelessWidget {
       ),
     );
   }
-
 }
 
 

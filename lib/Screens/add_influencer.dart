@@ -1,8 +1,11 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:samparka/Screens/home.dart';
 import 'package:samparka/Screens/upload_gv_excel.dart';
+import 'package:flutter/services.dart';
+
 
 import '../Service/api_service.dart';
 
@@ -70,6 +73,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
   List<dynamic> selectedHashtags = [];
   Set<int> selectedHashtagsIDs = {};
   String? selectedKaryakarthaId;
+  bool isTest = false;
 
   void toggleHashtagSelection(int id) {
     setState(() {
@@ -208,6 +212,9 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
   @override
   void initState() {
     super.initState();
+    if(apiService.UserId.startsWith('TKR')){
+      isTest = true;
+    }
 
     if(apiService.lvl>2){
       fetchShreni();
@@ -287,10 +294,11 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
       selectedKaryakarthaId,
       selectedShreni,
       selectedSoochi,
+      isTest,
     ];
 
     try {
-      bool success = await apiService.CreateGanyaVyakthi(context, registrationData);
+      bool success = await apiService.createGanyaVyakthi(context, registrationData);
       String message = success ? "Registered successfully!" : "Failed to register!";
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -319,8 +327,9 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent, // Make the app bar background transparent
-        elevation: 0, // Remove the app bar shadow
+        backgroundColor: Colors.transparent,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color.fromRGBO(5, 50, 70, 1.0)), // Back button icon
           onPressed: () {
@@ -349,76 +358,107 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                         color: const Color.fromRGBO(5, 50, 70, 1.0),
                       ),
                     ),
-                    Text(
+                    AutoSizeText(
                       "Influencer",
+                      maxLines: 1,
                       style: TextStyle(
                         fontSize: largeFontSize * 2,
                         fontWeight: FontWeight.bold,
                         color: const Color.fromRGBO(5, 50, 70, 1.0),
                       ),
+                      minFontSize: largeFontSize.floorToDouble(),
+                      stepGranularity: 1.0,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
                 Expanded(child: SizedBox()),
                 // Second Column: Button with Upload and Rotated Arrow Icon (pushed to the right)
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    gradient: const LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [
-                        Color.fromRGBO(16, 115, 65, 1.0),
-                        Color.fromRGBO(60, 170, 145, 1.0)
-                      ],
+                if (!apiService.UserId.startsWith('TKR'))
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      gradient: const LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          Color.fromRGBO(16, 115, 65, 1.0),
+                          Color.fromRGBO(60, 170, 145, 1.0),
+                        ],
+                      ),
                     ),
-                  ),
-                  child: Align(
-                    alignment: Alignment.centerRight,  // Align the button to the right
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => UploadGVExcel()),
-                        );
-                      },
-                      style: TextButton.styleFrom(
-                        //backgroundColor: Colors.blue, // Background color for the button
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12), // Rounded corners for the button
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => UploadGVExcel()),
+                          );
+                        },
+                        style: TextButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(6),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Upload',
+                                style: TextStyle(
+                                  fontSize: normFontSize,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Transform.rotate(
+                                angle: 4.7124,
+                                child: Image.asset(
+                                  'assets/icon/arrow.png',
+                                  color: Colors.white,
+                                  width: 15,
+                                  height: 15,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      child: Padding(
-                        padding: EdgeInsets.all(6),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center, // Center the row content inside the button
-                          children: [
-                            Text(
-                              'Upload',
-                              style: TextStyle(
-                                fontSize: normFontSize,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(width: 4),  // Add space between the text and the image
-                            Transform.rotate(
-                              angle: 4.7124,  // Rotate the arrow 90 degrees
-                              child: Image.asset(
-                                'assets/icon/arrow.png',
-                                color: Colors.white,
-                                width: 15,  // Adjust the size of the image
-                                height: 15, // Adjust the size of the image
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
                     ),
                   ),
-                ),
+
               ],
             ),
+            if (apiService.phone == '7337620623' || apiService.UserId.startsWith('TKR'))
+              Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        isTest ? 'Creating Test Influencer' : 'Create Test Influencer?',
+                        style: TextStyle(fontSize: 18, color: Colors.red, fontWeight: FontWeight.bold),
+                      ),
+                      if (apiService.phone == '7337620623')
+                        Switch(
+                          value: isTest,
+                          onChanged: (bool newValue) {
+                            setState(() {
+                              isTest = newValue;
+                            });
+                          },
+                          activeColor: Colors.red,
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+
+
             //influencer image
             Center(
               child: Stack(

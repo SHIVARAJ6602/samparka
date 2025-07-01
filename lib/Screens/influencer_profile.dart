@@ -50,6 +50,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
   late String state = '';
   late String district = '';
   late String organisation = '';
+  late String assignedKaryakartha = '';
 
   TextEditingController titleController = TextEditingController();
 
@@ -144,8 +145,10 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
         organisation = result[0]['Organization']??'';
         interactionLevel = result[0]['interaction_level']??'';
         profileImage = result[0]['profile_image']??'';
+        assignedKaryakartha = result[0]['assigned_karyakarta']??'';
         hashtags = getHashtagNames(result[0]['hashtags'], fetchedHashtags);
         print('Image: ${result[0]['profile_image']??''}');
+        print(result);
         setState(() {});
 
       });
@@ -290,6 +293,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
             ),
           ),
           actions: [
+            if(assignedKaryakartha.isNotEmpty && assignedKaryakartha==apiService.UserId)
             Container(
               width: MediaQuery.of(context).size.width * 0.25 * 1.1,
               height: MediaQuery.of(context).size.width * 0.25 * 0.4,
@@ -384,8 +388,9 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent, // Make the app bar background transparent
-        elevation: 0, // Remove the app bar shadow
+        backgroundColor: Colors.transparent,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        elevation: 0,
         actions: [
           // Add the notification icon to the right side of the app bar
           IconButton(

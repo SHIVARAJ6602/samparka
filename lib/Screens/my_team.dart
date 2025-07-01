@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:samparka/Screens/team.dart';
 import 'package:samparka/Screens/user_profile_page.dart';
 
@@ -9,6 +10,7 @@ import '../Service/api_service.dart';
 import 'API_TEST.dart';
 import 'gen_report.dart';
 import 'home.dart';
+import 'meeting.dart';
 
 class MyTeamPage extends StatefulWidget {
   final String type;
@@ -54,6 +56,12 @@ class _MyTeamPageState extends State<MyTeamPage> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const GenReportPage()),
+      );
+    } else if (index == 2) {
+      // Navigate to AddInfluencerPage when index 1 is tapped
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const MeetingPage()),
       );
     } else if (index == 1) {
       // Navigate to AddInfluencerPage when index 1 is tapped
@@ -114,6 +122,9 @@ class _MyTeamPageState extends State<MyTeamPage> {
     double smallFontSize = normFontSize-2; //14
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        elevation: 0,
         title: widget.type=="Gatanayaks"? Text('My Gatanayak\'S'):Text('My Team'),
       ),
       body: Stack(

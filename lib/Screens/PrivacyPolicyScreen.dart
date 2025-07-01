@@ -2,19 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../Service/api_service.dart';
 import 'login.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   final VoidCallback onAccept;
   final VoidCallback onDecline;
 
-  const PrivacyPolicyScreen({
+  PrivacyPolicyScreen({
     super.key,
     required this.onAccept,
     required this.onDecline,
   });
 
   static const _policyUrl = 'https://www.privacypolicies.com/live/2cd1ab57-7e78-4a12-962c-f20bc8775fef';
+  final apiService = ApiService();
 
   Future<void> _launchPrivacyPolicy() async {
     final uri = Uri.parse(_policyUrl);
@@ -105,7 +107,8 @@ class PrivacyPolicyScreen extends StatelessWidget {
                           color: Colors.black54,
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      (!apiService.privacyPolicyAgreed)? const SizedBox(height: 16): const SizedBox(height: 8),
+                      if (!apiService.privacyPolicyAgreed)
                       const Text(
                         'By accepting, you agree to our privacy policy and terms of use.',
                         style: TextStyle(
@@ -136,7 +139,34 @@ class PrivacyPolicyScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      Row(
+                      //Show deletion message only when Privacy policy is accepted
+                      if (apiService.privacyPolicyAgreed)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.shade50,
+                                border: Border.all(color: Colors.orange),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text(
+                                'Account Deletion:\n\nIf you wish to delete your account, please contact your local administrator or email us at samparkamysuru@gmail.com.',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.black87,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                        ),
+                      //Show Accept and decline only when not accepted.
+                      if(!apiService.privacyPolicyAgreed)
+                        Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           Container(

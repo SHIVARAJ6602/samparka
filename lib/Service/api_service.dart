@@ -28,6 +28,7 @@ class ApiService {
   late int lvl = 0;
   late var profileImage = '';
   late String UserId = '';
+  late String phone = '';
   late String first_name = '';
   late String last_name = '';
   late String designation = '';
@@ -37,6 +38,7 @@ class ApiService {
   late bool isAuthenticated = false;
   late bool shouldUpdate = false;
   late bool privacyPolicyAgreed = false;
+  late bool devVersion = true;
   late Dio dio;
   late CookieJar cookieJar;
   late FirebaseMessaging messaging;
@@ -160,6 +162,7 @@ class ApiService {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString("token", token ?? '');
       await prefs.setString('baseUrl', baseUrl ?? '');
+      await prefs.setString('phone_number', phone ?? 'Error');
       await prefs.setBool("isAuthenticated", isAuthenticated ?? false);
       await prefs.setBool("privacyPolicyAgreed", privacyPolicyAgreed ?? false);
       await prefs.setString("userName", first_name ?? '');
@@ -181,6 +184,7 @@ class ApiService {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     baseUrl = prefs.getString('baseUrl') ?? baseUrl;
     token = prefs.getString("token") ?? '';
+    phone = prefs.getString("phone_number") ?? '';
     first_name = prefs.getString("userName") ?? '';
     lvl = prefs.getInt("level")??1;
     isAuthenticated = prefs.getBool("isAuthenticated") ?? isAuthenticated;
@@ -190,6 +194,7 @@ class ApiService {
     district = prefs.getString('district') ?? district;
     state = prefs.getString('state') ?? state;
     print("DataLoaded - isAuthenticated: $isAuthenticated id $UserId token: $token url:$baseUrl perfT ${prefs.getString("token")} $UserId");
+    print("$UserId privacyPolicyAgreed:$privacyPolicyAgreed");
   }
 
   Future<Uint8List> resizeImage(Uint8List imageBytes) async {
@@ -264,6 +269,7 @@ class ApiService {
         "city": data[9],
         "district": data[10],
         "state": data[11],
+        "user_type": data[13],
       });
 
       dio.options.headers['Authorization'] = 'Token $token';
@@ -310,8 +316,8 @@ class ApiService {
       }
 
       // Optional image
-      if (userData[10] != null && userData[10] is File) {
-        File orgImage = userData[10];
+      if (userData[8] != null && userData[8] is File) {
+        File orgImage = userData[8];
         List<int> resizedImageBytes = await imageResize(orgImage, true, 600);
         String tempFilePath = '${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
         File tempFile = File(tempFilePath)..writeAsBytesSync(resizedImageBytes);
@@ -326,13 +332,13 @@ class ApiService {
       addIfValid("designation", userData[4]);
       addIfValid("description", userData[5]);
       addIfValid("address", userData[6]);
-      addIfValid("city", userData[7]);
-      addIfValid("district", userData[8]);
-      addIfValid("state", userData[9]);
-      addIfValid("shreni_id", userData[11]);
+      addIfValid("city", userData[9]);
+      addIfValid("district", userData[10]);
+      addIfValid("state", userData[11]);
+      addIfValid("shreni_id", userData[7]);
 
       updatePayload["KR_id"] = userId;
-      updatePayload["action"] = "updateKaryakartha";
+      updatePayload["action"] = "UpdateKaryakartha";
 
       FormData formData = FormData.fromMap(updatePayload);
       dio.options.headers['Authorization'] = 'Token $token';
@@ -401,7 +407,7 @@ class ApiService {
     }
   }
 
-  Future<bool> getUser() async  {
+  Future<bool> getUser(BuildContext context) async  {
     dio.options.headers['Authorization'] = 'Token $token';
     print('getUser Called');
 
@@ -411,34 +417,41 @@ class ApiService {
       print(response.statusCode);
 
       if (response.statusCode == 200) {
-        // Assuming the response data contains a list of user data.
-        var userData = response.data['data']; // Assuming 'data' holds the user info
+        var userData = response.data['data'];
         print(userData);
-        UserId = userData['id']??'';
-        first_name = userData['first_name']??'';
-        last_name = userData['last_name']??'';
-        lvl  = userData['level'??1];
-        city = userData['city'??''];
-        district = userData['district']??'';
-        profileImage = userData['profile_image']??'';
-        state = userData['state']??'';
-        designation = userData['designation']??'None';
+        UserId = userData['id'] ?? '';
+        phone = userData['phone_number'] ?? 'Error';
+        first_name = userData['first_name'] ?? '';
+        last_name = userData['last_name'] ?? '';
+        lvl = userData['level'] ?? 1;
+        city = userData['city'] ?? '';
+        district = userData['district'] ?? '';
+        profileImage = userData['profile_image'] ?? '';
+        state = userData['state'] ?? '';
+        designation = userData['designation'] ?? 'None';
+
         await saveData();
         await loadData();
 
         return true;
-      } else if(response.statusCode == 401){
-        print('401 Error Unauthorised');
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        print('401 Error: Unauthorized');
         this.isAuthenticated = false;
         this.token = '';
         await saveData();
         await loadData();
+        showDialogMsg(context, 'You Have been logged Out', 'Please Sign in again!');
+        return false;
+      } else {
+        print('Dio error: ${e.response?.statusCode} - ${e.message}');
+        // You could also show a dialog/snackbar depending on the use case
       }
-
     } catch (e) {
-      print('Error: $e');
-      throw Exception('Failed to load user data: $e');
+      print('Unexpected error: $e');
     }
+
     return false;
   }
 
@@ -580,6 +593,42 @@ class ApiService {
     }
   }
 
+  Future<List<dynamic>> myMJMembers(int sCount,int eCount) async{
+    try {
+      // Check if token is null or empty before making the request
+      if (token.isEmpty) {
+        print('Error: Authorization token is missing');
+        throw Exception('Failed: No Auth Token');
+      }
+      dio.options.headers['Authorization'] = 'Token $token';
+      // Send registration request to the server
+      final response = await dio.post(
+        '$baseUrl/callHandler/',
+        data: {
+          "action":"myMJMembers",
+        },
+      );
+      // Handle server response status
+      if (response.statusCode == 200) {
+        print(response.data);
+        if (response.data is List<dynamic>) {
+          return response.data;
+        } else if (response.data is String) {
+          final parsedData = List<dynamic>.from(response.data);
+          return parsedData;
+        } else {
+          throw Exception('Expected a List, but got ${response.data.runtimeType}');
+        }
+      } else {
+        throw Exception('Failed to load tasks. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle unexpected errors such as network issues or invalid responses
+      print('Error: $e');
+      throw Exception('Failed to load tasks: $e');
+    }
+  }
+
   Future<List<dynamic>> getGatanayak(String KR_id) async{
     try {
       // Check if token is null or empty before making the request
@@ -653,7 +702,7 @@ class ApiService {
     }
   }
 
-  Future<bool> CreateGanyaVyakthi(BuildContext context, List<dynamic> UserData) async {
+  Future<bool> createGanyaVyakthi(BuildContext context, List<dynamic> UserData) async {
     try {
       if (token.isEmpty) {
         print('Error: Authorization token is missing');
@@ -697,6 +746,7 @@ class ApiService {
         "profile_image": resizedImage,
         "shreni": UserData[16],
         "soochi": UserData[17],
+        "isTest": UserData[18],
       });
 
       dio.options.headers['Authorization'] = 'Token $token';
@@ -732,7 +782,7 @@ class ApiService {
     }
   }
 
-  Future<bool> UpdateGanyaVyakthi(List<dynamic> UserData, String gvId) async {
+  Future<bool> updateGanyaVyakthi(List<dynamic> UserData, String gvId) async {
     try {
       if (token.isEmpty) {
         print('Error: Authorization token is missing');
@@ -977,14 +1027,15 @@ class ApiService {
           //profile_image = responseData["profile_image"]??'';
 
           if (responseData['token'] != null) {
-            await getUser();
-            print('Login successful. Token: $token UserName: $first_name');
+            await getUser(context);
+            //print('Login successful. Token: $token UserName: $first_name');
             isAuthenticated = true;
+            privacyPolicyAgreed = true;
             await saveData(); // Save the data as needed
             await loadData();
 
             // Show success dialog
-            showDialogMsg(context, 'Samparka', 'Login successful!');
+            //showDialogMsg(context, 'Samparka', 'Login successful!', infoColor: Colors.green, alertColor: Colors.greenAccent);
           } else {
             // Show failure dialog
             showDialogMsg(context, 'Samparka', 'Failed to Login!');
@@ -1100,7 +1151,6 @@ class ApiService {
       print('Error: $e');
     }
   }
-
 
   Future<void> Subordinates() async {
     dio.options.headers['Authorization'] = 'Token $token';
@@ -2197,21 +2247,35 @@ class ApiService {
     }
   }
 
-  Future<void> showDialogMsg(BuildContext context,String alert, String info)async {
+  Future<void> showDialogMsg(BuildContext context, String alert, String info, { Color? alertColor = Colors.black, Color? infoColor = Colors.grey }) async {
     showDialog(
       context: context,
       barrierDismissible: false, // Prevent user from closing it manually
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(alert),
-          content: Text(info, style: TextStyle(fontSize: 18,),),
+          title: Text(
+            alert,
+            style: TextStyle(
+              color: alertColor, // Use provided or default alertColor
+            ),
+          ),
+          content: Text(
+            info,
+            style: TextStyle(
+              fontSize: 18,
+              color: infoColor, // Use provided or default infoColor
+            ),
+          ),
         );
       },
     );
+
     // Dismiss the dialog after 2 seconds
     Future.delayed(Duration(seconds: 2), () {
       Navigator.of(context).pop();
     });
   }
+
+
 
 }

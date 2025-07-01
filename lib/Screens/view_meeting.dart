@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
@@ -615,7 +616,8 @@ class MemberCard extends StatelessWidget {
                 radius: MediaQuery.of(context).size.width * 0.08,
                 backgroundColor: Colors.grey[200],
                 //backgroundImage: profileImage.isNotEmpty ? NetworkImage(profileImage) : null,
-                backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null, // Use NetworkImage here
+                //backgroundImage: profileImage.isNotEmpty ? MemoryImage(base64Decode(profileImage.split(',')[1])) : null, // Use NetworkImage here
+                backgroundImage: profileImage.isNotEmpty ? NetworkImage(profileImage) : null, // Use NetworkImage here
                 child: profileImage.isEmpty
                     ? Icon(
                   Icons.person,
@@ -686,6 +688,7 @@ class _FullScreenImageGalleryState extends State<FullScreenImageGallery> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         elevation: 0,
         iconTheme: IconThemeData(color: Colors.white),
       ),

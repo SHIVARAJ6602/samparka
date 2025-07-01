@@ -24,8 +24,13 @@ Future<void> main() async {
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   setupFCMListeners();
-  NoScreenshot.instance.screenshotOff();
+  NoScreenshot.instance.screenshotOn();
   //screenshotOn()
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent, // or any color you want
+    statusBarIconBrightness: Brightness.dark, // use Brightness.dark for black icons
+    statusBarBrightness: Brightness.light, // for iOS (optional)
+  ));
   runApp(MyApp());
 }
 
@@ -101,6 +106,9 @@ class MyApp extends StatelessWidget {
 
   // Helper function to build the actual app depending on authentication
   Widget _buildApp(ApiService apiService,BuildContext context) {
+    if(apiService.devVersion){
+      NoScreenshot.instance.screenshotOn();
+    }
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Samparka',
@@ -123,7 +131,7 @@ class MyApp extends StatelessWidget {
 
   Future<void> _wait(ApiService apiService) async {
     //await requestNotificationPermission();
-    await Future.delayed(const Duration(milliseconds: 0));
+    await Future.delayed(const Duration(milliseconds: 2000));
   }
 
 

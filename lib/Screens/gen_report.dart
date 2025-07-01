@@ -5,14 +5,16 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:samparka/Screens/meeting.dart';
-import 'package:samparka/Screens/settings.dart';
+import 'package:samparka/Screens/ProfilePage.dart';
 import 'package:samparka/Screens/team.dart';
 import 'package:samparka/Screens/view_report_meetings.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:open_file/open_file.dart';
 import '../Service/api_service.dart';
 import 'add_influencer.dart';
+import 'help.dart';
 import 'home.dart';
+import 'package:flutter/services.dart';
 import 'notifications.dart';
 
 //openfile
@@ -304,7 +306,7 @@ class GenReportPageState extends State<GenReportPage> {
       // Navigate to AddInfluencerPage when index 1 is tapped
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => SettingsPage()),
+        MaterialPageRoute(builder: (context) => ProfilePage()),
       );
     } else if (index == 0) {
       Navigator.push(
@@ -376,14 +378,24 @@ class GenReportPageState extends State<GenReportPage> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => SettingsPage()),
+              MaterialPageRoute(builder: (context) => ProfilePage()),
             );
           },
         ),
-        backgroundColor: Colors.transparent, // Make the app bar background transparent
+        backgroundColor: Colors.transparent,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         elevation: 0, // Remove the app bar shadow
         title: Text('Samparka',style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.bug_report, color: Color.fromRGBO(5, 50, 70, 1.0)),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => HelpPage()), // Your help/feedback screen
+              );
+            },
+          ),
           // Add the notification icon to the right side of the app bar
           IconButton(
             icon: const Icon(Icons.notifications, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon

@@ -1,10 +1,11 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:samparka/Screens/home.dart';
 import 'package:samparka/Screens/schedule_meeting.dart';
-import 'package:samparka/Screens/settings.dart';
+import 'package:samparka/Screens/ProfilePage.dart';
 import 'package:samparka/Screens/submit_report.dart';
 import 'package:samparka/Screens/team.dart';
 import 'package:samparka/Screens/view_influencers.dart';
@@ -14,6 +15,7 @@ import '../Service/api_service.dart';
 import 'API_TEST.dart';
 import 'Temp2.dart';
 import 'gen_report.dart';
+import 'help.dart';
 import 'login.dart';
 import 'notifications.dart';
 
@@ -32,7 +34,7 @@ class _MeetingPageState extends State<MeetingPage> {
       // Navigate to AddInfluencerPage when index 1 is tapped
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => SettingsPage()),
+        MaterialPageRoute(builder: (context) => ProfilePage()),
       );
     } else if (index == 4) {
       // Navigate to AddInfluencerPage when index 1 is tapped
@@ -187,7 +189,7 @@ class _MeetingPageState extends State<MeetingPage> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => SettingsPage()),
+                  MaterialPageRoute(builder: (context) => ProfilePage()),
                 );
               },
             )
@@ -200,10 +202,20 @@ class _MeetingPageState extends State<MeetingPage> {
             );
           },
         ),
-        backgroundColor: Colors.transparent, // Make the app bar background transparent
-        elevation: 0, // Remove the app bar shadow
+        backgroundColor: Colors.transparent,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        elevation: 0,
         title: Text('Samparka',style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.bug_report, color: Color.fromRGBO(5, 50, 70, 1.0)),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => HelpPage()), // Your help/feedback screen
+              );
+            },
+          ),
           // Add the notification icon to the right side of the app bar
           IconButton(
             icon: const Icon(Icons.notifications, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon

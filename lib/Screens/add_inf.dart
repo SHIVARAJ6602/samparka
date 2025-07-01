@@ -167,7 +167,7 @@ class _AddInfluencer1PageState extends State<AddInfluencer1Page> {
         _image!,//14
       ];
 
-      apiService.CreateGanyaVyakthi(context, registrationData);
+      apiService.createGanyaVyakthi(context, registrationData);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("User registered successfully!")),
       );

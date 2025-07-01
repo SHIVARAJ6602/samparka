@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../Service/api_service.dart';
 import '../widgets/influencer_card.dart';
@@ -102,6 +103,9 @@ class _ViewInfluencersPageState extends State<ViewInfluencersPage> {
     double smallFontSize = normFontSize-2; //14
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        elevation: 0,
         title: Text('Influencers'),
       ),
       body: ListView.builder(

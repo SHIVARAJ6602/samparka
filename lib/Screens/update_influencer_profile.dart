@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:samparka/Screens/home.dart';
@@ -329,9 +330,9 @@ class _ChangeRequestPageState extends State<ChangeRequestPage> {
   }
 
   void updateInfluencer() {
-    setState(() {
-      loading=true;
-    });
+
+    setState(() {loading=true;});
+
     List<dynamic> updateData = [
       phoneController.text,
       fnameController.text,
@@ -353,7 +354,7 @@ class _ChangeRequestPageState extends State<ChangeRequestPage> {
       selectedSoochi,
     ];
 
-    apiService.UpdateGanyaVyakthi(updateData, GV_id).then((success) {
+    apiService.updateGanyaVyakthi(updateData, GV_id).then((success) {
       String message = success ? "Update successful!" : "Update failed!";
       loading = success ? true : false;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message),backgroundColor: success ? Colors.green : Colors.red,));
@@ -372,8 +373,9 @@ class _ChangeRequestPageState extends State<ChangeRequestPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent, // Make the app bar background transparent
-        elevation: 0, // Remove the app bar shadow
+        backgroundColor: Colors.transparent,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color.fromRGBO(5, 50, 70, 1.0)), // Back button icon
           onPressed: () {

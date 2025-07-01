@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:samparka/Screens/submit_report.dart';
 import 'package:samparka/Screens/view_interaction.dart';
@@ -56,6 +57,9 @@ class _ViewReportMeetingsPageState extends State<ViewReportMeetingsPage> {
     double smallFontSize = normFontSize-2; //14
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        elevation: 0,
         title: Text('Events'),
       ),
       body: SingleChildScrollView(

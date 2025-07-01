@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:samparka/Screens/upload_kr_excel.dart';
@@ -34,7 +35,10 @@ class _RegisterUserState extends State<RegisterUserPage> {
   String designation = '';
   String password = '';
   String? selectedGroupId;
-  String? selectedShreniId;
+  String? selectedKaryakarthaId;
+
+  String? selectedShreni;
+  List<String> shrenis = ["Administration","Art and Award Winners","Economic","Healthcare","Intellectuals","Law and Judiciary","Religious","Science and Research","Social Leaders and Organizations","Sports"];
 
   List<dynamic> groups = [];
   late List<dynamic> result;
@@ -48,8 +52,10 @@ class _RegisterUserState extends State<RegisterUserPage> {
   String? selectedState;
   String? selectedDistrict;
   String? selectedCity = 'None';
+  String? userType = 'KR';
 
   bool isLoading = false;
+  bool isTestUser = false;
 
   Map<String, List<String>> stateDistricts = {
     'Karnataka South': ['Bangalore Mahanagara', 'Mysuru Mahanagara'],
@@ -74,7 +80,12 @@ class _RegisterUserState extends State<RegisterUserPage> {
     super.initState();
     fetchGroups();
     fetchSupervisor();
+    if(apiService.UserId.startsWith('TKR')){
+      userType = "TKR";
+      isTestUser = true;
+    }
     //fetchMembers();
+    setState(() {});
   }
 
   Future<void> fetchGroups() async {
@@ -97,7 +108,7 @@ class _RegisterUserState extends State<RegisterUserPage> {
       result = await apiService.myTeam(0, 100);
       if (result.isEmpty) {
         setState(() {
-          selectedShreniId = apiService.UserId;
+          selectedKaryakarthaId = apiService.UserId;
         });
         showDialog(
           context: context,
@@ -162,6 +173,14 @@ class _RegisterUserState extends State<RegisterUserPage> {
       designation = designationController.text;
       password = passwordController.text;
 
+
+      if(groups[int.parse(selectedGroupId!)]['name'] == "ADMIN"){
+        userType = "AD";
+      }
+      if(isTestUser){
+        userType = "TKR";
+      }
+
       List<dynamic> registrationData = [
         phoneNumber,//0
         firstName,//1
@@ -170,15 +189,17 @@ class _RegisterUserState extends State<RegisterUserPage> {
         designation,//4
         password,//5
         selectedGroupId,//6
-        selectedShreniId,//7
+        selectedKaryakarthaId,//7
         _image!,//8
         selectedCity,//9
         selectedDistrict,//10
         selectedState,//11
+        selectedShreni,//12
+        userType,//13
       ];
 
       print("User registered with following data:");
-      print("$phoneNumber $firstName $lastName $email $designation $password $selectedShreniId $selectedGroupId");
+      print("$phoneNumber $firstName $lastName $email $designation $password $selectedKaryakarthaId $selectedGroupId $userType");
 
       apiService.registerUser(registrationData);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -194,6 +215,9 @@ class _RegisterUserState extends State<RegisterUserPage> {
     double smallFontSize = normFontSize-2; //14
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        elevation: 0,
         //title: Text("User Registration"),
         title: Text(" "),
       ),
@@ -231,7 +255,8 @@ class _RegisterUserState extends State<RegisterUserPage> {
                       ),
                       Expanded(child: SizedBox()),
                       // Second Column: Button with Upload and Rotated Arrow Icon (pushed to the right)
-                      Container(
+                      if (!apiService.UserId.startsWith('TKR'))
+                        Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
                           gradient: const LinearGradient(
@@ -290,6 +315,30 @@ class _RegisterUserState extends State<RegisterUserPage> {
                     ],
                   ),
                   SizedBox(height: 10),
+                  if (apiService.phone == '7337620623' || apiService.UserId.startsWith('TKR'))
+                    Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              isTestUser ? 'Creating Test Karyakartha' : 'Create Test Karyakartha?',
+                              style: TextStyle(fontSize: 18,color: Colors.red,fontWeight: FontWeight.bold),
+                            ),
+                            if (apiService.phone == '7337620623')
+                              Switch(
+                                value: isTestUser,
+                                onChanged: (bool newValue) {
+                                  setState(() {
+                                    isTestUser = newValue;
+                                  });
+                                },
+                                activeColor: Colors.red,
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
                   //profile Pic
                   Center(
                     child: Stack(
@@ -454,10 +503,10 @@ class _RegisterUserState extends State<RegisterUserPage> {
                           padding: EdgeInsets.symmetric(horizontal: 10),
                           child: Text(members.isNotEmpty ? 'Select ShreniPramuhk' : 'Loading ShreniPramuhk..'),
                         ),
-                        value: selectedShreniId,
+                        value: selectedKaryakarthaId,
                         onChanged: (String? newValue) {
                           setState(() {
-                            selectedShreniId = newValue;
+                            selectedKaryakarthaId = newValue;
                           });
                         },
                         items: members.map<DropdownMenuItem<String>>((member) {
@@ -473,7 +522,40 @@ class _RegisterUserState extends State<RegisterUserPage> {
                         underline: Container(), // Removes the default underline from the dropdown
                       ),
                     ),
-
+                  if (selectedGroupId=='1'|| selectedGroupId=='2')
+                    SizedBox(height: 20),
+                  //Shreni
+                  if (selectedGroupId=='1' || selectedGroupId=='2')
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(color: Colors.grey.shade400, width: 1.0),
+                    ),
+                    child: DropdownButton<String>(
+                      hint: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        child: Text('Select Shreni'),
+                      ),
+                      value: selectedShreni,
+                      onChanged: (String? newShreni) {
+                        setState(() {
+                          selectedShreni = newShreni;
+                        });
+                      },
+                      items: shrenis.map<DropdownMenuItem<String>>((shreni) {
+                        return DropdownMenuItem<String>(
+                          value: shreni,
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10),
+                            child: Text(shreni),
+                          ),
+                        );
+                      }).toList(),
+                      isExpanded: true,
+                      underline: Container(),
+                    ),
+                  ),
                   SizedBox(height: 20),
                   Container(
                     decoration: BoxDecoration(

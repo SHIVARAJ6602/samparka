@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:samparka/Screens/influencer_profile.dart';
-import 'package:samparka/Screens/settings.dart';
+import 'package:samparka/Screens/ProfilePage.dart';
 import 'package:samparka/Screens/submit_report.dart';
 import 'package:samparka/Screens/update_user_profile.dart';
 import 'package:samparka/Screens/upload_gv_excel.dart';
@@ -11,7 +12,7 @@ import 'add_inf.dart';
 import 'drop_down.dart';
 import 'register_user.dart';
 import 'temp.dart';
-
+import '../Service/api_service.dart';
 class ApiScreen extends StatefulWidget {
   const ApiScreen({super.key});
 
@@ -54,7 +55,12 @@ class _ApiScreenState extends State<ApiScreen> {
     double largeFontSize = normFontSize+4; //20
     double smallFontSize = normFontSize-2; //14
     return Scaffold(
-      appBar: AppBar(title: const Text('API')),
+      appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          systemOverlayStyle: SystemUiOverlayStyle.dark,
+          elevation: 0,
+          title: const Text('API'),
+      ),
       body: Column(
         children: [
           Padding(
@@ -127,7 +133,7 @@ class _ApiScreenState extends State<ApiScreen> {
               children: [
                 TextButton(
                     onPressed: () {
-                      apiService.getUser();
+                      apiService.getUser(context);
                     },
                     child: Text('get User')
                 )
@@ -393,7 +399,7 @@ class _ApiScreenState extends State<ApiScreen> {
                     children: [
                       TextButton(
                           onPressed: () {
-                            apiService.getUser();
+                            apiService.getUser(context);
                           },
                           child: Text('User Data')
                       )

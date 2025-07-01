@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../Service/api_service.dart';
 
@@ -80,7 +81,11 @@ class _ViewInteractionPageState extends State<ViewInteractionPage> {
     double smallFontSize = normFontSize - 2; //14
 
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        elevation: 0,
+      ),
       body: Stack(
         children: [
           Column(

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../Service/api_service.dart';
@@ -19,36 +20,38 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
 
   File? _image;
 
-  final TextEditingController phoneController = TextEditingController();
-  final TextEditingController firstNameController = TextEditingController();
-  final TextEditingController lastNameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController designationController = TextEditingController();
+  final phoneController = TextEditingController();
+  final firstNameController = TextEditingController();
+  final lastNameController = TextEditingController();
+  final emailController = TextEditingController();
+  final designationController = TextEditingController();
 
-  String phoneNumber = '';
-  String firstName = '';
-  String lastName = '';
-  String email = '';
-  String designation = '';
   String? selectedGroupId;
-  String? selectedShreniId;
-  late String KR_id = '';
-
-  List<dynamic> groups = [];
-  late List<dynamic> result;
-  List<dynamic> members = [];
-  List<dynamic> supervisor = [];
-
-  List<String> states = ['Karnataka South', 'Maharashtra', 'Tamil Nadu'];
-  List<String> districts = [];
-  List<String> cities = [];
+  String? selectedKaryakarthaId;
+  String? selectedShreni;
 
   String? selectedState;
   String? selectedDistrict;
   String? selectedCity;
 
-  bool isLoading = false;
+  List<dynamic> groups = [];
+  List<dynamic> members = [];
+  List<dynamic> supervisor = [];
+  List<dynamic> result = [];
 
+  List<String> shrenis = [
+    "Administration", "Art and Award Winners", "Economic", "Healthcare",
+    "Intellectuals", "Law and Judiciary", "Religious", "Science and Research",
+    "Social Leaders and Organizations", "Sports"
+  ];
+  List<String> states = ['Karnataka South', 'Maharashtra', 'Tamil Nadu'];
+  List<String> districts = [];
+  List<String> cities = [];
+
+  bool isLoading = false;
+  late String KR_id;
+  String profileImage = '';
+  String profileImageOrg = '';
   Map<String, List<String>> stateDistricts = {
     'Karnataka South': ['Bangalore Mahanagara', 'Mysuru Mahanagara'],
     'Maharashtra': ['Mumbai', 'Pune', 'Nagpur'],
@@ -81,10 +84,8 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
       setState(() {
         groups = groupList;
       });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to load groups")),
-      );
+    } catch (_) {
+      _showSnackBar("Failed to load groups.");
     }
   }
 
@@ -92,29 +93,19 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
     try {
       result = await apiService.myTeam(0, 100);
       if (result.isEmpty) {
-        setState(() {
-          selectedShreniId = apiService.UserId;
-        });
-        showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: Text('Alert'),
-            content: Text('No ShreniPramukh to assign\nDefaulting to self: ${apiService.first_name}'),
-            actions: [
-              TextButton(
-                child: Text('OK'),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ],
-          ),
-        );
+        selectedKaryakarthaId = apiService.UserId;
+        _showAlert("No ShreniPramukh to assign. Defaulting to self: ${apiService.first_name}");
       }
-      result.add({'id': apiService.UserId, 'first_name': 'self(${apiService.first_name})', 'last_name': ''});
+      result.add({
+        'id': apiService.UserId,
+        'first_name': 'self(${apiService.first_name})',
+        'last_name': ''
+      });
       setState(() {
         members = result;
       });
-    } catch (e) {
-      print("Error fetching influencers: $e");
+    } catch (_) {
+      _showSnackBar("Error fetching ShreniPramukh.");
     }
   }
 
@@ -124,124 +115,136 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
       setState(() {
         supervisor = result;
       });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to load Supervisor")),
-      );
+    } catch (_) {
+      _showSnackBar("Failed to load Supervisor.");
     }
   }
 
   Future<void> getKaryakartha() async {
     try {
       result = await apiService.getKaryakartha(KR_id);
-      print("KR details: $result");
-
-      final fetchedState = result[0]['state'];
-      final fetchedDistrict = result[0]['district'];
-      final fetchedCity = result[0]['city'];
+      final data = result[0];
 
       setState(() {
-        firstNameController.text = result[0]['first_name'] ?? '';
-        lastNameController.text = result[0]['last_name'] ?? '';
-        designationController.text = result[0]['designation'] ?? '';
-        phoneController.text = result[0]['phone_number'] ?? '';
-        emailController.text = result[0]['email'] ?? '';
+        firstNameController.text = data['first_name'] ?? '';
+        lastNameController.text = data['last_name'] ?? '';
+        phoneController.text = data['phone_number'] ?? '';
+        emailController.text = data['email'] ?? '';
+        designationController.text = data['designation'] ?? '';
+        profileImage = result[0]['profile_image']??'';
+        profileImageOrg = result[0]['profile_image']??'';
+        print("porfile image : $profileImage");
+        selectedState = states.contains(data['state']) ? data['state'] : null;
+        districts = selectedState != null ? stateDistricts[selectedState!] ?? [] : [];
 
-        // Validate and set state
-        if (states.contains(fetchedState)) {
-          selectedState = fetchedState;
-          districts = stateDistricts[selectedState] ?? [];
+        selectedDistrict = districts.contains(data['district']) ? data['district'] : null;
+        cities = selectedDistrict != null ? districtCities[selectedDistrict!] ?? [] : [];
 
-          // Validate and set district
-          if (districts.contains(fetchedDistrict)) {
-            selectedDistrict = fetchedDistrict;
-            cities = districtCities[selectedDistrict] ?? [];
+        selectedCity = cities.contains(data['city']) ? data['city'] : null;
 
-            // Validate and set city
-            if (cities.contains(fetchedCity)) {
-              selectedCity = fetchedCity;
-            } else {
-              selectedCity = null;
-            }
-          } else {
-            selectedDistrict = null;
-            selectedCity = null;
-          }
-        } else {
-          selectedState = null;
-          selectedDistrict = null;
-          selectedCity = null;
+        if (shrenis.contains(data['shreni'])) {
+          selectedShreni = data['shreni'];
         }
       });
-    } catch (e) {
-      print("Error fetching user: $e");
+    } catch (_) {
+      _showSnackBar("Failed to fetch user data.");
     }
   }
 
-
   Future<void> _pickImage(ImageSource source) async {
-    final pickedFile = await _picker.pickImage(source: source);
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
+    final picked = await _picker.pickImage(source: source);
+    if (picked != null) {
+      setState(() => _image = File(picked.path));
     }
   }
 
   void updateUser() async {
-    setState(() {
-      phoneNumber = phoneController.text;
-      firstName = firstNameController.text;
-      lastName = lastNameController.text;
-      email = emailController.text;
-      designation = designationController.text;
-    });
+    if (!_validateInputs()) return;
 
-    if ([phoneNumber, firstName, lastName, email, designation].any((e) => e.isEmpty)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Please fill all the fields")),
-      );
-      return;
-    }
+    setState(() => isLoading = true);
 
-    List<dynamic> updateData = [
-      phoneNumber,
-      firstName,
-      lastName,
-      email,
-      designation,
-      null, // password removed
-      selectedGroupId,
-      selectedShreniId,
-      _image,
-      selectedCity,
-      selectedDistrict,
-      selectedState,
+    final updateData = [
+      phoneController.text.trim(),//0
+      firstNameController.text.trim(),//1
+      lastNameController.text.trim(),//2
+      emailController.text.trim(),//3
+      designationController.text.trim(),//4
+      null, // password //5
+      selectedGroupId,//6
+      selectedKaryakarthaId,//7
+      _image,//8
+      selectedCity,//9
+      selectedDistrict,//10
+      selectedState,//11
+      selectedShreni,//12
     ];
 
     try {
-      setState(() {
-        isLoading = true;
+      apiService.updateUser(updateData, widget.id).then((success) {
+        String message = success ? "Update successful!" : "Update failed!";
+        isLoading = success ? true : false;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message),backgroundColor: success ? Colors.green : Colors.red,));
+        if (success){
+          Navigator.pop(context,true);
+        }
       });
-
-      await apiService.updateUser(updateData, widget.id);
-
-      setState(() {
-        isLoading = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("User updated successfully!")),
-      );
+      //await apiService.updateUser(updateData, widget.id);
+      //_showSnackBar("User updated successfully!");
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to update user")),
-      );
-      print("Error updating user: $e");
+      _showSnackBar("Failed to update user.");
+    } finally {
+      setState(() => isLoading = false);
     }
+  }
+
+  bool _validateInputs() {
+    if ([phoneController.text, firstNameController.text, lastNameController.text, designationController.text].any((e) => e.isEmpty)) {
+      _showSnackBar("Please fill all required fields.");
+      return false;
+    }
+
+    if (!RegExp(r'^\d{10}$').hasMatch(phoneController.text)) {
+      _showSnackBar("Enter a valid 10-digit phone number.");
+      return false;
+    }
+
+    if (emailController.text.isNotEmpty &&
+        !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}$').hasMatch(emailController.text)) {
+      _showSnackBar("Enter a valid email address.");
+      return false;
+    }
+
+    if (selectedState == null || selectedDistrict == null) {
+      _showSnackBar("Select State and District.");
+      return false;
+    }
+
+    if (selectedGroupId == '1' && selectedKaryakarthaId == null) {
+      _showSnackBar("Select ShreniPramukh.");
+      return false;
+    }
+
+    if ((selectedGroupId == '1' || selectedGroupId == '2') && selectedShreni == null) {
+      _showSnackBar("Select Shreni.");
+      return false;
+    }
+
+    return true;
+  }
+
+  void _showSnackBar(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  void _showAlert(String message) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text("Alert"),
+        content: Text(message),
+        actions: [TextButton(child: Text("OK"), onPressed: () => Navigator.of(context).pop())],
+      ),
+    );
   }
 
   Widget _buildTextField({required String hint, required TextEditingController controller}) {
@@ -253,16 +256,35 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
         fillColor: Colors.grey[200],
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: Colors.grey.shade400, width: 1.0),
+          borderSide: BorderSide(color: Colors.grey.shade400),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: Colors.grey.shade600, width: 1.5),
+          borderSide: BorderSide(color: Colors.grey.shade600),
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: Colors.grey.shade400, width: 1.0),
-        ),
+      ),
+    );
+  }
+
+  Widget buildDropdownContainer({
+    required String hint,
+    required String? value,
+    required List<DropdownMenuItem<String>> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.grey.shade400),
+      ),
+      child: DropdownButton<String>(
+        isExpanded: true,
+        underline: SizedBox(),
+        hint: Padding(padding: EdgeInsets.symmetric(horizontal: 10), child: Text(hint)),
+        value: value,
+        items: items,
+        onChanged: onChanged,
       ),
     );
   }
@@ -280,40 +302,36 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Update User')),
+      appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          systemOverlayStyle: SystemUiOverlayStyle.dark,
+          elevation: 0,
+          title: Text('Edit Profile')
+      ),
       body: Stack(
         children: [
           SingleChildScrollView(
             padding: EdgeInsets.all(16),
             child: Column(
               children: [
-                // Profile image
+                //profile Image
                 Center(
                   child: Stack(
+                    alignment: Alignment.center, // Center the CircleAvatar within the Stack
                     children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.grey.shade400, width: 1.0),
-                        ),
-                        child: CircleAvatar(
-                          radius: MediaQuery.of(context).size.width * 0.20,
-                          backgroundColor: Colors.grey[200],
-                          backgroundImage: _image != null ? FileImage(_image!) : null,
-                          child: _image == null
-                              ? Icon(Icons.person, color: Colors.white, size: 80)
-                              : null,
-                        ),
-                      ),
+                      // The main CircleAvatar
+                      buildProfileImage(context),
+                      // add or edit image Button
                       Positioned(
                         bottom: 0,
                         right: 0,
                         child: CircleAvatar(
                           radius: 20,
-                          backgroundColor: Color.fromRGBO(5, 50, 70, 1.0),
+                          backgroundColor: Color.fromRGBO(5, 50, 70, 1.0), // Background color of the plus icon
                           child: IconButton(
-                            icon: Icon(_image != null ? Icons.edit : Icons.add, color: Colors.white),
-                            onPressed: () {
+                            icon: Icon((_image != null || (apiService.profileImage.isNotEmpty))? Icons.edit: Icons.add,color: Colors.white,),
+                            onPressed: () async {
+                              // Show a dialog to choose between camera or gallery
                               showModalBottomSheet(
                                 context: context,
                                 builder: (context) => Column(
@@ -342,13 +360,14 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
                           ),
                         ),
                       ),
+                      //Delete Button
                       if (_image != null)
                         Positioned(
                           top: 0,
                           right: 0,
                           child: CircleAvatar(
                             radius: 20,
-                            backgroundColor: Colors.red,
+                            backgroundColor: Colors.red, // Background color of the plus icon
                             child: IconButton(
                               icon: Icon(Icons.delete, color: Colors.white),
                               onPressed: () {
@@ -362,10 +381,9 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
                     ],
                   ),
                 ),
-
                 SizedBox(height: 16),
                 _buildTextField(hint: "Phone Number", controller: phoneController),
-                SizedBox(height: 10),
+                SizedBox(height: 16),
                 Row(
                   children: [
                     Expanded(child: _buildTextField(hint: "First Name", controller: firstNameController)),
@@ -377,11 +395,11 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
                 _buildTextField(hint: "E-mail Address", controller: emailController),
                 SizedBox(height: 16),
                 _buildTextField(hint: "Designation", controller: designationController),
+                if(widget.id != apiService.UserId)
                 SizedBox(height: 20),
-
-                // Group Dropdown
+                if(widget.id != apiService.UserId)
                 buildDropdownContainer(
-                  hint: groups.isNotEmpty ? 'Select Group' : 'Loading groups..',
+                  hint: 'Select Group',
                   value: selectedGroupId,
                   items: groups.map((group) {
                     return DropdownMenuItem<String>(
@@ -389,85 +407,85 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
                       child: Text(group['name']),
                     );
                   }).toList(),
-                  onChanged: (value) {
-                    if (value == '1') fetchMembers();
-                    setState(() => selectedGroupId = value);
+                  onChanged: (val) {
+                    setState(() => selectedGroupId = val);
+                    if (val == '1') fetchMembers();
                   },
                 ),
 
                 if (selectedGroupId == '1') ...[
-                  SizedBox(height: 20),
+                  SizedBox(height: 16),
                   buildDropdownContainer(
-                    hint: members.isNotEmpty ? 'Select ShreniPramukh' : 'Loading...',
-                    value: selectedShreniId,
-                    items: members.map((member) {
+                    hint: 'Select ShreniPramukh',
+                    value: selectedKaryakarthaId,
+                    items: members.map((m) {
                       return DropdownMenuItem<String>(
-                        value: member['id'].toString(),
-                        child: Text('${member['first_name']} ${member['last_name']}'),
+                        value: m['id'].toString(),
+                        child: Text('${m['first_name']} ${m['last_name']}'),
                       );
                     }).toList(),
-                    onChanged: (value) => setState(() => selectedShreniId = value),
+                    onChanged: (val) => setState(() => selectedKaryakarthaId = val),
                   ),
                 ],
 
-                SizedBox(height: 20),
+                if (selectedGroupId == '1' || selectedGroupId == '2') ...[
+                  SizedBox(height: 16),
+                  buildDropdownContainer(
+                    hint: 'Select Shreni',
+                    value: selectedShreni,
+                    items: shrenis.map((s) {
+                      return DropdownMenuItem<String>(
+                        value: s,
+                        child: Text(s),
+                      );
+                    }).toList(),
+                    onChanged: (val) => setState(() => selectedShreni = val),
+                  ),
+                ],
+
+                SizedBox(height: 16),
                 buildDropdownContainer(
                   hint: 'Select State',
                   value: selectedState,
-                  items: states.map((state) {
-                    return DropdownMenuItem<String>(
-                      value: state,
-                      child: Text(state),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
+                  items: states.map((s) => DropdownMenuItem(value: s, child: Text('   $s'))).toList(),
+                  onChanged: (val) {
                     setState(() {
-                      selectedState = value;
+                      selectedState = val;
                       selectedDistrict = null;
                       selectedCity = null;
-                      districts = stateDistricts[selectedState] ?? [];
+                      districts = stateDistricts[val] ?? [];
                     });
                   },
                 ),
 
                 if (selectedState != null)
                   Padding(
-                    padding: const EdgeInsets.only(top: 20),
+                    padding: const EdgeInsets.only(top: 16),
                     child: buildDropdownContainer(
                       hint: 'Select District',
                       value: selectedDistrict,
-                      items: districts.map((district) {
-                        return DropdownMenuItem<String>(
-                          value: district,
-                          child: Text(district),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
+                      items: districts.map((d) => DropdownMenuItem(value: d, child: Text('   $d'))).toList(),
+                      onChanged: (val) {
                         setState(() {
-                          selectedDistrict = value;
+                          selectedDistrict = val;
                           selectedCity = null;
-                          cities = districtCities[selectedDistrict] ?? [];
+                          cities = districtCities[val] ?? [];
                         });
                       },
                     ),
                   ),
-
-                if (selectedDistrict != null)
+                //Select City
+                /*if (selectedDistrict != null)
                   Padding(
-                    padding: const EdgeInsets.only(top: 20),
+                    padding: const EdgeInsets.only(top: 16),
                     child: buildDropdownContainer(
                       hint: 'Select City',
                       value: selectedCity,
-                      items: cities.map((city) {
-                        return DropdownMenuItem<String>(
-                          value: city,
-                          child: Text(city),
-                        );
-                      }).toList(),
-                      onChanged: (value) => setState(() => selectedCity = value),
+                      items: cities.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                      onChanged: (val) => setState(() => selectedCity = val),
                     ),
                   ),
-
+                 */
                 SizedBox(height: 30),
                 ElevatedButton(
                   onPressed: isLoading ? null : updateUser,
@@ -483,25 +501,140 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
     );
   }
 
-  Widget buildDropdownContainer({
-    required String hint,
-    required String? value,
-    required List<DropdownMenuItem<String>> items,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.grey.shade400, width: 1.0),
-      ),
-      child: DropdownButton<String>(
-        isExpanded: true,
-        underline: Container(),
-        hint: Padding(padding: EdgeInsets.symmetric(horizontal: 10), child: Text(hint)),
-        value: value,
-        onChanged: onChanged,
-        items: items,
+  Widget buildProfileImage(BuildContext context) {
+    final double avatarRadius = MediaQuery.of(context).size.width * 0.20;
+    final double iconSize = MediaQuery.of(context).size.width * 0.34;
+
+    if (_image != null) {
+      //Show picked file image
+      return Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.grey.shade400, width: 1.0),
+        ),
+        child: CircleAvatar(
+          radius: avatarRadius,
+          backgroundColor: Colors.grey[200],
+          backgroundImage: FileImage(_image!),
+        ),
+      );
+    } else {
+      return Container(
+        width: MediaQuery.of(context).size.width * 0.40,
+        height: MediaQuery.of(context).size.width * 0.40,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(90),
+          border: Border.all(color: Colors.grey.shade400),
+          color: Colors.grey[200],
+          boxShadow: [
+            BoxShadow(
+              color: (apiService.profileImage.isNotEmpty
+                  ? const Color.fromRGBO(5, 50, 70, 1.0)
+                  : Colors.grey)
+                  .withOpacity(0.5),
+              spreadRadius: 1,
+              blurRadius: apiService.profileImage.isNotEmpty ? 7 : 3,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(90),
+          child: apiService.profileImage.isNotEmpty
+              ? Image.network(
+            apiService.profileImage,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Center(
+                child: CircularProgressIndicator(
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded /
+                      (loadingProgress.expectedTotalBytes ?? 1)
+                      : null,
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                color: Colors.white,
+                child: Center(
+                  child: Icon(Icons.error, color: Colors.grey,size: MediaQuery.of(context).size.width * 0.10),
+                ),
+              );
+            },
+          )
+              : Icon(
+            Icons.person,
+            color: Colors.white,
+            size: MediaQuery.of(context).size.width * 0.14,
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _buildProfileImageSection() {
+    return Center(
+      child: Stack(
+        children: [
+          CircleAvatar(
+            radius: MediaQuery.of(context).size.width * 0.20,
+            backgroundColor: Colors.grey[200],
+            backgroundImage: _image != null ? FileImage(_image!) : null,
+            child: _image == null ? Icon(Icons.person, color: Colors.white, size: 80) : null,
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: CircleAvatar(
+              radius: 20,
+              backgroundColor: Color.fromRGBO(5, 50, 70, 1.0),
+              child: IconButton(
+                icon: Icon(_image != null ? Icons.edit : Icons.add, color: Colors.white),
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    builder: (_) => Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          leading: Icon(Icons.camera_alt),
+                          title: Text('Take a Photo'),
+                          onTap: () {
+                            _pickImage(ImageSource.camera);
+                            Navigator.pop(context);
+                          },
+                        ),
+                        ListTile(
+                          leading: Icon(Icons.photo_library),
+                          title: Text('Pick from Gallery'),
+                          onTap: () {
+                            _pickImage(ImageSource.gallery);
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          if (_image != null)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: CircleAvatar(
+                radius: 20,
+                backgroundColor: Colors.red,
+                child: IconButton(
+                  icon: Icon(Icons.delete, color: Colors.white),
+                  onPressed: () => setState(() => _image = null),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

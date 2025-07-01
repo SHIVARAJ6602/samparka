@@ -1,19 +1,23 @@
 import 'dart:io';
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:samparka/Screens/meeting.dart';
 import 'package:samparka/Screens/my_team.dart';
 import 'package:samparka/Screens/user_profile_page.dart';
 import 'package:samparka/Screens/register_user.dart';
-import 'package:samparka/Screens/settings.dart';
+import 'package:samparka/Screens/ProfilePage.dart';
 import 'Temp2.dart';
 import 'add_influencer.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'gen_report.dart';
+import 'help.dart';
 import 'home.dart';
 import 'login.dart';
 import 'API_TEST.dart'; //TaskListScreen()
+import 'myMJSP.dart';
 import 'notifications.dart';
 import 'view_influencers.dart';
 import 'package:samparka/Service/api_service.dart';
@@ -34,6 +38,7 @@ class _TeamPageState extends State<TeamPage> {
   final TextEditingController _searchController = TextEditingController();
 
   List<dynamic> members = [];
+  List<dynamic> MJmembers = []; // mahanagar and Jilla
   List<dynamic> Gatanayaks = [];
   List<dynamic> membersSearched = [];
   List<dynamic> supervisor = [];
@@ -48,7 +53,7 @@ class _TeamPageState extends State<TeamPage> {
       // Navigate to AddInfluencerPage when index 1 is tapped
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => SettingsPage()),
+        MaterialPageRoute(builder: (context) => ProfilePage()),
       );
     } else if (index == 4) {
       // Navigate to AddInfluencerPage when index 1 is tapped
@@ -97,6 +102,21 @@ class _TeamPageState extends State<TeamPage> {
     }
   }
 
+  Future<void> fetchMJMembers() async {
+    try {
+      // Call the apiService.homePage() and store the result
+      result = await apiService.myMJMembers(0, 100);
+      setState(() {
+        print('MJmembers $result');
+        // Update the influencers list with the fetched data
+        MJmembers = result;
+      });
+    } catch (e) {
+      // Handle any errors here
+      print("Error fetching influencers: $e");
+    }
+  }
+
   Future<void> fetchSupervisor() async {
     try {
       // Call the apiService.homePage() and store the result
@@ -114,13 +134,11 @@ class _TeamPageState extends State<TeamPage> {
 
   Future<void> fetchGatanayak(String KR_id) async {
     try {
-      // Call the apiService.homePage() and store the result
       result = await apiService.getGatanayak(KR_id);
       setState(() {
         // Update the influencers list with the fetched data
         Gatanayaks = result;
         //TeamMembers.add({'id':apiService.UserId,'first_name':'${apiService.first_name}(self)','last_name':apiService.last_name,'designation':apiService.designation,'profileImage':apiService.profileImage});
-        print('Gatanayaks: $Gatanayaks');
       });
     } catch (e) {
       // Handle any errors here
@@ -172,9 +190,14 @@ class _TeamPageState extends State<TeamPage> {
     super.initState();
 
     fetchSupervisor();
+    if(apiService.lvl > 3) {
+      fetchMJMembers();
+      print("MJ Member Called");
+    }
     if(apiService.lvl > 1) {
       fetchMembers();
       fetchGatanayak(apiService.UserId);
+      print("Member and Fetch Gatanayak Called");
     }
     if(apiService.lvl == 1){
       fetchLead();
@@ -197,7 +220,7 @@ class _TeamPageState extends State<TeamPage> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => SettingsPage()),
+                  MaterialPageRoute(builder: (context) => ProfilePage()),
                 );
               },
             )
@@ -210,10 +233,20 @@ class _TeamPageState extends State<TeamPage> {
                 );
               },
             ),
-            backgroundColor: Colors.transparent, // Make the app bar background transparent
-            elevation: 0, // Remove the app bar shadow
+            backgroundColor: Colors.transparent,
+            systemOverlayStyle: SystemUiOverlayStyle.dark,
+            elevation: 0,
             title: Text('Samparka',style: TextStyle(fontWeight: FontWeight.bold)),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.bug_report, color: Color.fromRGBO(5, 50, 70, 1.0)),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => HelpPage()), // Your help/feedback screen
+                  );
+                },
+              ),
               // Add the notification icon to the right side of the app bar
               IconButton(
                 icon: const Icon(Icons.notifications, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
@@ -507,7 +540,7 @@ class _TeamPageState extends State<TeamPage> {
                                 ),
                                 //My Shreni Pramukh
                                 if(apiService.lvl<2)
-                                Container(
+                                  Container(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -671,18 +704,22 @@ class _TeamPageState extends State<TeamPage> {
                                     ],
                                   ),
                                 ),
-                                //My team
+                                //My Shreni Pramukhs
                                 if(apiService.lvl > 2)
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
+                                      AutoSizeText(
                                         'My Shreni-Pramukh\'s',
+                                        maxLines: 1,
                                         style: TextStyle(
-                                          fontSize: largeFontSize*2,
+                                          fontSize: largeFontSize * 2,
                                           fontWeight: FontWeight.bold,
                                           color: const Color.fromRGBO(5, 50, 70, 1.0),
                                         ),
+                                        minFontSize: largeFontSize.floorToDouble(),
+                                        stepGranularity: 1.0,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                       const SizedBox(height: 1),
                                       Container(
@@ -776,6 +813,7 @@ class _TeamPageState extends State<TeamPage> {
                                       ),
                                     ],
                                   ),
+                                //My Gatanayak
                                 if(apiService.lvl>1)
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -793,7 +831,7 @@ class _TeamPageState extends State<TeamPage> {
                                       Container(
                                         decoration: BoxDecoration(
                                           //borderRadius: BorderRadius.circular(30),
-                                          borderRadius: members.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
+                                          borderRadius: Gatanayaks.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
                                           gradient: const LinearGradient(
                                             begin: Alignment.topCenter,
                                             end: Alignment.bottomCenter,
@@ -806,7 +844,7 @@ class _TeamPageState extends State<TeamPage> {
                                         child: Column(
                                           children: [
                                             // If the list is empty, show a message
-                                            if (members.isEmpty)
+                                            if (Gatanayaks.isEmpty)
                                               Container(
                                                 padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
                                                 decoration: BoxDecoration(
@@ -830,6 +868,7 @@ class _TeamPageState extends State<TeamPage> {
                                                   (Gatanayaks.length < 4) ? Gatanayaks.length : 3, // Display either all members or just 3
                                                       (index) {
                                                     final member = Gatanayaks[index]; // Access the member data
+                                                    print("Gatanayak $member ${Gatanayaks.length}");
                                                     return Padding(
                                                       padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
                                                       child: MemberCard(
@@ -853,6 +892,115 @@ class _TeamPageState extends State<TeamPage> {
                                                   Navigator.push(
                                                     context,
                                                     MaterialPageRoute(builder: (context) => const MyTeamPage(type: 'Gatanayaks',)),
+                                                  );
+                                                },
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    Text(
+                                                      'View all Members',
+                                                      style: TextStyle(
+                                                        fontSize: largeFontSize,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Image.asset(
+                                                      'assets/icon/arrow.png',
+                                                      color: Colors.white,
+                                                      width: 12,
+                                                      height: 12,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                //My MJ SP's
+                                if(apiService.lvl > 2)
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      AutoSizeText(
+                                        'My Mahanagar and Jilla SP\'s',
+                                        maxLines: 1,
+                                        style: TextStyle(
+                                          fontSize: largeFontSize * 2,
+                                          fontWeight: FontWeight.bold,
+                                          color: const Color.fromRGBO(5, 50, 70, 1.0),
+                                        ),
+                                        minFontSize: largeFontSize.floorToDouble(),
+                                        stepGranularity: 1.0,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 1),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          //borderRadius: BorderRadius.circular(30),
+                                          borderRadius: MJmembers.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
+                                          gradient: const LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              Color.fromRGBO(60, 170, 145, 1.0),
+                                              Color.fromRGBO(2, 40, 60, 1),
+                                            ],
+                                          ),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            // If the list is empty, show a message
+                                            if (MJmembers.isEmpty)
+                                              Container(
+                                                padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    'No Members Assigned',
+                                                    style: TextStyle(
+                                                      fontSize: largeFontSize,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                            // If the list is not empty, build a ListView of InfluencerCards
+                                            else
+                                              Column(
+                                                children: List.generate(
+                                                  (MJmembers.length < 4) ? MJmembers.length : 3, // Display either all members or just 3
+                                                      (index) {
+                                                    final member = MJmembers[index]; // Access the member data
+                                                    return Padding(
+                                                      padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
+                                                      child: MemberCard(
+                                                        id: member['id']!,
+                                                        first_name: member['first_name']!,
+                                                        last_name: member['last_name']!,
+                                                        designation: member['designation']??"Not Set",
+                                                        profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
+                                                            ? member['profile_image']!
+                                                            : '',
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+
+                                            if (MJmembers.isNotEmpty)
+                                            // View All Influencers Button
+                                              TextButton(
+                                                onPressed: () async {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(builder: (context) => const MyMJSPPage(type: 'ShreniPramukh')),
                                                   );
                                                 },
                                                 child: Row(
@@ -1034,7 +1182,7 @@ class _TeamPageState extends State<TeamPage> {
                     if(apiService.lvl<=2)
                       _buildBottomNavItem(
                         label: "Profile",
-                        iconPath: 'assets/icon/report.png',  // Use the PNG file path
+                        iconPath: 'assets/icon/user.png',  // Use the PNG file path
                         isActive: _selectedIndex == 5,
                         onPressed: () => _onNavItemTapped(5),
                       ),
