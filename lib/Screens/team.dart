@@ -546,7 +546,7 @@ class _TeamPageState extends State<TeamPage> {
                                     children: [
                                       //My Supervisor / Pramukh
                                       Text(
-                                        'My Sherni Pramukh',
+                                        'Sherni Pramukh',
                                         style: TextStyle(
                                           fontSize: largeFontSize*1.5,
                                           fontWeight: FontWeight.bold,
@@ -710,7 +710,7 @@ class _TeamPageState extends State<TeamPage> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       AutoSizeText(
-                                        'My Shreni-Pramukh\'s',
+                                        'Shreni-Pramukh\'s',
                                         maxLines: 1,
                                         style: TextStyle(
                                           fontSize: largeFontSize * 2,
@@ -820,7 +820,7 @@ class _TeamPageState extends State<TeamPage> {
                                     children: [
                                       const SizedBox(height: 10),
                                       Text(
-                                        'My Gatanayak\'s',
+                                        'Gatanayak\'s',
                                         style: TextStyle(
                                           fontSize: largeFontSize*2,
                                           fontWeight: FontWeight.bold,
@@ -926,7 +926,7 @@ class _TeamPageState extends State<TeamPage> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       AutoSizeText(
-                                        'My Mahanagar and Jilla SP\'s',
+                                        'Mahanagar and Jilla SP\'s',
                                         maxLines: 1,
                                         style: TextStyle(
                                           fontSize: largeFontSize * 2,

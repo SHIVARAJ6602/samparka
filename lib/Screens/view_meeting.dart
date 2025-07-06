@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
@@ -56,6 +57,7 @@ class _ViewEventPageState extends State<ViewEventPage> {
         fetchGanyavyakthi(widget.data['ganyavyakti']);
       }
     }
+    selectedStatus = widget.data['status'];
 
     if (widget.data['participants'] != null && widget.data['participants'].isNotEmpty) {
       fetchKaryakartha(widget.data['participants']);
@@ -127,16 +129,18 @@ class _ViewEventPageState extends State<ViewEventPage> {
     try{
       var result = await apiService.getInteractionByID(Event_id);
       setState(() {
-        print("fetching event by ID");
+        //print("fetching event by ID");
         Interaction = result;
         titleDataController.text = Interaction[0]['title']??'';
         placeDataController.text = Interaction[0]['meeting_place']??'';
         selectedMeetDate = DateTime.parse(Interaction[0]['meeting_datetime']??'');
+        selectedMeetDate = DateTime.tryParse(Interaction[0]['meeting_datetime'] ?? '1970-01-01T00:00:00Z');
         selectedStatus = Interaction[0]['status'];
         descriptionController.text = Interaction[0]['description'];
         materials_distributedController.text = Interaction[0]['materials_distributed']??'';
         virtual_meeting_linkController.text = 'virtualLink'??'';
         discussion_pointsController.text = Interaction[0]['discussion_points'];
+        selectedStatus = Interaction[0]['status'];
         //images = Interaction[0]['images'];
         //print("images : $images");
       });
@@ -155,8 +159,8 @@ class _ViewEventPageState extends State<ViewEventPage> {
         var imageResult = await apiService.getEventImages(widget.id, widget.type);
         setState(() {
           images = imageResult;
-          print("fimages : $images");
-          print('images = ${images[0]['images'].length}');
+          final imageCount = images.isNotEmpty ? (images[0]['images'] as List?)?.length ?? 0 : 0;
+          print('images = $imageCount');
         });
         setState(() {
 
@@ -227,6 +231,7 @@ class _ViewEventPageState extends State<ViewEventPage> {
     double largeFontSize = normFontSize + 4; //20
     double smallFontSize = normFontSize - 2; //14
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(),
       body: Stack(
         children: [
@@ -292,7 +297,9 @@ class _ViewEventPageState extends State<ViewEventPage> {
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 8.0),
                                 child: Text(
-                                  'Date & Time: ${widget.data['meeting_datetime'] == null ? "Date & Time not set" : "${DateTime.parse(widget.data['meeting_datetime']??'').toLocal()}".split(' ')[0]}',
+                                  'Date & Time: ${widget.data['meeting_datetime'] == null
+                                      ? "Date & Time not set"
+                                      : DateFormat('yyyy-MM-dd hh:mm a').format(DateTime.parse(widget.data['meeting_datetime']).toLocal())}',
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: widget.data['meeting_datetime'] == null ? Colors.red : Colors.green,

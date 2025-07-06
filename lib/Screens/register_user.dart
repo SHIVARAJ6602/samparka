@@ -166,47 +166,74 @@ class _RegisterUserState extends State<RegisterUserPage> {
   // Function to handle the registration logic
   void registerUser() {
     setState(() {
-      phoneNumber = phoneController.text;
-      firstName = firstNameController.text;
-      lastName = lastNameController.text;
-      email = emailController.text;
-      designation = designationController.text;
-      password = passwordController.text;
+      phoneNumber = phoneController.text.trim();
+      firstName = firstNameController.text.trim();
+      lastName = lastNameController.text.trim();
+      email = emailController.text.trim();
+      designation = designationController.text.trim();
+      password = passwordController.text.trim();
 
-
-      if(groups[int.parse(selectedGroupId!)]['name'] == "ADMIN"){
+      int? groupIndex = int.tryParse(selectedGroupId ?? '');
+      if (groupIndex != null && groups[groupIndex]['name'] == "ADMIN") {
         userType = "AD";
       }
-      if(isTestUser){
+      if (isTestUser) {
         userType = "TKR";
       }
 
+      // Construct registration data list
       List<dynamic> registrationData = [
-        phoneNumber,//0
-        firstName,//1
-        lastName,//2
-        email,//3
-        designation,//4
-        password,//5
-        selectedGroupId,//6
-        selectedKaryakarthaId,//7
-        _image!,//8
-        selectedCity,//9
-        selectedDistrict,//10
-        selectedState,//11
-        selectedShreni,//12
-        userType,//13
+        phoneNumber,          // 0
+        firstName,            // 1
+        lastName,             // 2
+        email,                // 3
+        designation,          // 4
+        password,             // 5
+        selectedGroupId,      // 6
+        selectedKaryakarthaId,// 7
+        _image,               // 8
+        selectedCity,         // 9
+        selectedDistrict,     // 10
+        selectedState,        // 11
+        selectedShreni,       // 12
+        userType,             // 13
       ];
+
+      // Validate all fields
+      bool isValid = registrationData.every((item) {
+        if (item == null) return false;
+        if (item is String && item.trim().isEmpty) return false;
+        return true;
+      });
+
+      // Show error if invalid
+      if (!isValid) {
+        if (_image == null || phoneNumber.isEmpty || firstName.isEmpty || lastName.isEmpty || email.isEmpty || designation.isEmpty || password.isEmpty || selectedGroupId == null || selectedCity == null || selectedDistrict == null || selectedState == null || selectedShreni == null) {
+          String errorMessage = _image == null ? "Please upload profile picture." : "Please fill all fields.";
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+
+      }
 
       print("User registered with following data:");
       print("$phoneNumber $firstName $lastName $email $designation $password $selectedKaryakarthaId $selectedGroupId $userType");
 
+      // Proceed with API call
       apiService.registerUser(registrationData);
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("User registered successfully!")),
       );
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -214,6 +241,7 @@ class _RegisterUserState extends State<RegisterUserPage> {
     double largeFontSize = normFontSize+4; //20
     double smallFontSize = normFontSize-2; //14
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         systemOverlayStyle: SystemUiOverlayStyle.dark,

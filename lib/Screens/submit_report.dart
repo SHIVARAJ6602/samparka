@@ -74,22 +74,22 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
   }
 
   Future<void> submitReport() async {
-    print('${widget.id} $_imageFiles ${reportDataController.text}');
+    //print('${widget.id} $_imageFiles ${reportDataController.text}');
     bool status = await apiService.submitReport(widget.id, widget.type, _imageFiles, reportDataController.text);
     if(status){
-      print('successful');
+      //print('successful');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Event Scheduled'),
+          content: Text('Report Submitted'),
           backgroundColor: Colors.green,
         ),
       );
       Navigator.pop(context,true);
     }else{
-      print('failed');
+      //print('failed');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed TO Schedule Event'),
+          content: Text('Failed to submit report!'),
           backgroundColor: Colors.red,
         ),
       );
@@ -100,7 +100,7 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
   void initState() {
     super.initState();
     data = widget.data;
-    print('data received sub report $data');
+    //print('data received sub report $data');
   }
 
   @override
@@ -109,6 +109,7 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
     double largeFontSize = normFontSize+4; //20
     double smallFontSize = normFontSize-2; //14
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         systemOverlayStyle: SystemUiOverlayStyle.dark,

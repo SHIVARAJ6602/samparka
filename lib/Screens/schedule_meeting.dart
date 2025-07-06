@@ -188,6 +188,7 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
     double smallFontSize = normFontSize - 2;
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         systemOverlayStyle: SystemUiOverlayStyle.dark,

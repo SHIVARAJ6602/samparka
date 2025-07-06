@@ -56,6 +56,7 @@ class _ViewReportMeetingsPageState extends State<ViewReportMeetingsPage> {
     double largeFontSize = normFontSize+4; //20
     double smallFontSize = normFontSize-2; //14
     return Scaffold(
+        backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
@@ -251,11 +252,19 @@ class MeetingCard extends StatelessWidget {
       ),
       child: TextButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => ViewEventPage(id, data, typeId)),
-          );
+          if (id.startsWith('ir') || id.startsWith('IR')) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ViewInteractionPage(id)),
+            );
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ViewEventPage(id, data, typeId)),
+            );
+          }
         },
+
         style: ButtonStyle(
           shape: WidgetStateProperty.all(RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(25),
@@ -273,23 +282,32 @@ class MeetingCard extends StatelessWidget {
                   children: [
                     LayoutBuilder(
                       builder: (context, constraints) {
+                        double screenWidth = MediaQuery.of(context).size.width;
+                        double maxTextWidth = screenWidth * 0.80;
+
                         double fontSize = 26;
-                        double availableWidth = title.length * largeFontSize;
-                        if (availableWidth > MediaQuery.of(context).size.width * 0.38 * 4.2) {
+                        double estimatedTextWidth = title.length * largeFontSize;
+
+                        if (estimatedTextWidth > maxTextWidth) {
                           fontSize = 20;
                         }
-                        return Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: fontSize,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+
+                        return Container(
+                          width: maxTextWidth,
+                          child: Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: fontSize,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: false,
                           ),
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: false,
                         );
                       },
                     ),
+
                     buildLabelValueRow('Date', formatDate(dateTime)),
                     buildLabelValueRow('Time', formatTime(dateTime)),
                     buildLabelValueRow('Location', data['venue'] ?? ''),

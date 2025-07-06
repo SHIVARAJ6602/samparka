@@ -278,7 +278,7 @@ class GenReportPageState extends State<GenReportPage> {
   void _getReportPage() async {
     try {
       // Call the apiService.homePage() and store the result
-      result = await apiService.getReportPage(selectedFromDate!.toIso8601String(),selectedToDate!.toIso8601String());
+      result = await apiService.getReportPage(apiService.UserId,selectedFromDate!.toIso8601String(),selectedToDate!.toIso8601String());
       setState(() {
         // Update the influencers list with the fetched data
         data = result;
@@ -296,7 +296,7 @@ class GenReportPageState extends State<GenReportPage> {
       });
     } catch (e) {
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      print("Error fetching Report in Page: $e");
     }
   }
 

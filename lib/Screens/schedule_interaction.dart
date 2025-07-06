@@ -116,6 +116,7 @@ class _AddInteractionPageState extends State<AddInteractionPage> {
     double largeFontSize = normFontSize+4; //20
     double smallFontSize = normFontSize-2; //14
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         systemOverlayStyle: SystemUiOverlayStyle.dark,

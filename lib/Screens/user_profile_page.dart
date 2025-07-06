@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:samparka/Screens/schedule_interaction.dart';
 import 'package:samparka/Screens/view_influencers.dart';
 import 'package:samparka/Screens/view_interaction.dart';
+import 'package:samparka/Screens/view_report_meetings.dart';
 
 import '../Service/api_service.dart';
 import '../widgets/influencer_card.dart';
@@ -37,7 +38,24 @@ class _UserProfilePageState extends State<UserProfilePage> {
   late String description = '';
   late String hashtags = '';
   late String profileImage = '';
+  late String shreni = '';
+  late int level = 0;
   late String KR_id = '';
+
+  DateTime? selectedFromDate;
+  DateTime? selectedToDate;
+  late var selectedMeetingType = "Meeting";
+  int influencerCount = 0;
+  int influencerMet = 0;
+  int activeTeamMembers = 0;
+  int inactiveTeamMembers = 0;
+  int individualMeetings = 0;
+  int SGM = 0;
+  int programs = 0;
+  int baitek = 0;
+  int successfullMeetings = 0;
+  List<dynamic> data = [];
+
 
   List<dynamic> influencers = [];
 
@@ -118,19 +136,56 @@ class _UserProfilePageState extends State<UserProfilePage> {
   @override
   void initState() {
     super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
     fetchHashtags();
     setState(() {loading = true;});
     KR_id = widget.id;
-    print(KR_id[0][0]);
     getKaryakartha();
     fetchInfluencers();
     fetchTasks(KR_id);
     setState(() {});
     Future.delayed(Duration(milliseconds: 1000), () {
       setState(() {
-        loading = false;
+        //loading = false;
       });
     });
+  }
+
+  Future<void> _getReport() async{
+    try {
+      // Call the apiService.homePage() and store the result
+      DateTime now = DateTime.now();
+      DateTime startOfMonth = DateTime(now.year, now.month, 1);
+      DateTime endOfRange = now;
+      result = await apiService.getReportPage(widget.id,startOfMonth.toIso8601String(),endOfRange.toIso8601String());
+      setState(() {
+        data = result;
+        if (data != null && data.isNotEmpty) {
+          var report = data[0];
+          int totalKR = report['Total_KR'] ?? 0;
+          int activeKR = report['Active_KR'] ?? 0;
+
+          setState(() {
+            influencerCount = report['Total_GV'] ?? 0;
+            influencerMet = report['Met_GV'] ?? 0;
+            activeTeamMembers = activeKR;
+            inactiveTeamMembers = totalKR - activeKR;
+            successfullMeetings = totalKR;
+
+            individualMeetings = report['Individual'] ?? 0;
+            SGM = report['SGM'] ?? 0;
+            programs = report['Program'] ?? 0;
+            baitek = report['Baitek'] ?? 0;
+          });
+        }
+      });
+    } catch (e) {
+      // Handle any errors here
+      print("Error fetching Report in Page(User profile page): $e");
+    }
   }
 
   Future<bool> getKaryakartha() async{
@@ -140,16 +195,20 @@ class _UserProfilePageState extends State<UserProfilePage> {
       setState(() {
         // Update the influencers list with the fetched data
         //meetings = result;
-        print(resultKR[0]['first_name']);
-        print("getKR KR data: $resultKR");
-        print(resultKR[0]['profile_image']);
+        print("result $resultKR");
         name = '${resultKR[0]['first_name']} ${resultKR[0]['last_name']}';
         designation = resultKR[0]['designation'];
-        description = resultKR[0]['description']??'';
-        profileImage = resultKR[0]['profile_image']??'';
-        print('Image: ${profileImage}');
-        setState(() {});
-
+        description = resultKR[0]['description'] ?? '';
+        profileImage = resultKR[0]['profile_image'] ?? '';
+        shreni = resultKR[0]['shreni'] ?? '';
+        level = int.tryParse(resultKR[0]['level']?.toString() ?? '0') ?? 0;
+        if(level>2){
+          _getReport();
+        }
+        print('KR loaded');
+        setState(() {
+          loading = false;
+        });
       });
       return true;
     } catch (e) {
@@ -157,6 +216,16 @@ class _UserProfilePageState extends State<UserProfilePage> {
       print("Error fetching karyakartha: $e");
     }
     return false;
+  }
+
+  void _viewMeets(type) {
+    DateTime now = DateTime.now();
+    DateTime startOfMonth = DateTime(now.year, now.month, 1);
+    DateTime endOfRange = now;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ViewReportMeetingsPage(type,startOfMonth.toIso8601String(),endOfRange.toIso8601String())),
+    );
   }
 
   Future<void> fetchTasks(GV_id) async {
@@ -290,7 +359,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
                                     color: Color.fromRGBO(5, 50, 70, 1.0),
                                   ),
                                 ),
-                                Row(
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       designation, // Dynamic designation
@@ -299,14 +369,15 @@ class _UserProfilePageState extends State<UserProfilePage> {
                                         color: Color.fromRGBO(5, 50, 70, 1.0),
                                       ),
                                     ),
-                                    Container(
+                                    /*Container(
                                       width: 2, // Divider width
                                       height: smallFontSize, // Divider height (you can adjust this as needed)
                                       color: Colors.black, // Divider color
                                       margin: EdgeInsets.symmetric(horizontal: 8), // Add spacing around the divider
-                                    ),
+                                    ),*/
+                                    if(level < 3)
                                     Text(
-                                      'Shreni', // Dynamic designation
+                                      shreni, // Dynamic designation
                                       style: TextStyle(
                                         fontSize: smallFontSize,
                                         color: Color.fromRGBO(5, 50, 70, 1.0),
@@ -315,6 +386,160 @@ class _UserProfilePageState extends State<UserProfilePage> {
                                   ],
                                 ),
 
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 30,),
+                      //report
+                      if (level>2)
+                        Column(
+                        children: [
+                          Center(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text('This Month\'s Overview',style: TextStyle(fontWeight: FontWeight.bold,fontSize: largeFontSize+10,color: Color.fromRGBO(2, 40, 60, 1),decoration: TextDecoration.underline),),
+                              ],
+                            ),
+                          ),
+                          //Meeting Summary
+                          Container(
+                            width: MediaQuery.of(context).size.width-20,
+                            padding: const EdgeInsets.all(16.0), // Padding around the container
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12), // Rounded corners for the border
+                              border: Border.all(
+                                color: Colors.grey.shade400,
+                                width: 1, // Border width
+                              ),
+                              gradient: const LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Color.fromRGBO(60, 245, 200, 1.0),
+                                  Color.fromRGBO(2, 40, 60, 1),
+                                ],
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                        width: MediaQuery.of(context).size.width*0.40,
+                                        padding: const EdgeInsets.all(7.0),
+                                        decoration: BoxDecoration(
+                                          //color: Color.fromRGBO(255, 255, 255, 0.1), // Background color
+                                          borderRadius: BorderRadius.circular(12), // Rounded corners for the border
+                                          border: Border.all(
+                                            color: Colors.grey.shade400, // Border color
+                                            width: 1, // Border width
+                                          ),
+                                        ),
+                                        child: TextButton(
+                                          onPressed: (){
+                                            if(individualMeetings>0){
+                                              _viewMeets('individual');
+                                            }
+                                          },
+                                          child: Column(
+                                            children: [
+                                              Text('$individualMeetings',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold,fontSize: largeFontSize*1.85,shadows: [Shadow(color: Colors.black.withOpacity(0.5),offset: Offset(3.0, 3.0),blurRadius: 5.0,),]),),
+                                              Text('Individual Meetings',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold,fontSize: normFontSize,shadows: [Shadow(color: Colors.black.withOpacity(0.5),offset: Offset(3.0, 3.0),blurRadius: 5.0,),]),textAlign: TextAlign.center,),
+                                              //Text('data',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),),
+                                            ],
+                                          ),
+                                        )
+                                    ),
+                                    SizedBox(width: 10),
+                                    Container(
+                                        width: MediaQuery.of(context).size.width*0.40,
+                                        padding: const EdgeInsets.all(5.0),
+                                        decoration: BoxDecoration(
+                                          //color: Color.fromRGBO(255, 255, 255, 0.3), // Background color
+                                          borderRadius: BorderRadius.circular(12), // Rounded corners for the border
+                                          border: Border.all(
+                                            color: Colors.grey.shade400, // Border color
+                                            width: 1, // Border width
+                                          ),
+                                        ),
+                                        child: TextButton(
+                                          onPressed: (){
+                                            if(SGM>0){
+                                              _viewMeets('sgm');
+                                            }
+                                          },
+                                          child: Column(
+                                            children: [
+                                              Text('$SGM',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold,fontSize: largeFontSize*2,shadows: [Shadow(color: Colors.black.withOpacity(0.5),offset: Offset(3.0, 3.0),blurRadius: 5.0,),]),),
+                                              Text('Small Group Meetings ',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold,fontSize: normFontSize,shadows: [Shadow(color: Colors.black.withOpacity(0.5),offset: Offset(3.0, 3.0),blurRadius: 5.0,),]),textAlign: TextAlign.center,),
+                                              //Text('data',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),),
+                                            ],
+                                          ),
+                                        )
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    Container(
+                                        width: MediaQuery.of(context).size.width*0.40,
+                                        padding: const EdgeInsets.all(5.0),
+                                        decoration: BoxDecoration(
+                                          //color: Color.fromRGBO(255, 255, 255, 0.3), // Background color
+                                          borderRadius: BorderRadius.circular(12), // Rounded corners for the border
+                                          border: Border.all(
+                                            color: Colors.grey.shade400, // Border color
+                                            width: 1, // Border width
+                                          ),
+                                        ),
+                                        child: TextButton(
+                                          onPressed: (){
+                                            if(programs>0){
+                                              _viewMeets('program');
+                                            }
+                                          },
+                                          child: Column(
+                                            children: [
+                                              Text('$programs',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold,fontSize: largeFontSize*2,shadows: [Shadow(color: Colors.black.withOpacity(0.5),offset: Offset(3.0, 3.0),blurRadius: 5.0,),]),),
+                                              Text('Programs',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold,fontSize: normFontSize,shadows: [Shadow(color: Colors.black.withOpacity(0.5),offset: Offset(3.0, 3.0),blurRadius: 5.0,),]),textAlign: TextAlign.center,),
+                                            ],
+                                          ),
+                                        )
+                                    ),
+                                    SizedBox(width: 5),
+                                    Divider(),
+                                    SizedBox(width: 5),
+                                    Container(
+                                        width: MediaQuery.of(context).size.width*0.40,
+                                        padding: const EdgeInsets.all(5.0),
+                                        decoration: BoxDecoration(
+                                          //color: Color.fromRGBO(255, 255, 255, 0.3), // Background color
+                                          borderRadius: BorderRadius.circular(12), // Rounded corners for the border
+                                          border: Border.all(
+                                            color: Colors.grey.shade400, // Border color
+                                            width: 1, // Border width
+                                          ),
+                                        ),
+                                        child: TextButton(
+                                          onPressed: (){
+                                            if(baitek>0){
+                                              _viewMeets('baitak');
+                                            }
+                                          },
+                                          child: Column(
+                                            children: [
+                                              Text('$baitek',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold,fontSize: largeFontSize*2,shadows: [Shadow(color: Colors.black.withOpacity(0.5),offset: Offset(3.0, 3.0),blurRadius: 5.0,),]),),
+                                              Text('Baitaks',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold,fontSize: normFontSize,shadows: [Shadow(color: Colors.black.withOpacity(0.5),offset: Offset(3.0, 3.0),blurRadius: 5.0,),]),textAlign: TextAlign.center,),
+                                            ],
+                                          ),
+                                        )
+                                    ),
+                                  ],
+                                )
                               ],
                             ),
                           ),

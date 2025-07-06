@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Required for SystemUiOverlayStyle
 import 'package:samparka/Screens/update_user_profile.dart';
 import '../Service/api_service.dart';
+import 'AboutDeveloper.dart';
 import 'PrivacyPolicyScreen.dart';
 import 'login.dart';
 
@@ -329,6 +330,35 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               onPressed: _confirmLogout,
             ),
+
+            const SizedBox(height: 20),
+
+            TextButton.icon(
+              icon: Icon(Icons.info_outline, color: Colors.grey[700]),
+              label: Text(
+                'About Developer',
+                style: TextStyle(
+                  fontSize: normFontSize,
+                  color: Colors.grey[700],
+                ),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                minimumSize: const Size(double.infinity, 50),
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  side: BorderSide(color: Colors.grey.shade300),
+                ),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AboutDeveloperPage()),
+                );
+              },
+            ),
+
           ],
         ),
       ),

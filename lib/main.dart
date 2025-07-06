@@ -6,6 +6,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:new_version_plus/new_version_plus.dart';
 import 'package:no_screenshot/no_screenshot.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:samparka/Screens/PrivacyPolicyScreen.dart';
@@ -31,7 +32,8 @@ Future<void> main() async {
     statusBarIconBrightness: Brightness.dark, // use Brightness.dark for black icons
     statusBarBrightness: Brightness.light, // for iOS (optional)
   ));
-  runApp(MyApp());
+  //runApp(MyApp());
+  runApp(VersionCheck()); //MyApp called inside VersionCheck
 }
 
 class MyApp extends StatelessWidget {
@@ -149,6 +151,84 @@ class MyApp extends StatelessWidget {
     }
   }
 }
+
+class VersionCheck extends StatefulWidget {
+  @override
+  _VersionCheckState createState() => _VersionCheckState();
+}
+
+class _VersionCheckState extends State<VersionCheck> {
+  bool _isReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkVersion();
+  }
+
+  void _checkVersion() async {
+    final newVersion = NewVersionPlus(
+      androidId: "com.samparkamysuru.samparka", // ✅ replace with your real Android package ID
+      iOSId: "000000000", // ✅ replace with your real iOS App Store ID
+    );
+
+    final status = await newVersion.getVersionStatus();
+
+    /*if (status != null) {
+      print("Local version: ${status.localVersion}");
+      print("Store version: ${status.storeVersion}");
+      print("App store link: ${status.appStoreLink}");
+      print("Can update: ${status.canUpdate}");
+    } else {
+      print("Version status is null.");
+    }*/
+
+    if (status != null && status.canUpdate) {
+      newVersion.showUpdateDialog(
+        context: context,
+        versionStatus: status,
+        dialogTitle: "Update Required",
+        dialogText:
+        "A new version (${status.storeVersion}) is available. Please update the app to continue.",
+        updateButtonText: "Update Now",
+        dismissButtonText: "Later",
+        allowDismissal: false, // ❗ Force the user to update
+      );
+    } else {
+      setState(() => _isReady = true); // Proceed to app
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_isReady) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          backgroundColor: Colors.white,
+          body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/logo/logo.png',
+                    height: 150,
+                  ),
+                  const CupertinoActivityIndicator(
+                    color: Colors.green,
+                    radius: 20, // Customize the radius of the activity indicator
+                  )
+                ],
+              )
+          ),
+        ),
+      );
+    }
+
+    return MyApp(); // ✅ launch your app when version check is done
+  }
+}
+
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();

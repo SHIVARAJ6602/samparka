@@ -88,7 +88,10 @@ class _MeetingPageState extends State<MeetingPage> {
   @override
   void initState() {
     super.initState();
+    _loadData();
+  }
 
+  Future<void> _loadData() async {
     //handleButtonPress();
     username = apiService.first_name;
     isAuthenticated = apiService.isAuthenticated;
@@ -101,6 +104,7 @@ class _MeetingPageState extends State<MeetingPage> {
     fetchMeeting('3');
     loading = false;
   }
+
   // State variables for radio buttons
   String? selectedRadio = 'url1';
   String? selectedMeetingType = 'baitak';
@@ -527,17 +531,11 @@ class _MeetingPageState extends State<MeetingPage> {
                               onPressed: () async {
                                 final result = await Navigator.push(
                                   context,
-                                    MaterialPageRoute(builder: (context) => const ScheduleMeetingPage()), // Replace with your page
+                                  MaterialPageRoute(builder: (context) => const ScheduleMeetingPage()),
                                 );
 
-                                if (result != null && result) {
-                                  // The result is true, meaning the page needs to be reloaded
-                                  initState();
-                                  setState(() {
-                                    // Trigger a state change to reload the previous page's content
-
-
-                                  });
+                                if (result == true) {
+                                  _loadData(); // Refresh the data
                                 }
                               },
                               style: TextButton.styleFrom(
@@ -722,6 +720,7 @@ class _MeetingPageState extends State<MeetingPage> {
                                               dateTime: meeting['meeting_datetime']!,
                                               id: meeting['id']!,
                                               data: meeting,
+                                              onReportSubmitted: _loadData,
                                             ),
                                           );
                                         }),
@@ -825,6 +824,7 @@ class _MeetingPageState extends State<MeetingPage> {
                                               dateTime: meeting['meeting_datetime']!,
                                               id: meeting['id']!,
                                               data: meeting,
+                                              onReportSubmitted: _loadData,
                                             ),
                                           );
                                         }),
@@ -917,6 +917,7 @@ class _MeetingPageState extends State<MeetingPage> {
                                               dateTime: meeting['meeting_datetime']!,
                                               id: meeting['id']!,
                                               data: meeting,
+                                              onReportSubmitted: _loadData,
                                             ),
                                           );
                                         }),
@@ -1249,6 +1250,7 @@ class MeetingCard extends StatelessWidget {
   final String description;
   final String dateTime;
   final String id;
+  final VoidCallback? onReportSubmitted;
 
   const MeetingCard({
     super.key,
@@ -1256,7 +1258,7 @@ class MeetingCard extends StatelessWidget {
     required this.description,
     required this.id,
     required this.dateTime,
-    required this.data, required this.typeId,
+    required this.data, required this.typeId, required this.onReportSubmitted,
   });
 
   @override
@@ -1424,11 +1426,15 @@ class MeetingCard extends StatelessWidget {
                         color: const Color.fromRGBO(5, 50, 70, 1.0),
                       ),
                       child: TextButton(
-                        onPressed: () {
-                          Navigator.push(
+                        onPressed: () async {
+                          final result = await Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) => SubmitReportPage(id,typeId,data)),
                           );
+
+                          if (result == true) {
+                            onReportSubmitted!(); // Refresh the data
+                          }
                         },
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.all(10),

@@ -921,7 +921,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                               if (loading)
                                 Center(
                                   child: CircularProgressIndicator(
-                                    backgroundColor: Colors.blue,
+                                    backgroundColor: Colors.white,
                                   ),
                                 )
                               else
@@ -951,7 +951,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                                         child: meetingCard(
                                           title: meeting['title']!,
                                           description: meeting['description']!,
-                                          dateTime: meeting['meeting_datetime']??'',
+                                          dateTime: meeting['meeting_datetime']??'0000-00-00T00:00:00+00:00',
                                           id: meeting['id']!,
                                         ),
                                       );

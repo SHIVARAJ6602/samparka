@@ -1671,9 +1671,9 @@ class ApiService {
     dio.options.headers['Authorization'] = 'Token $token';
 
     try {
-      print(IR_id);
-      final response = await dio.post('$baseUrl/callHandler/',data: {'act33ion':'get_interaction_by_id','id':IR_id});
-      print(response.data);
+      //print(IR_id);
+      final response = await dio.post('$baseUrl/callHandler/',data: {'action':'get_interaction_by_id','id':IR_id});
+      //print(response.data);
 
       if (response.statusCode == 200) {
         //print('TS ${response.data}');
@@ -1688,11 +1688,9 @@ class ApiService {
       } else {
         throw Exception('Failed to load lead. Status code: ${response.statusCode}');
       }
-
-
     } catch (e) {
       print('Error: $e');
-      throw Exception('Failed to load supervisor: $e');
+      throw Exception('Failed to load interaction: $e');
     }
   }
 
@@ -1782,11 +1780,11 @@ class ApiService {
     }
   }
 
-  Future<List<dynamic>> getReportPage(String fromDate, String toDate) async {
+  Future<List<dynamic>> getReportPage(String id,String fromDate, String toDate) async {
     dio.options.headers['Authorization'] = 'Token $token';
 
     try {
-      final response = await dio.post('$baseUrl/callHandler/',data: {'action':'reportPage','fromDate':fromDate,'toDate':toDate});
+      final response = await dio.post('$baseUrl/callHandler/',data: {'action':'reportPage', 'user_id': id, 'fromDate':fromDate,'toDate':toDate});
       print(response.data);
 
       if (response.statusCode == 200) {
@@ -2233,7 +2231,7 @@ class ApiService {
       final response = await dio.post('$baseUrl/callHandler/', data: formData);
 
       // Check if the response is successful (status code 200)
-      if (response.statusCode == 200 || response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       } else {
         // Log and throw exception if status code is not 200

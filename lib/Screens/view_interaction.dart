@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import '../Service/api_service.dart';
 
@@ -37,7 +38,7 @@ class _ViewInteractionPageState extends State<ViewInteractionPage> {
   @override
   void initState() {
     super.initState();
-
+    //print('id : ${widget.id} - view interaction');
     fetchInteraction(widget.id);
     /*titleDataController.text = Interaction[0]['title']??'';
     placeDataController.text = Interaction[0]['meeting_place']??'';
@@ -54,15 +55,20 @@ class _ViewInteractionPageState extends State<ViewInteractionPage> {
     try{
       var result = await apiService.getInteractionByID(MT_id);
       setState(() {
+        print('fetch itr start');
         Interaction = result;
         titleDataController.text = Interaction[0]['title']??'';
         placeDataController.text = Interaction[0]['meeting_place']??'';
-        selectedMeetDate = DateTime.parse(Interaction[0]['meeting_datetime']??'');
+        //selectedMeetDate = DateTime.parse(Interaction[0]['meeting_datetime']??'1970-01-01T00:00:00Z');
+        selectedMeetDate = DateTime.tryParse(Interaction[0]['meeting_datetime'] ?? '1970-01-01T00:00:00Z');
+        //selectedMeetDate = DateFormat('yyyy-MM-dd HH:mm a').format(DateTime.parse(Interaction[0]['meeting_datetime'] ?? '1970-01-01T00:00:00Z'));;
         selectedStatus = Interaction[0]['status'];
+        print('fetch itr mid');
         descriptionController.text = Interaction[0]['description'];
         materials_distributedController.text = Interaction[0]['materials_distributed']??'';
         virtual_meeting_linkController.text = 'virtualLink'??'';
         discussion_pointsController.text = Interaction[0]['discussion_points'];
+        print("interaction : $Interaction");
       });
       setState(() {
 
@@ -81,6 +87,7 @@ class _ViewInteractionPageState extends State<ViewInteractionPage> {
     double smallFontSize = normFontSize - 2; //14
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
@@ -164,7 +171,9 @@ class _ViewInteractionPageState extends State<ViewInteractionPage> {
                                 Padding(
                                   padding: const EdgeInsets.only(bottom: 8.0),
                                   child: Text(
-                                    'Date & Time: ${selectedMeetDate == null ? "Date & Time not set" : "${selectedMeetDate!.toLocal()}".split(' ')[0]}',
+                                    'Date & Time: ${selectedMeetDate == null
+                                        ? "Date & Time not set"
+                                        : DateFormat('yyyy-MM-dd hh:mm a').format(selectedMeetDate!.toLocal())}',
                                     style: TextStyle(
                                       fontSize: normFontSize,
                                       color: selectedMeetDate == null ? Colors.red : Colors.green,
@@ -184,7 +193,7 @@ class _ViewInteractionPageState extends State<ViewInteractionPage> {
                                 Padding(
                                   padding: const EdgeInsets.only(bottom: 8.0),
                                   child: Text(
-                                    'Materials Given: ${materials_distributedController.text}',
+                                    'Materials Given:\n ${materials_distributedController.text}',
                                     style: TextStyle(
                                       fontSize: normFontSize,
                                       color: Colors.black87,
