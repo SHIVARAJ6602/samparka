@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -54,7 +56,7 @@ class InfluencerList extends StatelessWidget {
       itemCount: influencerData.length,
       itemBuilder: (context, index) {
         final influencer = influencerData[index];
-        print('name: ${influencer['fname']}');
+        log('name: ${influencer['fname']}');
         return Padding(
           padding: const EdgeInsets.only(bottom: 20),
           child: InfluencerCard(

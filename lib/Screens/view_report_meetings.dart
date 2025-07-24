@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -40,13 +41,13 @@ class _ViewReportMeetingsPageState extends State<ViewReportMeetingsPage> {
     try {
       // Call the apiService.homePage() and store the result
       result = await apiService.getReportMeet(meetType,fromDate,toDate);
-      print(result);
+      //log(result);
       setState(() {
         meets = result;
       });
     } catch (e) {
       // Handle any errors here
-      print("Error fetching Meetings: $e");
+      log("Error fetching Meetings: $e");
     }
   }
 
@@ -207,7 +208,7 @@ class MeetingCard extends StatelessWidget {
       }
     }
 
-    print(data['status']);
+    //log(data['status']);
 
     Widget buildLabelValueRow(String label, String value) {
       return Row(

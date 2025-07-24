@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:samparka/Screens/influencer_profile.dart';
@@ -44,7 +46,7 @@ class _ApiScreenState extends State<ApiScreen> {
       });
       _taskController.clear(); // Clear the input field
     } catch (e) {
-      print('Error adding task: $e');
+      log('Error adding task: $e');
     }
     return true;
   }
@@ -346,7 +348,7 @@ class _ApiScreenState extends State<ApiScreen> {
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () async {
-                    print(_mail.text.trim());
+                    log(_mail.text.trim());
                     await apiService.sendEmail(_mail.text);
                     setState(() {});
                   },
@@ -473,7 +475,7 @@ class _ApiScreenState extends State<ApiScreen> {
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () {
-                    print(_url.text.trim());
+                    log(_url.text.trim());
                     apiService.saveUrl(_url.text.trim());
                     setState(() {});
                   },

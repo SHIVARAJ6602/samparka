@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -68,7 +69,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
       // Call the apiService.homePage() and store the result
       resultGV = await apiService.getInfluencer(0, 100,widget.id);
       result = [];
-      print('Influencers User Screen $result');
+      //log('Influencers User Screen $result');
       setState(() {
         resultGV.forEach((inf) {
           if (inf['soochi'] == 'AkhilaBharthiya') {
@@ -93,7 +94,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
       });
     } catch (e) {
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
   }
 
@@ -105,12 +106,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
       var tags = await apiService.getHashtags();
       setState(() {
         fetchedHashtags = tags;
-        //print('hastags\'s $result');
+        //log('hastags\'s $result');
         isTagsLoaded = true;
       });
 
     } catch (e) {
-      print("Error fetching tags: $e");
+      log("Error fetching tags: $e");
     }
   }
 
@@ -184,7 +185,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
       });
     } catch (e) {
       // Handle any errors here
-      print("Error fetching Report in Page(User profile page): $e");
+      log("Error fetching Report in Page(User profile page): $e");
     }
   }
 
@@ -195,7 +196,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
       setState(() {
         // Update the influencers list with the fetched data
         //meetings = result;
-        print("result $resultKR");
+        //log("result $resultKR");
         name = '${resultKR[0]['first_name']} ${resultKR[0]['last_name']}';
         designation = resultKR[0]['designation'];
         description = resultKR[0]['description'] ?? '';
@@ -205,7 +206,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
         if(level>2){
           _getReport();
         }
-        print('KR loaded');
+        //log('KR loaded');
         setState(() {
           loading = false;
         });
@@ -213,7 +214,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
       return true;
     } catch (e) {
       // Handle any errors here
-      print("Error fetching karyakartha: $e");
+      log("Error fetching karyakartha: $e");
     }
     return false;
   }
@@ -238,16 +239,16 @@ class _UserProfilePageState extends State<UserProfilePage> {
       });
     } catch (e) {
       // Handle any errors here
-      print("Error fetching interactions: $e");
+      log("Error fetching interactions: $e");
     }
   }
 
   @override
   Widget build(BuildContext context) {
     String GV_id = widget.id;
-    print(GV_id);
-    print(widget.id);
-    print("profile image: $profileImage");
+    //log(GV_id);
+    //log(widget.id);
+    //log("profile image: $profileImage");
     double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
     double largeFontSize = normFontSize+4; //20
     double smallFontSize = normFontSize-2;
@@ -263,7 +264,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
             icon: const Icon(Icons.notifications, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
             onPressed: () {
               // Handle the notification icon tap here (you can add navigation or other actions)
-              print('Notifications tapped');
+              //log('Notifications tapped');
             },
           ),
         ],
@@ -602,8 +603,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
                                     (influencers.length < 4) ? influencers.length : 3, // Display either all members or just 3
                                         (index) {
                                       final influencer = influencers[index]; // Access the member data
-                                      print(influencer['hashtags']);
-                                      print('influencer ${influencer??[]}');
+                                      //log(influencer['hashtags']);
+                                      //log('influencer ${influencer??[]}');
                                       return Padding(
                                         padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
                                         child: InfluencerCard(

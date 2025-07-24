@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -116,11 +118,11 @@ class _ChangeRequestPageState extends State<ChangeRequestPage> {
         result.add({'id': selectedKaryakarthaId,'first_name': 'Do Not Change','last_name': '',});
       }
       setState(() {
-        print('karyakartha\'s $result');
+        //log('karyakartha\'s $result');
         karyakartha = result;
       });
     } catch (e) {
-      print("Error fetching karyakarthas: $e");
+      log("Error fetching karyakarthas: $e");
     }
   }
 
@@ -134,7 +136,7 @@ class _ChangeRequestPageState extends State<ChangeRequestPage> {
       setState(() {
         // Update the influencers list with the fetched data
         //meetings = result;
-        print('get GV: ${result[0]}');
+        //log('get GV: ${result[0]}');
         profileImage = result[0]['profile_image']??'';
         fnameController.text = result[0]['fname'];
         lnameController.text = result[0]['lname'];
@@ -142,7 +144,7 @@ class _ChangeRequestPageState extends State<ChangeRequestPage> {
         descriptionController.text = result[0]['description']??'';
         impactOnSocietyController.text = result[0]['impact_on_society']??'';
         organizationController.text = result[0]['organization']??'';
-        print(organisationController.text);
+        //log(organisationController.text);
         if (result[0]['soochi'] == 'AkhilaBharthiya'){
           soochiController.text = 'AB';
         }else if(result[0]['soochi'] == 'PranthyaSampark'){
@@ -157,7 +159,7 @@ class _ChangeRequestPageState extends State<ChangeRequestPage> {
         district1Controller.text = result[0]['district']??'';
         emailController.text = result[0]['email']??'';
         selectedKaryakarthaId = result[0]['assigned_karyakarta'];
-        print(selectedKaryakarthaId);
+        //log(selectedKaryakarthaId);
         if (interactionLevels.contains(result[0]['interaction_level'])) {
           selectedInteractionLevel = result[0]['interaction_level'];
         }
@@ -168,24 +170,24 @@ class _ChangeRequestPageState extends State<ChangeRequestPage> {
           selectedShreni = result[0]['shreni'];
         }
 
-        print(result[0]['email']);
-        print('object');
+        //log(result[0]['email']);
+        //log('object');
         //interactionLevelController.text = result[0]['interaction_level']??'';
         //_image = result[0]['profile_image']??'';
-        print('Image: ${result[0]['profile_image']??''}');
+        //log('Image: ${result[0]['profile_image']??''}');
         setState(() {
           loading = false;
         });
 
       });
-      print('${result[0]['hashtags']}');
+      //log('${result[0]['hashtags']}');
       for (var id in result[0]['hashtags']) {
         toggleHashtagSelection(id);
       }
       return true;
     } catch (e) {
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
     return false;
   }
@@ -214,8 +216,8 @@ class _ChangeRequestPageState extends State<ChangeRequestPage> {
         .map((hashtag) => hashtag['name'])
         .toList();
 
-    // Optionally, print or store the selected hashtag names
-    //print("Selected Hashtags Names: $selectedHashtags");
+    // Optionally, log or store the selected hashtag names
+    //log("Selected Hashtags Names: $selectedHashtags");
   }
 
   void toggleHashtagSelection(int id) {
@@ -226,7 +228,7 @@ class _ChangeRequestPageState extends State<ChangeRequestPage> {
         selectedHashtagsIDs.add(id);  // Select
       }
       getSelectedHashtags();
-      print("selected hashtag IDs: $selectedHashtagsIDs , selected hashtags: $selectedHashtags");
+      //log("selected hashtag IDs: $selectedHashtagsIDs , selected hashtags: $selectedHashtags");
     });
   }
 
@@ -236,10 +238,10 @@ class _ChangeRequestPageState extends State<ChangeRequestPage> {
       result = await apiService.getHashtags();
       setState(() {
         hashtags = result;
-        print('hastags\'s $result');
+        //log('hastags\'s $result');
       });
     } catch (e) {
-      print("Error fetching tags: $e");
+      log("Error fetching tags: $e");
     }
   }
 
@@ -268,7 +270,7 @@ class _ChangeRequestPageState extends State<ChangeRequestPage> {
                       'id': hashtags.length + 1, // Simple way to increment ID
                       'name': newHashtagName,
                     });
-                    print('updated hastags: $hashtags');
+                    //log('updated hastags: $hashtags');
                   });
                 }
                 Navigator.pop(context); // Close the dialog
@@ -294,7 +296,7 @@ class _ChangeRequestPageState extends State<ChangeRequestPage> {
       setState(() {loading=true;}); // Rebuild to show/hide label dynamically
     });
     GV_id = widget.id;
-    print(GV_id[0][0]);
+    //log(GV_id[0][0]);
     if(apiService.lvl>2){
       //getGanyavyakthi called inside fetchShreni
       fetchShreni();

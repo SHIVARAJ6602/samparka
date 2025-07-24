@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -8,15 +9,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:new_version_plus/new_version_plus.dart';
 import 'package:no_screenshot/no_screenshot.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:samparka/Screens/PrivacyPolicyScreen.dart';
 import 'package:samparka/Screens/home.dart'; //InfluencersPage()
 import 'package:samparka/Screens/login.dart'; //LoginPage()
 import 'package:samparka/Screens/error_page.dart'; //ErrorPage()
-import 'package:samparka/Screens/add_influencer.dart'; //AddInfluencerPage()
 import 'package:samparka/Service/api_service.dart';
-import 'Screens/API_TEST.dart';
-import 'Screens/temp.dart';
+import 'Screens/ForceUpdatePage.dart';
 import 'Service/PushNotificationService.dart'; //TaskListScreen()
 
 Future<void> main() async {
@@ -25,16 +23,22 @@ Future<void> main() async {
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   setupFCMListeners();
-  NoScreenshot.instance.screenshotOn();
-  //screenshotOn()
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
     statusBarColor: Colors.transparent, // or any color you want
     statusBarIconBrightness: Brightness.dark, // use Brightness.dark for black icons
     statusBarBrightness: Brightness.light, // for iOS (optional)
   ));
+  NoScreenshot.instance.screenshotOff();
+  //screenshotOn()
   //runApp(MyApp());
-  runApp(VersionCheck()); //MyApp called inside VersionCheck
+  //runApp(VersionCheck()); //MyApp called inside VersionCheck
+
+  runApp(MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: ForceUpdatePage(nextPage: MyApp()),
+  ));
 }
+
 
 class MyApp extends StatelessWidget {
   MyApp({super.key});
@@ -42,7 +46,7 @@ class MyApp extends StatelessWidget {
   final FirebaseMessaging messaging = FirebaseMessaging.instance;
 
   StreamSubscription<ConnectivityResult>? _subscription;
-  bool _isOffline = false;
+  final bool _isOffline = false;
 
 
   @override
@@ -109,7 +113,7 @@ class MyApp extends StatelessWidget {
   // Helper function to build the actual app depending on authentication
   Widget _buildApp(ApiService apiService,BuildContext context) {
     if(apiService.devVersion){
-      NoScreenshot.instance.screenshotOn();
+      NoScreenshot.instance.screenshotOff();
     }
     return MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -145,25 +149,29 @@ class MyApp extends StatelessWidget {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print("Notifications permission granted.");
+      log("Notifications permission granted.");
     } else {
-      print("Notifications permission denied.");
+      log("Notifications permission denied.");
     }
   }
 }
 
 class VersionCheck extends StatefulWidget {
+  const VersionCheck({super.key});
+
   @override
-  _VersionCheckState createState() => _VersionCheckState();
+  VersionCheckState createState() => VersionCheckState();
 }
 
-class _VersionCheckState extends State<VersionCheck> {
+class VersionCheckState extends State<VersionCheck> {
   bool _isReady = false;
 
   @override
   void initState() {
     super.initState();
+    log('check vr called');
     _checkVersion();
+    log('call ended vr');
   }
 
   void _checkVersion() async {
@@ -174,14 +182,14 @@ class _VersionCheckState extends State<VersionCheck> {
 
     final status = await newVersion.getVersionStatus();
 
-    /*if (status != null) {
-      print("Local version: ${status.localVersion}");
-      print("Store version: ${status.storeVersion}");
-      print("App store link: ${status.appStoreLink}");
-      print("Can update: ${status.canUpdate}");
+    if (status != null) {
+      log("Local version: ${status.localVersion}");
+      log("Store version: ${status.storeVersion}");
+      log("App store link: ${status.appStoreLink}");
+      log("Can update: ${status.canUpdate}");
     } else {
-      print("Version status is null.");
-    }*/
+      log("Version status is null.");
+    }
 
     if (status != null && status.canUpdate) {
       newVersion.showUpdateDialog(
@@ -232,5 +240,5 @@ class _VersionCheckState extends State<VersionCheck> {
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  print('🔔 Background message: ${message.messageId}');
+  log('🔔 Background message: ${message.messageId}');
 }

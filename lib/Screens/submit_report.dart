@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -74,10 +75,10 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
   }
 
   Future<void> submitReport() async {
-    //print('${widget.id} $_imageFiles ${reportDataController.text}');
+    //log('${widget.id} $_imageFiles ${reportDataController.text}');
     bool status = await apiService.submitReport(widget.id, widget.type, _imageFiles, reportDataController.text);
     if(status){
-      //print('successful');
+      //log('successful');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Report Submitted'),
@@ -86,7 +87,7 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
       );
       Navigator.pop(context,true);
     }else{
-      //print('failed');
+      //log('failed');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to submit report!'),
@@ -100,7 +101,7 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
   void initState() {
     super.initState();
     data = widget.data;
-    //print('data received sub report $data');
+    //log('data received sub report $data');
   }
 
   @override

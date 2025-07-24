@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';// Import multi_select_flutter package
@@ -7,10 +9,10 @@ class ScheduleMeetingPage extends StatefulWidget {
   const ScheduleMeetingPage({super.key});
 
   @override
-  _ScheduleMeetingPageState createState() => _ScheduleMeetingPageState();
+  ScheduleMeetingPageState createState() => ScheduleMeetingPageState();
 }
 
-class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
+class ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
 
   final apiService = ApiService();
   final TextEditingController meetingTitleController = TextEditingController();
@@ -32,7 +34,7 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
   List<dynamic> influencers = [];
 
   Future<bool> createMeeting() async {
-    List<dynamic> MeetingData = [
+    List<dynamic> meetingData = [
       selectedType, // 0: The type of the meeting (e.g., business, casual, etc.)
       meetingTitleController.text, // 1: The title of the meeting, entered by the user
       descriptionController.text, // 2: Description of the meeting, entered by the user
@@ -43,7 +45,7 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
       selectedStatus, // 7: The current status of the meeting (e.g., scheduled, canceled, etc.)
       apiService.UserId, // 8: The User ID of the person organizing the meeting (e.g., interaction ID or widget ID)
     ];
-    if(await apiService.createMeeting(MeetingData)){
+    if(await apiService.createMeeting(meetingData)){
       return true;
     } else {
       return false;
@@ -54,47 +56,63 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
   Future<void> fetchMembers() async {
     try {
       resultMem = await apiService.myTeam(0, 100);
+
+      if (!mounted) return; // ✅ Stop if widget is disposed
+
       if (resultMem.isEmpty) {
         setState(() {
-          selectedMembersIds = [apiService.UserId]; // Default to self if no members are found
+          selectedMembersIds = [apiService.UserId]; // Default to self if no members
         });
-        setState(() {});
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Alert'),
-              content: Text('No members to assign. Defaulting to self: ${apiService.first_name}'),
-              actions: <Widget>[
-                TextButton(
-                  child: Text('OK'),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            );
-          },
-        );
+
+        // ✅ Only show dialog if still mounted
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('Alert'),
+                content: Text('No members to assign. Defaulting to self: ${apiService.first_name}'),
+                actions: <Widget>[
+                  TextButton(
+                    child: Text('OK'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        }
       }
-      resultMem.add({'id': apiService.UserId, 'first_name': 'self(${apiService.first_name})', 'last_name': ''});
-      setState(() {
-        members = resultMem;
+
+      // Add self to the list
+      resultMem.add({
+        'id': apiService.UserId,
+        'first_name': 'self(${apiService.first_name})',
+        'last_name': '',
       });
+
+      if (mounted) {
+        setState(() {
+          members = resultMem;
+        });
+      }
     } catch (e) {
-      print("Error fetching members: $e");
+      log("Error fetching members: $e");
     }
   }
+
 
   Future<void> fetchInfluencers() async {
     try {
       resultInf = await apiService.getInfluencer(0, 100,apiService.UserId);
-      print(resultInf);
+      //log(resultInf);
       setState(() {
         influencers = resultInf;
       });
     } catch (e) {
-      print("Error fetching members: $e");
+      log("Error fetching members: $e");
     }
   }
 
@@ -141,6 +159,26 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
     }
   }
 
+  String getMemberName(String id, List<dynamic> members) {
+    final member = members.firstWhere(
+          (m) => m['id'] == id,
+      orElse: () => {},
+    );
+    final firstName = member['first_name'] ?? '';
+    final lastName = member['last_name'] ?? '';
+    return '$firstName $lastName'.trim();
+  }
+
+  String getInfluencerName(String id, List<dynamic> influencers) {
+    final influencer = influencers.firstWhere(
+          (inf) => inf['id'] == id,
+      orElse: () => {},
+    );
+    final firstName = influencer['fname'] ?? '';
+    final lastName = influencer["lname"] ?? '';
+    return '$firstName $lastName'.trim();
+  }
+
   // Function to show the DatePicker and update the selected date
   Future<void> _selectDateTime(BuildContext context, bool isFromDate) async {
     final DateTime initialDate = DateTime.now();
@@ -154,11 +192,17 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
       lastDate: lastDate,
     );
 
+    if (!mounted) return; // ✅ ensure widget is still mounted
+
     if (pickedDate != null) {
+      final currentContext = context; // ✅ capture context after await
+
       final TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
+        context: currentContext,
         initialTime: TimeOfDay.fromDateTime(initialDate),
       );
+
+      if (!mounted) return;
 
       if (pickedTime != null) {
         setState(() {
@@ -174,6 +218,7 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
     }
   }
 
+
   @override
   void initState() {
     super.initState();
@@ -186,6 +231,7 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
     double normFontSize = MediaQuery.of(context).size.width * 0.041;
     double largeFontSize = normFontSize + 4;
     double smallFontSize = normFontSize - 2;
+    smallFontSize = smallFontSize;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -228,7 +274,7 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
                                     value: selectedType,
                                     onChanged: (String? newValue) {
                                       setState(() {
-                                        print(newValue);
+                                        //log(newValue);
                                         selectedType = newValue;
                                       });
                                     },
@@ -250,6 +296,7 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
                                 const SizedBox(height: 16),
                                 _buildTextField(hint: "Description", controller: descriptionController),
                                 SizedBox(height: 10),
+                                //data&time and location
                                 Row(
                                   children: [
                                     Expanded(
@@ -303,8 +350,10 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
                                             selectedMembersIds.isEmpty
                                                 ? "Select Members"
                                                 : selectedMembersIds.length <= 3
-                                                ? selectedMembersIds.join(', ') // Join all members if there are 3 or fewer
-                                                : '${selectedMembersIds[0]}+${selectedMembersIds.sublist(1, 3).join(', ')},+ ', // First member with +, then 2 more
+                                                ? selectedMembersIds
+                                                .map((id) => getMemberName(id, members))
+                                                .join(', ')
+                                                : '${getMemberName(selectedMembersIds[0], members)}, +${selectedMembersIds.length - 1} more',
                                             style: TextStyle(color: Colors.grey.shade600, fontSize: normFontSize),
                                           ),
                                         ],
@@ -335,7 +384,11 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
                                             Text(
                                               selectedInfluencerIds.isEmpty
                                                   ? "Select Influencers"
-                                                  : selectedInfluencerIds.join(', '),
+                                                  : selectedInfluencerIds.length <= 3
+                                                  ? selectedInfluencerIds
+                                                  .map((id) => getInfluencerName(id, influencers))
+                                                  .join(', ')
+                                                  : '${getInfluencerName(selectedInfluencerIds[0], influencers)}, +${selectedInfluencerIds.length - 1} more',
                                               style: TextStyle(color: Colors.grey.shade600, fontSize: normFontSize),
                                             ),
                                           ],
@@ -358,16 +411,22 @@ class _ScheduleMeetingPageState extends State<ScheduleMeetingPage> {
                                   ),
                                   child: TextButton(
                                     onPressed: () async {
-                                      if (await createMeeting()) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                      final success = await createMeeting();
+
+                                      if (!mounted) return;
+
+                                      final currentContext = context; // <-- capture AFTER await
+
+                                      if (success) {
+                                        ScaffoldMessenger.of(currentContext).showSnackBar(
                                           SnackBar(
                                             content: Text('Created interaction'),
                                             backgroundColor: Colors.green,
                                           ),
                                         );
-                                        Navigator.pop(context,true);
+                                        Navigator.pop(currentContext, true);
                                       } else {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(currentContext).showSnackBar(
                                           SnackBar(
                                             content: Text('Failed to create interaction'),
                                             backgroundColor: Colors.red,

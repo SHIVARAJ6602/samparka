@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
@@ -91,11 +93,11 @@ class _AddInfluencer1PageState extends State<AddInfluencer1Page> {
       }
       result.add({'id': apiService.UserId,'first_name': 'self(${apiService.first_name})','last_name': ''});
       setState(() {
-        print('shreni\'s $result');
+        log('shreni\'s $result');
         shreni = result;
       });
     } catch (e) {
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
   }
 

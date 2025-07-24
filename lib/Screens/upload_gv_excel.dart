@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -107,7 +108,7 @@ class _UploadExcelGVPageState extends State<UploadGVExcel> {
 
       _showDownloadedDialog(fullPath);
     } catch (e) {
-      print("Download error: $e");
+      log("Download error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to download the template.")),
       );
@@ -130,7 +131,7 @@ class _UploadExcelGVPageState extends State<UploadGVExcel> {
                   try {
                     await OpenFile.open(file.path);
                   } catch (e) {
-                    print('Error opening file: $e');
+                    log('Error opening file: $e');
                   }
                 }
               },

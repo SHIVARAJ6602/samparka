@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -38,7 +40,7 @@ class _ViewInteractionPageState extends State<ViewInteractionPage> {
   @override
   void initState() {
     super.initState();
-    //print('id : ${widget.id} - view interaction');
+    //log('id : ${widget.id} - view interaction');
     fetchInteraction(widget.id);
     /*titleDataController.text = Interaction[0]['title']??'';
     placeDataController.text = Interaction[0]['meeting_place']??'';
@@ -48,14 +50,13 @@ class _ViewInteractionPageState extends State<ViewInteractionPage> {
     materials_distributedController.text = Interaction[0]['materials_distributed']??'';
     virtual_meeting_linkController.text = 'virtualLink'??'';
     discussion_pointsController.text = 'discussionPoints';*/
-    //print(apiService.getInteractionByID(widget.id));
+    //log(apiService.getInteractionByID(widget.id));
   }
 
   Future<bool> fetchInteraction(MT_id)async{
     try{
       var result = await apiService.getInteractionByID(MT_id);
       setState(() {
-        print('fetch itr start');
         Interaction = result;
         titleDataController.text = Interaction[0]['title']??'';
         placeDataController.text = Interaction[0]['meeting_place']??'';
@@ -63,19 +64,17 @@ class _ViewInteractionPageState extends State<ViewInteractionPage> {
         selectedMeetDate = DateTime.tryParse(Interaction[0]['meeting_datetime'] ?? '1970-01-01T00:00:00Z');
         //selectedMeetDate = DateFormat('yyyy-MM-dd HH:mm a').format(DateTime.parse(Interaction[0]['meeting_datetime'] ?? '1970-01-01T00:00:00Z'));;
         selectedStatus = Interaction[0]['status'];
-        print('fetch itr mid');
         descriptionController.text = Interaction[0]['description'];
         materials_distributedController.text = Interaction[0]['materials_distributed']??'';
         virtual_meeting_linkController.text = 'virtualLink'??'';
         discussion_pointsController.text = Interaction[0]['discussion_points'];
-        print("interaction : $Interaction");
       });
       setState(() {
 
       });
       return true;
     } catch (e) {
-      print("Error fetching interaction: $e");
+      log("Error fetching interaction: $e");
     }
     return false;
   }

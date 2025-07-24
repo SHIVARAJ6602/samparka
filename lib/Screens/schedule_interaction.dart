@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -66,7 +68,7 @@ class _AddInteractionPageState extends State<AddInteractionPage> {
             pickedTime.hour,
             pickedTime.minute,
           );
-          print(selectedMeetDate);
+          //log(selectedMeetDate);
         });
       }
     }
@@ -111,7 +113,7 @@ class _AddInteractionPageState extends State<AddInteractionPage> {
 
   @override
   Widget build(BuildContext context) {
-    print(widget.id);
+    //log(widget.id);
     double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
     double largeFontSize = normFontSize+4; //20
     double smallFontSize = normFontSize-2; //14
@@ -263,7 +265,7 @@ class _AddInteractionPageState extends State<AddInteractionPage> {
                                 setState(() {
                                   selectedStatus = newState;
                                 });
-                                print(selectedStatus);
+                                //log(selectedStatus);
                               },
                               items: status.map<DropdownMenuItem<String>>((state) {
                                 return DropdownMenuItem<String>(

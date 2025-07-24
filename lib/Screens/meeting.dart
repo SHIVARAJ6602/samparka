@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,19 +13,17 @@ import 'package:samparka/Screens/view_meeting.dart';
 
 import '../Service/api_service.dart';
 import 'API_TEST.dart';
-import 'Temp2.dart';
 import 'gen_report.dart';
 import 'help.dart';
-import 'login.dart';
 import 'notifications.dart';
 
 class MeetingPage extends StatefulWidget {
   const MeetingPage({super.key});
   @override
-  _MeetingPageState createState() => _MeetingPageState();
+  MeetingPageState createState() => MeetingPageState();
 }
 
-class _MeetingPageState extends State<MeetingPage> {
+class MeetingPageState extends State<MeetingPage> {
   int _selectedIndex = 2;
   final apiService = ApiService();
 
@@ -67,7 +65,7 @@ class _MeetingPageState extends State<MeetingPage> {
       });
     }
   }
-  /****************menu**********************/
+  ///****************menu**********************////
   // Text editing controllers for text fields
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController tokenController = TextEditingController();
@@ -149,29 +147,29 @@ class _MeetingPageState extends State<MeetingPage> {
       return true;
     } catch (e) {
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
     return false;
   }
-  Future<bool> fetchMeeting(String MeetingTypeID) async {
+  Future<bool> fetchMeeting(String meetingTypeID) async {
     try {
       // Call the apiService.homePage() and store the result
-      result = await apiService.getEvents(MeetingTypeID);
+      result = await apiService.getEvents(meetingTypeID);
       setState(() {
         // Update the influencers list with the fetched data
-        if(MeetingTypeID == '1'){
+        if(meetingTypeID == '1'){
           baitak = result;
-        } else if(MeetingTypeID == '2'){
+        } else if(meetingTypeID == '2'){
           programs = result;
-        } else if(MeetingTypeID == '3'){
+        } else if(meetingTypeID == '3'){
           smg = result;
         }
-        print(result);
+        //log(result);
       });
       return true;
     } catch (e) {
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
     return false;
   }
@@ -183,7 +181,7 @@ class _MeetingPageState extends State<MeetingPage> {
     double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
     double largeFontSize = normFontSize+4; //20
     double smallFontSize = normFontSize-2; //14
-    double squareSize = MediaQuery.of(context).size.width * 0.4;
+    smallFontSize = smallFontSize; //14
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -672,292 +670,269 @@ class _MeetingPageState extends State<MeetingPage> {
                       //Row(children: [Text('Scheduled',style: TextStyle(fontSize: largeFontSize,color: const Color.fromRGBO(5, 50, 70, 1.0),fontWeight: FontWeight.w600))],),
                       //Baitak
                       if(selectedMeetingType == 'baitak')
-                        Container(
-                        child: Column(
+                        Column(
                           children: [
                             Row(children: [Text("Baitaks",style: TextStyle(fontSize: largeFontSize+20,fontWeight: FontWeight.w600,color: const Color.fromRGBO(5, 50, 70, 1.0),),),],),
                             //scheduled meetings
                             const SizedBox(height: 1),
                             // meeting Cards
-                            Container(
-                              child: Column(
-                                children: [
-                                  // If the list is empty, show a message
-                                  if (loading)
-                                    Center(
-                                      child: CircularProgressIndicator(
-                                        backgroundColor: Colors.blue,
+                            Column(
+                              children: [
+                                // If the list is empty, show a message
+                                if (loading)
+                                  Center(
+                                    child: CircularProgressIndicator(
+                                      backgroundColor: Colors.blue,
+                                    ),
+                                  )
+                                else
+                                  if (baitak.isEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          'No Event Scheduled',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
                                       ),
                                     )
                                   else
-                                    if (baitak.isEmpty)
-                                      Container(
-                                        padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(16),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            'No Event Scheduled',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
+                                    Column(
+                                      children: List.generate(baitak.length, (index) {
+                                        final meeting = baitak[index]; // Access the meeting data for each item
+                                        return Padding(
+                                          padding: const EdgeInsets.only(left: 8, right: 8, top: 12),
+                                          child: MeetingCard(
+                                            title: meeting['title']!,
+                                            typeId: '1',
+                                            description: meeting['description']!,
+                                            dateTime: meeting['meeting_datetime']!,
+                                            id: meeting['id']!,
+                                            data: meeting,
+                                            onReportSubmitted: _loadData,
                                           ),
-                                        ),
-                                      )
-                                    else
-                                      Column(
-                                        children: List.generate(baitak.length, (index) {
-                                          final meeting = baitak[index]; // Access the meeting data for each item
-                                          return Padding(
-                                            padding: const EdgeInsets.only(left: 8, right: 8, top: 12),
-                                            child: MeetingCard(
-                                              title: meeting['title']!,
-                                              typeId: '1',
-                                              description: meeting['description']!,
-                                              dateTime: meeting['meeting_datetime']!,
-                                              id: meeting['id']!,
-                                              data: meeting,
-                                              onReportSubmitted: _loadData,
-                                            ),
-                                          );
-                                        }),
-                                      ),
-
-                                  if (influencers.isNotEmpty)
-                                  // View All Influencers Button
-                                    TextButton(
-                                      onPressed: () async {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(builder: (context) => ViewInfluencersPage(apiService.UserId)),
                                         );
-                                      },
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          const Text(
-                                            'View all Influencers',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Image.asset(
-                                            'assets/icon/arrow.png',
-                                            color: Colors.white,
-                                            width: 12,
-                                            height: 12,
-                                          ),
-                                        ],
-                                      ),
+                                      }),
                                     ),
-                                ],
-                              ),
+
+                                if (influencers.isNotEmpty)
+                                // View All Influencers Button
+                                  TextButton(
+                                    onPressed: () async {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (context) => ViewInfluencersPage(apiService.UserId)),
+                                      );
+                                    },
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Text(
+                                          'View all Influencers',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Image.asset(
+                                          'assets/icon/arrow.png',
+                                          color: Colors.white,
+                                          width: 12,
+                                          height: 12,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
                             ),
                           ],
                         ),
-                      ),
                       //scheduled Meeting Title
                       //Row(children: [Text('Scheduled',style: TextStyle(fontSize: largeFontSize,color: const Color.fromRGBO(5, 50, 70, 1.0),fontWeight: FontWeight.w600))],),
                       if(selectedMeetingType == 'program')
-                        Container(
-                        child: Column(
+                        Column(
                           children: [
                             Row(children: [Text("Programs",style: TextStyle(fontSize: largeFontSize+20,fontWeight: FontWeight.w600,color: const Color.fromRGBO(5, 50, 70, 1.0),),),],),
                             //scheduled meetings
                             const SizedBox(height: 1),
                             // meeting Cards
-                            Container(
-                              /*decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                          gradient: const LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Color.fromRGBO(60, 170, 145, 1.0),
-                              Color.fromRGBO(2, 40, 60, 1),
-                            ],
-                          ),
-                        ),*/
-                              child: Column(
-                                children: [
-                                  // If the list is empty, show a message
-                                  if (loading)
-                                    Center(
-                                      child: CircularProgressIndicator(
-                                        backgroundColor: Colors.blue,
+                            Column(
+                              children: [
+                                // If the list is empty, show a message
+                                if (loading)
+                                  Center(
+                                    child: CircularProgressIndicator(
+                                      backgroundColor: Colors.blue,
+                                    ),
+                                  )
+                                else
+                                  if (programs.isEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          'No Event Scheduled',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
                                       ),
                                     )
                                   else
-                                    if (programs.isEmpty)
-                                      Container(
-                                        padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(16),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            'No Event Scheduled',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
+                                    Column(
+                                      children: List.generate(programs.length, (index) {
+                                        final meeting = programs[index]; // Access the meeting data for each item
+                                        return Padding(
+                                          padding: const EdgeInsets.only(left: 8, right: 8, top: 12),
+                                          child: MeetingCard(
+                                            title: meeting['title']!,
+                                            typeId: '2',
+                                            description: meeting['description']!,
+                                            dateTime: meeting['meeting_datetime']!,
+                                            id: meeting['id']!,
+                                            data: meeting,
+                                            onReportSubmitted: _loadData,
                                           ),
-                                        ),
-                                      )
-                                    else
-                                      Column(
-                                        children: List.generate(programs.length, (index) {
-                                          final meeting = programs[index]; // Access the meeting data for each item
-                                          return Padding(
-                                            padding: const EdgeInsets.only(left: 8, right: 8, top: 12),
-                                            child: MeetingCard(
-                                              title: meeting['title']!,
-                                              typeId: '2',
-                                              description: meeting['description']!,
-                                              dateTime: meeting['meeting_datetime']!,
-                                              id: meeting['id']!,
-                                              data: meeting,
-                                              onReportSubmitted: _loadData,
-                                            ),
-                                          );
-                                        }),
-                                      ),
-
-                                  if (influencers.isNotEmpty)
-                                  // View All Influencers Button
-                                    TextButton(
-                                      onPressed: () async {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(builder: (context) => ViewInfluencersPage(apiService.UserId)),
                                         );
-                                      },
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          const Text(
-                                            'View all Influencers',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Image.asset(
-                                            'assets/icon/arrow.png',
-                                            color: Colors.white,
-                                            width: 12,
-                                            height: 12,
-                                          ),
-                                        ],
-                                      ),
+                                      }),
                                     ),
-                                ],
-                              ),
+
+                                if (influencers.isNotEmpty)
+                                // View All Influencers Button
+                                  TextButton(
+                                    onPressed: () async {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (context) => ViewInfluencersPage(apiService.UserId)),
+                                      );
+                                    },
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Text(
+                                          'View all Influencers',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Image.asset(
+                                          'assets/icon/arrow.png',
+                                          color: Colors.white,
+                                          width: 12,
+                                          height: 12,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
                             ),
                           ],
                         ),
-                      ),
                       //scheduled Meeting Title
                       //Row(children: [Text('Scheduled',style: TextStyle(fontSize: largeFontSize,color: const Color.fromRGBO(5, 50, 70, 1.0),fontWeight: FontWeight.w600))],),
                       if(selectedMeetingType == 'smg')
-                        Container(
-                        child: Column(
+                        Column(
                           children: [
                             Row(children: [Text("Small Group Events",style: TextStyle(fontSize: largeFontSize+20,fontWeight: FontWeight.w600,color: const Color.fromRGBO(5, 50, 70, 1.0),),),],),
                             //scheduled meetings
                             const SizedBox(height: 1),
                             // meeting Cards
-                            Container(
-                              child: Column(
-                                children: [
-                                  // If the list is empty, show a message
-                                  if (loading)
-                                    Center(
-                                      child: CircularProgressIndicator(
-                                        backgroundColor: Colors.blue,
+                            Column(
+                              children: [
+                                // If the list is empty, show a message
+                                if (loading)
+                                  Center(
+                                    child: CircularProgressIndicator(
+                                      backgroundColor: Colors.blue,
+                                    ),
+                                  )
+                                else
+                                  if (smg.isEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          'No Event Scheduled',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
                                       ),
                                     )
                                   else
-                                    if (smg.isEmpty)
-                                      Container(
-                                        padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(16),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            'No Event Scheduled',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
+                                    Column(
+                                      children: List.generate(smg.length, (index) {
+                                        final meeting = smg[index]; // Access the meeting data for each item
+                                        return Padding(
+                                          padding: const EdgeInsets.only(left: 8, right: 8, top: 12),
+                                          child: MeetingCard(
+                                            title: meeting['title']!,
+                                            typeId: '3',
+                                            description: meeting['description']!,
+                                            dateTime: meeting['meeting_datetime']!,
+                                            id: meeting['id']!,
+                                            data: meeting,
+                                            onReportSubmitted: _loadData,
                                           ),
-                                        ),
-                                      )
-                                    else
-                                      Column(
-                                        children: List.generate(smg.length, (index) {
-                                          final meeting = smg[index]; // Access the meeting data for each item
-                                          return Padding(
-                                            padding: const EdgeInsets.only(left: 8, right: 8, top: 12),
-                                            child: MeetingCard(
-                                              title: meeting['title']!,
-                                              typeId: '3',
-                                              description: meeting['description']!,
-                                              dateTime: meeting['meeting_datetime']!,
-                                              id: meeting['id']!,
-                                              data: meeting,
-                                              onReportSubmitted: _loadData,
-                                            ),
-                                          );
-                                        }),
-                                      ),
-                                  if (influencers.isNotEmpty)
-                                  // View All Influencers Button
-                                    TextButton(
-                                      onPressed: () async {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(builder: (context) => ViewInfluencersPage(apiService.UserId)),
                                         );
-                                       },
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          const Text(
-                                            'View all Influencers',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Image.asset(
-                                            'assets/icon/arrow.png',
-                                            color: Colors.white,
-                                            width: 12,
-                                            height: 12,
-                                          ),
-                                        ],
-                                      ),
+                                      }),
                                     ),
-                                ],
-                              ),
+                                if (influencers.isNotEmpty)
+                                // View All Influencers Button
+                                  TextButton(
+                                    onPressed: () async {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (context) => ViewInfluencersPage(apiService.UserId)),
+                                      );
+                                     },
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Text(
+                                          'View all Influencers',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Image.asset(
+                                          'assets/icon/arrow.png',
+                                          color: Colors.white,
+                                          width: 12,
+                                          height: 12,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
                             ),
                           ],
-                        ),
-                      )
+                        )
                     ],
                   ),
                 ),
@@ -1105,136 +1080,131 @@ class ActionCard extends StatelessWidget {
     double smallFontSize = normFontSize-2; //14
     return Container(
       padding: const EdgeInsets.all(16),
-      child: Container(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // First Column: meeting details
-            Container(
-              width: MediaQuery.of(context).size.width * 0.40,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,  // Dynamic name
-                    style: TextStyle(
-                      fontSize: largeFontSize + 6,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // First Column: meeting details
+          SizedBox(
+            width: MediaQuery.of(context).size.width * 0.40,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,  // Dynamic name
+                  style: TextStyle(
+                    fontSize: largeFontSize + 6,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                  Text(
-                    date,  // Dynamic designation
-                    style: TextStyle(
-                      fontSize: smallFontSize,
-                      color: Colors.white,
-                    ),
+                ),
+                Text(
+                  date,  // Dynamic designation
+                  style: TextStyle(
+                    fontSize: smallFontSize,
+                    color: Colors.white,
                   ),
-                  SizedBox(height: 1),
-                  Text(
-                    time,  // Dynamic description
-                    style: TextStyle(
-                      fontSize: smallFontSize - 2,
-                      color: Colors.white,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 1),
+                Text(
+                  time,  // Dynamic description
+                  style: TextStyle(
+                    fontSize: smallFontSize - 2,
+                    color: Colors.white,
                   ),
-                  SizedBox(height: 1),
-                  Text(
-                    location,  // Dynamic hashtags
-                    style: TextStyle(
-                      fontSize: smallFontSize - 2,
-                      color: Colors.white,
-                    ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 1),
+                Text(
+                  location,  // Dynamic hashtags
+                  style: TextStyle(
+                    fontSize: smallFontSize - 2,
+                    color: Colors.white,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            SizedBox(width: 5),
-            // Second Column: buttons
-            Container(
-              //width: MediaQuery.of(context).size.width ,
-              child: Column(
-                children: [
-                  Container(
-                    width: MediaQuery.of(context).size.width*0.25,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: const Color.fromRGBO(5, 50, 70, 1.0),
-                    ),
-                    child: TextButton(
-                      onPressed: () {
-                        /*
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => SubmitReportPage(id,'1')),
-                        );*/
-                      },
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.all(10),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Center(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Submit Report',
-                              style: TextStyle(
-                                fontSize: smallFontSize-2,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+          ),
+          SizedBox(width: 5),
+          // Second Column: buttons
+          Column(
+            children: [
+              Container(
+                width: MediaQuery.of(context).size.width*0.25,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: const Color.fromRGBO(5, 50, 70, 1.0),
+                ),
+                child: TextButton(
+                  onPressed: () {
+                    /*
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SubmitReportPage(id,'1')),
+                    );*/
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.all(10),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Submit Report',
+                          style: TextStyle(
+                            fontSize: smallFontSize-2,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
-                  SizedBox(height: 8),
-                  Container(
-                    width: MediaQuery.of(context).size.width*0.25,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      gradient: const LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [
-                          Color.fromRGBO(133, 1, 1, 1.0),
-                          Color.fromRGBO(237, 62, 62, 1.0),
-                        ],
-                      ),
-                    ),
-                    child: TextButton(
-                      onPressed: () {},
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.all(10),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Center(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Cancel Event',
-                              style: TextStyle(
-                                fontSize: smallFontSize-2,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-            // Space between the two rows
-          ],
-        ),
+              SizedBox(height: 8),
+              Container(
+                width: MediaQuery.of(context).size.width*0.25,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  gradient: const LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      Color.fromRGBO(133, 1, 1, 1.0),
+                      Color.fromRGBO(237, 62, 62, 1.0),
+                    ],
+                  ),
+                ),
+                child: TextButton(
+                  onPressed: () {},
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.all(10),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Cancel Event',
+                          style: TextStyle(
+                            fontSize: smallFontSize-2,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // Space between the two rows
+        ],
       ),
 
 
@@ -1322,7 +1292,7 @@ class MeetingCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween, // Added to space out the content
             children: [
               // Left Column: Meeting details
-              Container(
+              SizedBox(
                 width: MediaQuery.of(context).size.width * 0.50, // Adjust width for details
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1414,7 +1384,7 @@ class MeetingCard extends StatelessWidget {
               ),
 
               // Right Column: Buttons
-              Container(
+              SizedBox(
                 width: MediaQuery.of(context).size.width * 0.315, // Adjust width for buttons
                 child: Column(
                   children: [

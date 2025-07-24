@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:developer';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +19,7 @@ import 'help.dart';
 import 'influencer_profile.dart';
 import 'login.dart';
 import 'API_TEST.dart'; //TaskListScreen()
+import 'migrate_influencer.dart';
 import 'notifications.dart';
 import 'view_influencers.dart';
 import 'package:samparka/Service/api_service.dart';
@@ -114,6 +116,8 @@ class _InfluencersPageState extends State<InfluencersPage> {
     super.initState();
     handleAuth(context);
     //handleButtonPress();
+    //apiService.token = 'c7117b29e594dda83130774d398a928021810c41';
+    //apiService.getUser(context);
     username = apiService.first_name;
     isAuthenticated = apiService.isAuthenticated;
     token = apiService.token;
@@ -140,10 +144,10 @@ class _InfluencersPageState extends State<InfluencersPage> {
       result = await apiService.getHashtags();
       setState(() {
         hashtags = result;
-        print('hastags\'s $result');
+        //log('hastags\'s $result');
       });
     } catch (e) {
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
   }
 
@@ -222,12 +226,11 @@ class _InfluencersPageState extends State<InfluencersPage> {
         });
         // Update the influencers list with the fetched data
         influencers = result;
-        print(influencers);
       });
       return true;
     } catch (e) {
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
     return false;
   }
@@ -258,7 +261,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
         setState(() {
           // Update the influencers list with the fetched data
           unApprovedInfluencers = result;
-          print('UnApproved Profile: $unApprovedInfluencers');
+          //log('UnApproved Profile: $unApprovedInfluencers');
         });
       } else {
         setState(() {
@@ -271,7 +274,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
     } catch (e) {
       unApprovedInfluencers = [];
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
     setState(() {});
     return false;
@@ -297,16 +300,16 @@ class _InfluencersPageState extends State<InfluencersPage> {
   Future<void> fetchTeam() async {
     try {
       // Call the apiService.homePage() and store the result
-      result = await apiService.getShreniPramukhs();
+      result = await apiService.getShreniPramukhs(apiService.UserId);
       setState(() {
         // Update the influencers list with the fetched data
         TeamMembers = result;
         TeamMembers.add({'id':apiService.UserId,'first_name':'${apiService.first_name}(self)','last_name':apiService.last_name,'designation':apiService.designation,'profileImage':apiService.profileImage});
-        print('ShreniPramukhs: $TeamMembers');
+        //log('ShreniPramukhs: $TeamMembers');
       });
     } catch (e) {
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
   }
 
@@ -321,7 +324,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
         // Update the influencers list with the fetched data
         Gatanayaks = result;
         //TeamMembers.add({'id':apiService.UserId,'first_name':'${apiService.first_name}(self)','last_name':apiService.last_name,'designation':apiService.designation,'profileImage':apiService.profileImage});
-        print('Gatanayaks: $Gatanayaks');
+        //log('Gatanayaks: $Gatanayaks');
         loading=false;
         if(Gatanayaks.isEmpty){
           assignGatanayak=false;
@@ -348,7 +351,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
     } catch (e) {
       // Handle any errors here
       loading=false;
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
   }
 
@@ -366,7 +369,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
       }
 
       if (inf is List) {
-        print("inf length: ${inf.length}");
+        //("inf length: ${inf.length}");
         inf.forEach((inf) {
           if (inf['soochi'] == 'AkhilaBharthiya') inf['soochi'] = 'AB';
           else if (inf['soochi'] == 'PranthyaSampark') inf['soochi'] = 'PS';
@@ -387,7 +390,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
         });
       }
     } catch (e) {
-      print("Error fetching Karyakartha: $e");
+      log("Error fetching Karyakartha: $e");
     }
   }
 
@@ -398,9 +401,6 @@ class _InfluencersPageState extends State<InfluencersPage> {
       setState(() {
         // Update the influencers list with the fetched data
         //meetings = result;
-        print(resultKR[0]['first_name']);
-        print("getKR KR data: $resultKR");
-        print(resultKR[0]['profile_image']);
 
         setState(() {});
 
@@ -408,26 +408,19 @@ class _InfluencersPageState extends State<InfluencersPage> {
       return true;
     } catch (e) {
       // Handle any errors here
-      print("Error fetching karyakartha: $e");
+      log("Error fetching karyakartha: $e");
     }
     return false;
   }
 
   void createdmember(String id) {
-    print('Team Members: $TeamMembers');
-    print('Team Members: ${TeamMembers[0]['id']}');
-    TeamMembers.forEach((member) {
-      print(member['id']); // or do something else with member['id']
-    });
-
-
     final index = TeamMembers.indexWhere((member) => member['id'] == id);
 
     if (index != -1) {
       selectedMemberIndex = index;
-      print('Selected member index: $selectedMemberIndex');
+      log('Selected member index: $selectedMemberIndex');
     } else {
-      print('Member with ID $id not found.');
+      log('Member with ID $id not found.');
     }
   }
 
@@ -515,115 +508,60 @@ class _InfluencersPageState extends State<InfluencersPage> {
                   ),
                 ),
                 ListTile(
-                  title: Text('Username: $username'),
-                ),
-                ListTile(
-                  title: Text('City: ${apiService.city}'),
-                ),
-                ListTile(
-                  title: Text('District: ${apiService.district}'),
-                ),
-                ListTile(
-                  title: Text('State: ${apiService.state}'),
-                ),
-                ListTile(
-                  title: Text('Is Authenticated: $isAuthenticated'),
-                ),
-                ListTile(
-                  title: Text('User level: $level'),
-                ),
-                ListTile(
-                  title: Text('Token: ${token.length > 20 ? token.substring(0, 20) : token}..'),
-                ),
-                Divider(),
-                ListTile(
-                  title: Text('API URL: ${currentUrl}..'),
-                ),
-                // Submenu with radio buttons
-                ExpansionTile(
-                  title: Text('Change API URL'),
-                  children: [
-                    ListTile(
-                      title: Row(
-                        children: [
-                          Radio<String>(
-                            value: 'url1',
-                            groupValue: selectedRadio,
-                            onChanged: (value) {
-                              setState(() {
-                                selectedRadio = value;
-                              });
-                            },
-                          ),
-                          Text(apiService.baseUrl1.substring(8,24)),
-                        ],
-                      ),
+                  title: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ProfilePage()),
+                      );
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min, // This will make the row wrap its content
+                      children: [
+                        Text('Profile'),
+                        SizedBox(width: 8), // Add some space between the text and the icon
+                        Icon(Icons.person), // Gear icon
+                      ],
                     ),
-                    ListTile(
-                      title: Row(
-                        children: [
-                          Radio<String>(
-                            value: 'url2',
-                            groupValue: selectedRadio,
-                            onChanged: (value) {
-                              setState(() {
-                                selectedRadio = value;
-                              });
-                            },
-                          ),
-                          Text(apiService.baseUrl2.substring(8,32)),
-                        ],
-                      ),
-                    ),
-                    ListTile(
-                      title: Row(
-                        children: [
-                          Radio<String>(
-                            value: 'url3',
-                            groupValue: selectedRadio,
-                            onChanged: (value) {
-                              setState(() {
-                                selectedRadio = value;
-                              });
-                            },
-                          ),
-                          Text(apiService.baseUrl3.substring(8,30)),
-                        ],
-                      ),
-                    ),
-                    ListTile(
-                      title: TextField(
-                        controller: newUrlController,
-                        decoration: InputDecoration(
-                          labelText: 'Enter a new URL',
-                        ),
-                      ),
-                    ),
-                    ListTile(
-                      title: ElevatedButton(
-                        onPressed: handleButtonPress,
-                        child: Text('Set url'),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-                //Divider(),
-                // Perform action button
-
-                Divider(),
-                // Login button
                 ListTile(
                   title: ElevatedButton(
                     onPressed: () {
-                      // Navigate to the login page
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const LoginPage()),
+                        MaterialPageRoute(builder: (context) => MigrateInfluencerPage(apiService.UserId)),
                       );
                     },
-                    child: Text('Login'),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min, // This will make the row wrap its content
+                      children: [
+                        Text('Migrate Influencer'),
+                        SizedBox(width: 8), // Add some space between the text and the icon
+                        Icon(Icons.person), // Gear icon
+                      ],
+                    ),
                   ),
                 ),
+                ListTile(
+                  title: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ProfilePage()),
+                      );
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min, // This will make the row wrap its content
+                      children: [
+                        Text('Profile'),
+                        SizedBox(width: 8), // Add some space between the text and the icon
+                        Icon(Icons.person), // Gear icon
+                      ],
+                    ),
+                  ),
+                ),
+                /*
                 Container(
                   decoration: BoxDecoration(
                     border: Border.all(
@@ -642,13 +580,16 @@ class _InfluencersPageState extends State<InfluencersPage> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min, // This will make the row wrap its content
                       children: [
-                        Text('Settings'),
+                        Text('Profile'),
                         SizedBox(width: 8), // Add some space between the text and the icon
-                        Icon(Icons.settings), // Gear icon
+                        Icon(Icons.person), // Gear icon
                       ],
                     ),
                   ),
                 ),
+
+                 */
+                Divider(),
                 ListTile(
                   title: ElevatedButton(
                     onPressed: () async {
@@ -705,6 +646,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                     child: Text('Logout'),
                   ),
                 ),
+                /*
                 ListTile(
                   title: ElevatedButton(
                     onPressed: () async {
@@ -716,7 +658,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                     },
                     child: Text('API'),
                   ),
-                ),
+                ),*/
               ],
             ),
           ),
@@ -852,11 +794,11 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                             fetchTeam();
                                                             selectedIndex = index;
                                                             ApproveMember = unApprovedInfluencers[index];
-                                                            print('index $selectedIndex');
+                                                            //log('index $selectedIndex');
                                                             assign = true;
                                                           });
                                                           createdmember(ApproveMember['created_by']);
-                                                          print('Selected index: $selectedIndex'); // Print selected index
+                                                          //log('Selected index: $selectedIndex'); // log selected index
                                                         },
                                                         soochi: influencer['soochi']??'',
                                                         itrLvl: influencer['interaction_level']??'',
@@ -870,6 +812,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                         ),
                                     ],
                                   ),
+                                if (unApprovedInfluencers.isNotEmpty)
                                 const SizedBox(height: 20),
                                 // Recently Assigned Influencers Title
                                 Text(
@@ -1138,7 +1081,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                 double fontSize = largeFontSize + 6; // Default font size
                                                 var tmpname = "${ApproveMember['fname']} ${ApproveMember['lname']}"??'';
                                                 double availableWidth = tmpname.length*largeFontSize;
-                                                //print('$fontSize $availableWidth ${MediaQuery.of(context).size.width * 0.38*2}');
+                                                //log('$fontSize $availableWidth ${MediaQuery.of(context).size.width * 0.38*2}');
 
                                                 if (availableWidth > MediaQuery.of(context).size.width * 0.38*2) {
                                                   fontSize = normFontSize; // Adjust this to your needs
@@ -1267,7 +1210,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                           child: TextButton(
                                             onPressed: () async {
                                               // Handle the approval logic here
-                                              //print('Selected Member Index: $selectedMemberIndex');
+                                              //log('Selected Member Index: $selectedMemberIndex');
                                               if (selectedMemberIndex == -1) {
                                                 // Show an error dialog if no member is selected
                                                 showDialog(
@@ -1312,8 +1255,8 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                           if (selectedMemberIndex > -1) {
                                                             try {
                                                               // Log the IDs for debugging purposes
-                                                              print(ApproveMember['id']);
-                                                              print(TeamMembers[selectedMemberIndex]['id']);
+                                                              //log(ApproveMember['id']);
+                                                              //log(TeamMembers[selectedMemberIndex]['id']);
 
                                                               await apiService.approveGanyavyakthi(ApproveMember['id'], TeamMembers[selectedMemberIndex]['id']);
 
@@ -1329,7 +1272,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                               Navigator.of(context).pop(true);
                                                             } catch (e) {
                                                               // Error handling for API failure
-                                                              print('Error during approval: $e');
+                                                              log('Error during approval: $e');
                                                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                                                                 content: Text('An error occurred. Please try again later.'),
                                                               ));
@@ -1578,7 +1521,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                 double fontSize = largeFontSize + 6; // Default font size
                                                 var tmpname = "${ApproveMember['fname']} ${ApproveMember['lname']}"??'';
                                                 double availableWidth = tmpname.length*largeFontSize;
-                                                print('$fontSize $availableWidth ${MediaQuery.of(context).size.width * 0.38*2}');
+                                                //log('$fontSize $availableWidth ${MediaQuery.of(context).size.width * 0.38*2}');
 
                                                 if (availableWidth > MediaQuery.of(context).size.width * 0.38*2) {
                                                   fontSize = normFontSize; // Adjust this to your needs
@@ -1706,7 +1649,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                           child: TextButton(
                                             onPressed: () async {
                                               // Handle the approval logic here
-                                              //print('Selected Member Index: $selectedMemberIndex');
+                                              //log('Selected Member Index: $selectedMemberIndex');
                                               bool Status = await showDialog(
                                                 context: context,
                                                 builder: (context) => AlertDialog(
@@ -1718,8 +1661,8 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                         if (selectedMemberIndex > -1) {
                                                           try {
                                                             // Log the IDs for debugging purposes
-                                                            print(ApproveMember['id']);
-                                                            print(Gatanayaks[selectedMemberIndex]['id']);
+                                                            //log(ApproveMember['id']);
+                                                            //log(Gatanayaks[selectedMemberIndex]['id']);
 
                                                             // API call to approve the member
                                                             await apiService.approveGanyavyakthi(ApproveMember['id'], Gatanayaks[selectedMemberIndex]['id']);
@@ -1736,7 +1679,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                             Navigator.of(context).pop(true);
                                                           } catch (e) {
                                                             // Error handling for API failure
-                                                            print('Error during approval: $e');
+                                                            log('Error during approval: $e');
                                                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                                                               content: Text('An error occurred. Please try again later.'),
                                                             ));

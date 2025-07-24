@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -94,7 +95,7 @@ class _MyTeamPageState extends State<MyTeamPage> {
       loading = false;
     } catch (e) {
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
   }
 
@@ -106,12 +107,12 @@ class _MyTeamPageState extends State<MyTeamPage> {
         // Update the influencers list with the fetched data
         Members = result;
         //TeamMembers.add({'id':apiService.UserId,'first_name':'${apiService.first_name}(self)','last_name':apiService.last_name,'designation':apiService.designation,'profileImage':apiService.profileImage});
-        print('Gatanayaks: $Members');
+        //log('Gatanayaks: $Members');
         loading = false;
       });
     } catch (e) {
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
   }
 

@@ -1,7 +1,9 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:samparka/Screens/migrate_karyakartha.dart';
 import 'package:samparka/Screens/upload_kr_excel.dart';
 import 'package:samparka/Service/api_service.dart';
 
@@ -93,9 +95,10 @@ class _RegisterUserState extends State<RegisterUserPage> {
       final groupList = await apiService.getGroups();
       setState(() {
         groups = groupList;
+        //print('fetched groups $groups');
       });
     } catch (e) {
-      print("Error fetching groups: $e");
+      //print("Error fetching groups: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to load groups")),
       );
@@ -130,11 +133,14 @@ class _RegisterUserState extends State<RegisterUserPage> {
       }
       result.add({'id': apiService.UserId,'first_name': 'self(${apiService.first_name})','last_name': ''});
       setState(() {
-        print('members $result');
+        //print('members $result');
         members = result;
       });
     } catch (e) {
-      print("Error fetching influencers: $e");
+      //print("Error fetching influencers: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to loading members")),
+      );
     }
   }
 
@@ -142,14 +148,14 @@ class _RegisterUserState extends State<RegisterUserPage> {
     try {
       result = await apiService.mySupervisor();
       setState(() {
-        print('Supervisor $result');
+        //print('Supervisor $result');
         supervisor = result;
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to load Supervisor")),
       );
-      print("Failed to load Supervisor: $e");
+      //print("Failed to load Supervisor: $e");
     }
   }
 
@@ -222,10 +228,10 @@ class _RegisterUserState extends State<RegisterUserPage> {
 
       }
 
-      print("User registered with following data:");
-      print("$phoneNumber $firstName $lastName $email $designation $password $selectedKaryakarthaId $selectedGroupId $userType");
+      //print("User registered with following data:");
+      //print("$phoneNumber $firstName $lastName $email $designation $password $selectedKaryakarthaId $selectedGroupId $userType");
 
-      // Proceed with API call
+      //Proceed with API call
       apiService.registerUser(registrationData);
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -256,6 +262,95 @@ class _RegisterUserState extends State<RegisterUserPage> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      //Migrate Influencer
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start, // Align the text to the start
+                        children: [
+                          Text(
+                            "Migrate",
+                            style: TextStyle(
+                              fontSize: largeFontSize,
+                              fontWeight: FontWeight.w600,
+                              color: const Color.fromRGBO(5, 50, 70, 1.0),
+                            ),
+                          ),
+                          AutoSizeText(
+                            "Karyakartha",
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontSize: largeFontSize * 2,
+                              fontWeight: FontWeight.bold,
+                              color: const Color.fromRGBO(5, 50, 70, 1.0),
+                            ),
+                            minFontSize: largeFontSize.floorToDouble(),
+                            stepGranularity: 1.0,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                      Expanded(child: SizedBox()),
+                      if (apiService.lvl>2)
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            gradient: const LinearGradient(
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                              colors: [
+                                Color.fromRGBO(16, 115, 65, 1.0),
+                                Color.fromRGBO(60, 170, 145, 1.0),
+                              ],
+                            ),
+                          ),
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => MigrateUserPage(userId: apiService.UserId, lvl: apiService.lvl,)),
+                                );
+                              },
+                              style: TextButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.all(6),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Migrate',
+                                      style: TextStyle(
+                                        fontSize: normFontSize,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Transform.rotate(
+                                      angle: 4.7124,
+                                      child: Image.asset(
+                                        'assets/icon/arrow.png',
+                                        color: Colors.white,
+                                        width: 15,
+                                        height: 15,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  //title/header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween, // Distribute space between the columns
                     children: [
@@ -343,6 +438,7 @@ class _RegisterUserState extends State<RegisterUserPage> {
                     ],
                   ),
                   SizedBox(height: 10),
+                  //test user button for shivaraj
                   if (apiService.phone == '7337620623' || apiService.UserId.startsWith('TKR'))
                     Column(
                       children: [
@@ -494,28 +590,47 @@ class _RegisterUserState extends State<RegisterUserPage> {
                       ),
                       value: selectedGroupId,
                       onChanged: (String? newValue) async {
-                        if (newValue == '1'){
+                        if (newValue == '1') {
                           fetchMembers();
                         }
                         setState(() {
                           selectedGroupId = newValue;
                         });
                       },
-                      items: groups.map<DropdownMenuItem<String>>((group) {
-                        return DropdownMenuItem<String>(
-                          value: group['id'].toString(),
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 10),
-                            child: Text(group['name']),
-                          ),
-                        );
-                      }).toList(),
-                      isExpanded: true, // Ensures the dropdown stretches to the full width
-                      underline: Container(), // Removes the default underline from the dropdown
+                      items: (() {
+                        int lvl = apiService.lvl;
+                        List groupSubset;
+
+                        if (lvl == 3 || lvl == 4) {
+                          // Limit to first 3 items
+                          groupSubset = groups.length > 2 ? groups.sublist(0, 2) : groups;
+                        } else if (lvl == 10) {
+                          // Limit to first 3 items
+                          groupSubset = groups.length > 2 ? groups.sublist(0, lvl) : groups;
+                        } else {
+                          // Show from index 0 up to (lvl - 1)
+                          groupSubset = groups.length >= lvl ? groups.sublist(0, lvl-1) : groups;
+                        }
+
+
+
+                        return groupSubset.map<DropdownMenuItem<String>>((group) {
+                          return DropdownMenuItem<String>(
+                            value: group['id'].toString(),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 10),
+                              child: Text(group['name']),
+                            ),
+                          );
+                        }).toList();
+                      })(),
+                      isExpanded: true,
+                      underline: Container(),
                     ),
                   ),
                   if (selectedGroupId=='1')
                     SizedBox(height: 20),
+                  // Select Shreni pramukh if id =1
                   if (selectedGroupId=='1')
                     Container(
                       decoration: BoxDecoration(
@@ -552,7 +667,7 @@ class _RegisterUserState extends State<RegisterUserPage> {
                     ),
                   if (selectedGroupId=='1'|| selectedGroupId=='2')
                     SizedBox(height: 20),
-                  //Shreni
+                  //Shreni if group id
                   if (selectedGroupId=='1' || selectedGroupId=='2')
                   Container(
                     decoration: BoxDecoration(
@@ -585,6 +700,7 @@ class _RegisterUserState extends State<RegisterUserPage> {
                     ),
                   ),
                   SizedBox(height: 20),
+                  //Select state
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.grey[200],
@@ -619,6 +735,7 @@ class _RegisterUserState extends State<RegisterUserPage> {
                     ),
                   ),
                   SizedBox(height: 20),
+                  //select district
                   if (selectedState != null)
                     Container(
                       decoration: BoxDecoration(

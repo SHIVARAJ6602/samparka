@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -49,11 +50,11 @@ class _ViewEventPageState extends State<ViewEventPage> {
   @override
   void initState() {
     super.initState();
-    print('data = ${widget.data}');
-    print(widget.data['meeting_datetime']);
+    //log('data = ${widget.data}');
+    //log(widget.data['meeting_datetime']);
     if(widget.data['ganyavyakti'] != null){
       if(widget.data['ganyavyakti'].isNotEmpty){
-        print('GV = ${widget.data['ganyavyakti']}');
+        //log('GV = ${widget.data['ganyavyakti']}');
         fetchGanyavyakthi(widget.data['ganyavyakti']);
       }
     }
@@ -74,7 +75,7 @@ class _ViewEventPageState extends State<ViewEventPage> {
     materials_distributedController.text = Interaction[0]['materials_distributed']??'';
     virtual_meeting_linkController.text = 'virtualLink'??'';
     discussion_pointsController.text = 'discussionPoints';*/
-    //print(apiService.getInteractionByID(widget.id));
+    //log(apiService.getInteractionByID(widget.id));
   }
 
   Future<bool> fetchGanyavyakthi(List<dynamic> GV_ids) async {
@@ -104,7 +105,7 @@ class _ViewEventPageState extends State<ViewEventPage> {
       });
       return true;
     } catch (e) {
-      print("Error fetching interaction: $e");
+      log("Error fetching interaction: $e");
     }
     return false;
   }
@@ -120,7 +121,7 @@ class _ViewEventPageState extends State<ViewEventPage> {
         });
         return true;
       } catch (e) {
-        print("Error fetching interaction: $e");
+        log("Error fetching interaction: $e");
       }
       return false;
     }
@@ -129,7 +130,7 @@ class _ViewEventPageState extends State<ViewEventPage> {
     try{
       var result = await apiService.getInteractionByID(Event_id);
       setState(() {
-        //print("fetching event by ID");
+        //log("fetching event by ID");
         Interaction = result;
         titleDataController.text = Interaction[0]['title']??'';
         placeDataController.text = Interaction[0]['meeting_place']??'';
@@ -142,14 +143,14 @@ class _ViewEventPageState extends State<ViewEventPage> {
         discussion_pointsController.text = Interaction[0]['discussion_points'];
         selectedStatus = Interaction[0]['status'];
         //images = Interaction[0]['images'];
-        //print("images : $images");
+        //log("images : $images");
       });
       setState(() {
 
       });
       return true;
     } catch (e) {
-      print("Error fetching interaction: $e");
+      log("Error fetching interaction: $e");
     }
     return false;
   }
@@ -160,14 +161,14 @@ class _ViewEventPageState extends State<ViewEventPage> {
         setState(() {
           images = imageResult;
           final imageCount = images.isNotEmpty ? (images[0]['images'] as List?)?.length ?? 0 : 0;
-          print('images = $imageCount');
+          //log('images = $imageCount');
         });
         setState(() {
 
         });
         return true;
       } catch (e) {
-        print("Error fetching interaction: $e");
+        log("Error fetching interaction: $e");
       }
       return false;
     }

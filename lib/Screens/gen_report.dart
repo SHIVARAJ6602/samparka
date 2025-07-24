@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -101,7 +102,7 @@ class GenReportPageState extends State<GenReportPage> {
       isGenerating = true;
       // Get external directory path based on platform
       var exPath = await _getExternalDirectory();
-      print("Saved Path: $exPath");
+      //log("Saved Path: $exPath");
 
       // Create the directory if it does not exist
       await Directory(exPath).create(recursive: true);
@@ -125,8 +126,8 @@ class GenReportPageState extends State<GenReportPage> {
         selectedToDate!.toIso8601String(),
       ));
 
-      // Print file path for confirmation
-      print('PDF saved to: $filePath');
+      // log file path for confirmation
+      //log('PDF saved to: $filePath');
 
       isGenerating = false;
 
@@ -137,7 +138,7 @@ class GenReportPageState extends State<GenReportPage> {
       
       return true;
     } catch (e) {
-      print('Error: $e');
+      //log('Error: $e');
       setState(() {
         isGenerating = false;
       });
@@ -166,20 +167,20 @@ class GenReportPageState extends State<GenReportPage> {
                       openDownloadedPDF(filePath);
                     }
                     catch (e) {
-                      print('Error: $e');
+                      log('Error: $e');
                     }
                     // For Android 7.0+ devices, use FileProvider if necessary
                     final Uri fileUri = Uri.file(filePath); // Use Uri.file() to generate a proper URI
                     if (await canLaunch(fileUri.toString())) {
                       await launch(fileUri.toString());  // Launch the file URI
                     } else {
-                      print("Couldn't open the file. No suitable app found.");
+                      log("Couldn't open the file. No suitable app found.");
                     }
                   } catch (e) {
-                    print('Error: $e');
+                    log('Error: $e');
                   }
                 } else {
-                  print("File does not exist at the specified path");
+                  log("File does not exist at the specified path");
                 }
               },
               child: Text("Open"),
@@ -262,10 +263,8 @@ class GenReportPageState extends State<GenReportPage> {
   @override
   void initState() {
     super.initState();
-    print('object');
     //requestPermissions();
     Future.delayed(const Duration(milliseconds: 5000));
-    print('object');
   }
 
   void _viewMeets(type) {
@@ -282,7 +281,7 @@ class GenReportPageState extends State<GenReportPage> {
       setState(() {
         // Update the influencers list with the fetched data
         data = result;
-        print('data: $data ${data[0]['Total_KR']}');
+        //log('data: $data ${data[0]['Total_KR']}');
         influencerCount = data[0]['Total_GV'];
         influencerMet = data[0]['Met_GV'];
         activeTeamMembers = data[0]['Active_KR'];
@@ -296,7 +295,7 @@ class GenReportPageState extends State<GenReportPage> {
       });
     } catch (e) {
       // Handle any errors here
-      print("Error fetching Report in Page: $e");
+      log("Error fetching Report in Page: $e");
     }
   }
 
@@ -339,9 +338,11 @@ class GenReportPageState extends State<GenReportPage> {
 
   // Function to show the DatePicker and update the selected date
   Future<void> _selectDate(BuildContext context, bool isFromDate) async {
-    final DateTime initialDate = DateTime.now();
+    final DateTime today = DateTime.now();
+    final DateTime yesterday = today.subtract(Duration(days: 1));
+    final DateTime initialDate = isFromDate ? yesterday : today;
     final DateTime firstDate = DateTime(2000);
-    final DateTime lastDate = DateTime(2101);
+    final DateTime lastDate = isFromDate ? yesterday : today;
 
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -350,19 +351,24 @@ class GenReportPageState extends State<GenReportPage> {
       lastDate: lastDate,
     );
 
-    if (picked != null && picked != initialDate) {
+    if (picked != null) {
       setState(() {
         if (isFromDate) {
           selectedFromDate = picked;
         } else {
           selectedToDate = picked;
         }
-        if ((selectedFromDate != null) && (selectedToDate != null) && (selectedToDate!.isAfter(selectedFromDate!))){
+
+        if (selectedFromDate != null &&
+            selectedToDate != null &&
+            selectedToDate!.isAfter(selectedFromDate!)) {
           _getReportPage();
         }
       });
     }
   }
+
+
 
 
   @override

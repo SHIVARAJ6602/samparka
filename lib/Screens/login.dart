@@ -1,4 +1,6 @@
 import 'dart:async';
+//import 'dart:math';
+import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:samparka/Screens/home.dart';
@@ -49,8 +51,16 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
+    //spoofUser();
   }
 
+  Future<void> spoofUser() async {
+    apiService.token = '35bed6d5f6f8ea817de3b6e08c5a83f2a1a64813';
+    apiService.privacyPolicyAgreed = true;
+    apiService.isAuthenticated = true;
+    apiService.userAuth(context);
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const InfluencersPage()));
+  }
 
   void _startResendOTPTimer() {
     setState(() {
@@ -69,24 +79,30 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  void show_Dialog(BuildContext context, String message) {
+  void show_Dialog(BuildContext outerContext, String message) {
     showDialog(
-      context: context,
+      context: outerContext,
       barrierDismissible: false,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
+        // Use dialogContext for safe dismissal
+        Future.delayed(const Duration(seconds: 3), () {
+          if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+        });
+
         return AlertDialog(
-          title: Text('Samparka says:',style: TextStyle(color: Colors.green,fontWeight: FontWeight.bold),),
+          title: const Text(
+            'Samparka says:',
+            style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+          ),
           content: Text(
             message,
-            style: TextStyle(color: Colors.deepOrange, fontSize: 18,fontWeight: FontWeight.bold),
+            style: const TextStyle(color: Colors.deepOrange, fontSize: 18, fontWeight: FontWeight.bold),
           ),
         );
       },
     );
-    Future.delayed(Duration(seconds: 2), () {
-      Navigator.of(context).pop();
-    });
   }
+
 
   void _handleOtpSubmit(String otp) async {
     if (otp.length == 6) {
@@ -224,8 +240,8 @@ class _LoginPageState extends State<LoginPage> {
                       if (response == 200) {
                         setState(() {
                           _otpSent = true;
-                          apiService.saveData();
-                          apiService.loadData();
+                          //apiService.saveData();
+                          //apiService.loadData();
                         });
                         _startResendOTPTimer();
 
@@ -240,6 +256,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       setState(() {
                         _isLoading = false;
+                        log('OTP sent successfully and _isloading set to false');
                       });
                     },
                     style: ElevatedButton.styleFrom(

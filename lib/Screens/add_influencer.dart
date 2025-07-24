@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
@@ -8,6 +10,7 @@ import 'package:flutter/services.dart';
 
 
 import '../Service/api_service.dart';
+import 'migrate_influencer.dart';
 
 class AddInfluencerPage extends StatefulWidget {
   const AddInfluencerPage({super.key});
@@ -83,7 +86,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
         selectedHashtagsIDs.add(id);  // Select
       }
       getSelectedHashtags();
-      print("selected hashtag IDs: $selectedHashtagsIDs , selected hashtags: $selectedHashtags");
+      //log("selected hashtag IDs: $selectedHashtagsIDs , selected hashtags: $selectedHashtags");
     });
   }
 
@@ -97,8 +100,8 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
         .map((hashtag) => hashtag['name'])
         .toList();
 
-    // Optionally, print or store the selected hashtag names
-    //print("Selected Hashtags Names: $selectedHashtags");
+    // Optionally, log or store the selected hashtag names
+    //log("Selected Hashtags Names: $selectedHashtags");
   }
 
   Future<void> fetchShreni() async {
@@ -129,11 +132,11 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
       }
       result.add({'id': apiService.UserId,'first_name': 'self(${apiService.first_name})','last_name': ''});
       setState(() {
-        print('karyakartha\'s $result');
+        //log('karyakartha\'s $result');
         karyakartha = result;
       });
     } catch (e) {
-      print("Error fetching karyakarthas: $e");
+      log("Error fetching karyakarthas: $e");
     }
   }
 
@@ -143,10 +146,10 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
       result = await apiService.getHashtags();
       setState(() {
         hashtags = result;
-        print('hastags\'s $result');
+        //log('hastags\'s $result');
       });
     } catch (e) {
-      print("Error fetching tags: $e");
+      log("Error fetching tags: $e");
     }
   }
 
@@ -175,7 +178,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                       'id': hashtags.length + 1, // Simple way to increment ID
                       'name': newHashtagName,
                     });
-                    print('updated hastags: $hashtags');
+                    //log('updated hastags: $hashtags');
                   });
                 }
                 Navigator.pop(context); // Close the dialog
@@ -310,7 +313,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
         Navigator.pop(context, true);
       }
     } catch (e) {
-      print("Error during registration: $e");
+      //log("Error during registration: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
       );
@@ -342,6 +345,94 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                //Migrate Influencer
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start, // Align the text to the start
+                  children: [
+                    Text(
+                      "Migrate",
+                      style: TextStyle(
+                        fontSize: largeFontSize,
+                        fontWeight: FontWeight.w600,
+                        color: const Color.fromRGBO(5, 50, 70, 1.0),
+                      ),
+                    ),
+                    AutoSizeText(
+                      "Influencer",
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontSize: largeFontSize * 2,
+                        fontWeight: FontWeight.bold,
+                        color: const Color.fromRGBO(5, 50, 70, 1.0),
+                      ),
+                      minFontSize: largeFontSize.floorToDouble(),
+                      stepGranularity: 1.0,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+                Expanded(child: SizedBox()),
+                if (apiService.lvl>2)
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      gradient: const LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          Color.fromRGBO(16, 115, 65, 1.0),
+                          Color.fromRGBO(60, 170, 145, 1.0),
+                        ],
+                      ),
+                    ),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => MigrateInfluencerPage(apiService.UserId)),
+                          );
+                        },
+                        style: TextButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(6),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Migrate',
+                                style: TextStyle(
+                                  fontSize: normFontSize,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Transform.rotate(
+                                angle: 4.7124,
+                                child: Image.asset(
+                                  'assets/icon/arrow.png',
+                                  color: Colors.white,
+                                  width: 15,
+                                  height: 15,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
             // Title Section
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween, // Distribute space between the columns
@@ -619,7 +710,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                 onChanged: (String? newSoochi) {
                   setState(() {
                     selectedSoochi = newSoochi;
-                    print(selectedSoochi!+selectedInteractionLevel!+selectedShreni!);
+                    //log(selectedSoochi!+selectedInteractionLevel!+selectedShreni!);
                   });
                 },
                 items: soochis.map<DropdownMenuItem<String>>((soochi) {

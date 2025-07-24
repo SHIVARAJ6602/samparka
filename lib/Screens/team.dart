@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:auto_size_text/auto_size_text.dart';
@@ -92,13 +93,13 @@ class _TeamPageState extends State<TeamPage> {
       // Call the apiService.homePage() and store the result
       result = await apiService.myTeam(0, 100);
       setState(() {
-        print('members $result');
+        //log('members $result');
         // Update the influencers list with the fetched data
         members = result;
       });
     } catch (e) {
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
   }
 
@@ -107,13 +108,13 @@ class _TeamPageState extends State<TeamPage> {
       // Call the apiService.homePage() and store the result
       result = await apiService.myMJMembers(0, 100);
       setState(() {
-        print('MJmembers $result');
+        //log('MJmembers $result');
         // Update the influencers list with the fetched data
         MJmembers = result;
       });
     } catch (e) {
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
   }
 
@@ -121,14 +122,14 @@ class _TeamPageState extends State<TeamPage> {
     try {
       // Call the apiService.homePage() and store the result
       result = await apiService.mySupervisor();
-      print('$result');
+      //log('$result');
       setState(() {
         // Update the influencers list with the fetched data
         supervisor = result;
       });
     } catch (e) {
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
   }
 
@@ -142,7 +143,7 @@ class _TeamPageState extends State<TeamPage> {
       });
     } catch (e) {
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
   }
 
@@ -150,14 +151,14 @@ class _TeamPageState extends State<TeamPage> {
     try {
       // Call the apiService.homePage() and store the result
       result = await apiService.myLead();
-      print('$result');
+      //log('$result');
       setState(() {
         // Update the influencers list with the fetched data
         lead = result;
       });
     } catch (e) {
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
   }
 
@@ -167,11 +168,8 @@ class _TeamPageState extends State<TeamPage> {
       var mem = await apiService.searchKR(str);
       if (mem is List) {  // Check if inf is a List (data returned)
         setState(() {
-          print("searched before assign:");
           membersSearched = [];
-          print("result: $mem");
-          membersSearched = mem;  // Assign the list data to membersSearched
-          print("search: ");
+          membersSearched = mem;
         });
         setState(() {});
       } else if (mem == false) {  // If inf is false (no content or error)
@@ -181,7 +179,7 @@ class _TeamPageState extends State<TeamPage> {
       }
     } catch (e) {
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
   }
 
@@ -192,12 +190,10 @@ class _TeamPageState extends State<TeamPage> {
     fetchSupervisor();
     if(apiService.lvl > 3) {
       fetchMJMembers();
-      print("MJ Member Called");
     }
     if(apiService.lvl > 1) {
       fetchMembers();
       fetchGatanayak(apiService.UserId);
-      print("Member and Fetch Gatanayak Called");
     }
     if(apiService.lvl == 1){
       fetchLead();
@@ -376,19 +372,23 @@ class _TeamPageState extends State<TeamPage> {
                                 ],
                               ),
                             ),
-                          //My Supervisor / Pramukh
+                          //Main Content
                           if (!isSearching)
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                //My Supervisor / Pramukh
-                                Text(
-                                  'My Pramukh',
+                                //My Supervisor / Pramukh - Title
+                                AutoSizeText(
+                                  supervisor.isEmpty ? 'My Pramukh' : (supervisor[0]['designation'] ?? 'My Pramukh'),
+                                  maxLines: 1,
                                   style: TextStyle(
-                                    fontSize: largeFontSize*1.5,
+                                    fontSize: largeFontSize * 2,
                                     fontWeight: FontWeight.bold,
                                     color: const Color.fromRGBO(5, 50, 70, 1.0),
                                   ),
+                                  minFontSize: largeFontSize.floorToDouble(),
+                                  stepGranularity: 1.0,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: 1),
                                 //My Supervisor / Pramukh
@@ -415,13 +415,17 @@ class _TeamPageState extends State<TeamPage> {
                                             borderRadius: BorderRadius.circular(4),
                                           ),
                                           child: Center(
-                                            child: Text(
+                                            child: AutoSizeText(
                                               'No Pramukh Assigned',
+                                              maxLines: 1,
                                               style: TextStyle(
                                                 fontSize: largeFontSize,
                                                 fontWeight: FontWeight.bold,
                                                 color: Colors.white,
                                               ),
+                                              minFontSize: largeFontSize.floorToDouble(),
+                                              stepGranularity: 1.0,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
                                         )
@@ -446,7 +450,8 @@ class _TeamPageState extends State<TeamPage> {
                                                         boxShadow: [
                                                           if (supervisor.isNotEmpty && (supervisor[0]['profile_image'] ?? '').isNotEmpty)
                                                             BoxShadow(
-                                                              color: Colors.white10.withOpacity(0.5), // Grey shadow color with opacity
+                                                              color: Color.fromRGBO(2, 40, 60, 1).withOpacity(0.9), // Grey shadow color with opacity
+                                                              //color: Colors.white10.withOpacity(0.5), // Grey shadow color with opacity
                                                               spreadRadius: 1, // Spread radius of the shadow
                                                               blurRadius: 6, // Blur radius of the shadow
                                                               offset: Offset(0, 4), // Shadow position (x, y)
@@ -538,6 +543,115 @@ class _TeamPageState extends State<TeamPage> {
                                     ],
                                   ),
                                 ),
+                                //My MJ SP's
+                                if(apiService.lvl > 4)
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      AutoSizeText(
+                                        'Mahanagar and Jilla SP\'s',
+                                        maxLines: 1,
+                                        style: TextStyle(
+                                          fontSize: largeFontSize * 2,
+                                          fontWeight: FontWeight.bold,
+                                          color: const Color.fromRGBO(5, 50, 70, 1.0),
+                                        ),
+                                        minFontSize: largeFontSize.floorToDouble(),
+                                        stepGranularity: 1.0,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 1),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          //borderRadius: BorderRadius.circular(30),
+                                          borderRadius: MJmembers.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
+                                          gradient: const LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              Color.fromRGBO(60, 170, 145, 1.0),
+                                              Color.fromRGBO(2, 40, 60, 1),
+                                            ],
+                                          ),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            // If the list is empty, show a message
+                                            if (MJmembers.isEmpty)
+                                              Container(
+                                                padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    'No Members Assigned',
+                                                    style: TextStyle(
+                                                      fontSize: largeFontSize,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                            // If the list is not empty, build a ListView of InfluencerCards
+                                            else
+                                              Column(
+                                                children: List.generate(
+                                                  (MJmembers.length < 4) ? MJmembers.length : 3, // Display either all members or just 3
+                                                      (index) {
+                                                    final member = MJmembers[index]; // Access the member data
+                                                    return Padding(
+                                                      padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
+                                                      child: MemberCard(
+                                                        id: member['id']!,
+                                                        first_name: member['first_name']!,
+                                                        last_name: member['last_name']!,
+                                                        designation: member['designation']??"Not Set",
+                                                        profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
+                                                            ? member['profile_image']!
+                                                            : '',
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+
+                                            if (MJmembers.isNotEmpty)
+                                            // View All Influencers Button
+                                              TextButton(
+                                                onPressed: () async {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(builder: (context) => const MyMJSPPage(type: 'ShreniPramukh')),
+                                                  );
+                                                },
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    Text(
+                                                      'View all Members',
+                                                      style: TextStyle(
+                                                        fontSize: largeFontSize,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Image.asset(
+                                                      'assets/icon/arrow.png',
+                                                      color: Colors.white,
+                                                      width: 12,
+                                                      height: 12,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 //My Shreni Pramukh
                                 if(apiService.lvl<2)
                                   Container(
@@ -545,13 +659,17 @@ class _TeamPageState extends State<TeamPage> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       //My Supervisor / Pramukh
-                                      Text(
-                                        'Sherni Pramukh',
+                                      AutoSizeText(
+                                        'Shreni Pramukh',
+                                        maxLines: 1,
                                         style: TextStyle(
-                                          fontSize: largeFontSize*1.5,
+                                          fontSize: largeFontSize * 2,
                                           fontWeight: FontWeight.bold,
                                           color: const Color.fromRGBO(5, 50, 70, 1.0),
                                         ),
+                                        minFontSize: largeFontSize.floorToDouble(),
+                                        stepGranularity: 1.0,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                       const SizedBox(height: 1),
                                       //My Shreni Pramukh Pramukh
@@ -710,7 +828,7 @@ class _TeamPageState extends State<TeamPage> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       AutoSizeText(
-                                        'Shreni-Pramukh\'s',
+                                        'Shreni Pramukhs',
                                         maxLines: 1,
                                         style: TextStyle(
                                           fontSize: largeFontSize * 2,
@@ -820,7 +938,7 @@ class _TeamPageState extends State<TeamPage> {
                                     children: [
                                       const SizedBox(height: 10),
                                       Text(
-                                        'Gatanayak\'s',
+                                        'Gatanayaks',
                                         style: TextStyle(
                                           fontSize: largeFontSize*2,
                                           fontWeight: FontWeight.bold,
@@ -868,7 +986,7 @@ class _TeamPageState extends State<TeamPage> {
                                                   (Gatanayaks.length < 4) ? Gatanayaks.length : 3, // Display either all members or just 3
                                                       (index) {
                                                     final member = Gatanayaks[index]; // Access the member data
-                                                    print("Gatanayak $member ${Gatanayaks.length}");
+                                                    //log("Gatanayak $member ${Gatanayaks.length}");
                                                     return Padding(
                                                       padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
                                                       child: MemberCard(
@@ -892,115 +1010,6 @@ class _TeamPageState extends State<TeamPage> {
                                                   Navigator.push(
                                                     context,
                                                     MaterialPageRoute(builder: (context) => const MyTeamPage(type: 'Gatanayaks',)),
-                                                  );
-                                                },
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.center,
-                                                  children: [
-                                                    Text(
-                                                      'View all Members',
-                                                      style: TextStyle(
-                                                        fontSize: largeFontSize,
-                                                        fontWeight: FontWeight.bold,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Image.asset(
-                                                      'assets/icon/arrow.png',
-                                                      color: Colors.white,
-                                                      width: 12,
-                                                      height: 12,
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                //My MJ SP's
-                                if(apiService.lvl > 2)
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      AutoSizeText(
-                                        'Mahanagar and Jilla SP\'s',
-                                        maxLines: 1,
-                                        style: TextStyle(
-                                          fontSize: largeFontSize * 2,
-                                          fontWeight: FontWeight.bold,
-                                          color: const Color.fromRGBO(5, 50, 70, 1.0),
-                                        ),
-                                        minFontSize: largeFontSize.floorToDouble(),
-                                        stepGranularity: 1.0,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 1),
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          //borderRadius: BorderRadius.circular(30),
-                                          borderRadius: MJmembers.isEmpty ? BorderRadius.circular(10) : BorderRadius.circular(30),
-                                          gradient: const LinearGradient(
-                                            begin: Alignment.topCenter,
-                                            end: Alignment.bottomCenter,
-                                            colors: [
-                                              Color.fromRGBO(60, 170, 145, 1.0),
-                                              Color.fromRGBO(2, 40, 60, 1),
-                                            ],
-                                          ),
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            // If the list is empty, show a message
-                                            if (MJmembers.isEmpty)
-                                              Container(
-                                                padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(4),
-                                                ),
-                                                child: Center(
-                                                  child: Text(
-                                                    'No Members Assigned',
-                                                    style: TextStyle(
-                                                      fontSize: largeFontSize,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: Colors.white,
-                                                    ),
-                                                  ),
-                                                ),
-                                              )
-                                            // If the list is not empty, build a ListView of InfluencerCards
-                                            else
-                                              Column(
-                                                children: List.generate(
-                                                  (MJmembers.length < 4) ? MJmembers.length : 3, // Display either all members or just 3
-                                                      (index) {
-                                                    final member = MJmembers[index]; // Access the member data
-                                                    return Padding(
-                                                      padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
-                                                      child: MemberCard(
-                                                        id: member['id']!,
-                                                        first_name: member['first_name']!,
-                                                        last_name: member['last_name']!,
-                                                        designation: member['designation']??"Not Set",
-                                                        profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
-                                                            ? member['profile_image']!
-                                                            : '',
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
-                                              ),
-
-                                            if (MJmembers.isNotEmpty)
-                                            // View All Influencers Button
-                                              TextButton(
-                                                onPressed: () async {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(builder: (context) => const MyMJSPPage(type: 'ShreniPramukh')),
                                                   );
                                                 },
                                                 child: Row(
@@ -1096,7 +1105,7 @@ class _TeamPageState extends State<TeamPage> {
                                         Padding(
                                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
                                           child: Text(
-                                            'No Influencer Found',
+                                            'No Karyakartha Found',
                                             style: TextStyle(
                                               fontSize: MediaQuery.of(context).size.width * 0.041 + 2,
                                               fontWeight: FontWeight.bold,
@@ -1110,7 +1119,7 @@ class _TeamPageState extends State<TeamPage> {
                                             (membersSearched.length < 4) ? membersSearched.length : 3, // Display either all members or just 3
                                                 (index) {
                                               final member = membersSearched[index]; // Access the member data
-                                              print("before sending to member: ${member['first_name']} TEam page");
+                                              //log("before sending to member: ${member['first_name']} TEam page");
                                               return Padding(
                                                 padding: const EdgeInsets.only(left: 8, right: 8, top: 20,bottom: 10),
                                                 child: MemberCard(
@@ -1300,7 +1309,7 @@ class MemberCard extends StatelessWidget {
     double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
     double largeFontSize = normFontSize+4; //20
     double smallFontSize = normFontSize-2; //14
-    print(' KR received $first_name $last_name');
+    //log(' KR received $first_name $last_name');
     return Container(
       padding: const EdgeInsets.all(0), // Container padding
       decoration: BoxDecoration(

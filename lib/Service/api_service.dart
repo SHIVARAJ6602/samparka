@@ -1,13 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:file_picker/file_picker.dart';
+import 'dart:developer';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:image/image.dart' as img;
-import 'dart:typed_data';
-import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
@@ -15,8 +13,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:image/image.dart' as img; // Make sure to import the 'image' package
-import 'dart:typed_data';
+import 'package:image/image.dart' as img;
 
 class ApiService {
   late String baseUrl0 = "https://samparka.org/api";
@@ -30,6 +27,7 @@ class ApiService {
   late String UserId = '';
   late String phone = '';
   late String first_name = '';
+  late String user_name = '';
   late String last_name = '';
   late String designation = '';
   late String city = '';
@@ -45,7 +43,7 @@ class ApiService {
   late FlutterLocalNotificationsPlugin localNotifications;
   late bool _isInitialized = false;
   late String txt = '...';
-
+  late final FlutterSecureStorage secureStorage;
   Future<void> _initialize() async {
     dio = Dio();
     cookieJar = CookieJar();
@@ -55,17 +53,18 @@ class ApiService {
     setupNotifications();
     requestNotificationPermission();
     //showNotification('Test','this is a test notification');
+    secureStorage = const FlutterSecureStorage();
     await loadData();
 
     try {
       final response = await dio.get(baseUrl.toString().substring(0, baseUrl.length-4));
       if (response.statusCode == 200) {
-        print('Ping successful! Status Code: 200');
+        log('Ping successful!', name: 'PingCheck', level: 200);
       } else {
-        print('Failed to ping. Status Code: ${response.statusCode}');
+        log('Failed to ping. Status Code: ${response.statusCode}', name: 'PingCheck', level: 900);
       }
     } catch (e) {
-      print('Ping failed. Error: $e');
+      log('Ping failed. Error: $e');
     }
     _isInitialized = true;
   }
@@ -113,9 +112,9 @@ class ApiService {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print("Notifications permission granted.");
+      log("Notifications permission granted.");
     } else {
-      print("Notifications permission denied.");
+      log("Notifications permission denied.");
     }
   }
 
@@ -143,7 +142,7 @@ class ApiService {
 
   void setupFirebaseListeners() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print("New notification received: ${message.notification?.title}");
+      log("New notification received: ${message.notification?.title}");
       showNotification(message.notification?.title, message.notification?.body);
     });
   }
@@ -151,14 +150,14 @@ class ApiService {
 
   Future<bool> checkVersion() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    print("App Version: ${packageInfo.version}");
-    print("Build Number: ${packageInfo.buildNumber}");
+    log("App Version: ${packageInfo.version}");
+    log("Build Number: ${packageInfo.buildNumber}");
     return true;
   }
 
-  Future<bool> saveData() async {
+  Future<bool> saveDataShareOnly() async {
     try {
-      print('Token: $token');
+      //log('Token: $token');
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString("token", token ?? '');
       await prefs.setString('baseUrl', baseUrl ?? '');
@@ -171,16 +170,15 @@ class ApiService {
       await prefs.setString("district", district ?? '');
       await prefs.setString("state", state ?? '');
       await prefs.setString("profile_image", profileImage ?? '');
-
-      print("Data Saved Successfully");
+      log("Data Saved Successfully");
       return true;
     } catch (e) {
-      print("Error saving data: $e");
+      log("Error saving data: $e");
       return false;
     }
   }
 
-  Future<void> loadData() async {
+  Future<void> loadDataSharedOnly() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     baseUrl = prefs.getString('baseUrl') ?? baseUrl;
     token = prefs.getString("token") ?? '';
@@ -193,9 +191,62 @@ class ApiService {
     city = prefs.getString('city') ?? city;
     district = prefs.getString('district') ?? district;
     state = prefs.getString('state') ?? state;
-    print("DataLoaded - isAuthenticated: $isAuthenticated id $UserId token: $token url:$baseUrl perfT ${prefs.getString("token")} $UserId");
-    print("$UserId privacyPolicyAgreed:$privacyPolicyAgreed");
+    log("DataLoaded");
   }
+
+  Future<bool> saveData() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      // Save sensitive data securely
+      await secureStorage.write(key: "token", value: token ?? '');
+      await secureStorage.write(key: "phone_number", value: phone ?? 'Error');
+
+      // Save non-sensitive data
+      await prefs.setString('baseUrl', baseUrl ?? '');
+      await prefs.setBool("isAuthenticated", isAuthenticated ?? false);
+      await prefs.setBool("privacyPolicyAgreed", privacyPolicyAgreed ?? false);
+      await prefs.setString("userName", user_name ?? '');
+      await prefs.setString("firstName", first_name ?? '');
+      await prefs.setString("lastName", last_name ?? '');
+      await prefs.setInt("level", lvl ?? 1);
+      await prefs.setString("city", city ?? '');
+      await prefs.setString("district", district ?? '');
+      await prefs.setString("state", state ?? '');
+      await prefs.setString("profile_image", profileImage ?? '');
+
+      log("Data Saved Successfully");
+      return true;
+    } catch (e) {
+      log("Error saving data: $e");
+      return false;
+    }
+  }
+
+  Future<void> loadData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Load sensitive data securely
+    token = await secureStorage.read(key: "token") ?? '';
+    phone = await secureStorage.read(key: "phone_number") ?? 'Error';
+
+    // Load non-sensitive data
+    baseUrl = prefs.getString('baseUrl') ?? baseUrl;
+    user_name = prefs.getString("userName") ?? '';
+    first_name = prefs.getString("firstName") ?? '';
+    last_name = prefs.getString("lastName") ?? '';
+    lvl = prefs.getInt("level") ?? 1;
+    isAuthenticated = prefs.getBool("isAuthenticated") ?? false;
+    privacyPolicyAgreed = prefs.getBool("privacyPolicyAgreed") ?? false;
+    profileImage = prefs.getString("profile_image") ?? profileImage;
+    city = prefs.getString('city') ?? city;
+    district = prefs.getString('district') ?? district;
+    state = prefs.getString('state') ?? state;
+
+    log("Data Loaded");
+  }
+
+
 
   Future<Uint8List> resizeImage(Uint8List imageBytes) async {
     // Decode the image (supports JPEG, PNG, etc.)
@@ -227,31 +278,20 @@ class ApiService {
 
   Future<bool> registerUser(List<dynamic> data) async {
     try {
-      print(data);
 
       // Check if token is null or empty before making the request
       if (token.isEmpty) {
-        print('Error: Authorization token is missing');
+        log('Error: Authorization token is missing');
         return false;
       }
-
-      print("registration Start");
       File orgImage = await data[8];
-      print("D1");
       List<int> resizedImageBytes = await imageResize(orgImage, true, 600);
-      print("D2");
       // Convert the byte array into a MultipartFile (temporary file)
       String tempFilePath = '${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
       File tempFile = File(tempFilePath)..writeAsBytesSync(resizedImageBytes);
 
       // Create a MultipartFile from the resized temporary file
       MultipartFile resizedImage = await MultipartFile.fromFile(tempFile.path, filename: tempFile.uri.pathSegments.last);
-
-      print("Resized Image Size: ${resizedImage.length}");
-
-      print("ProfileImage ${data[8]} ${data[8].path.split('/').last}");
-
-      print(UserId);
 
       FormData formData = FormData.fromMap({
         "action": "register",
@@ -282,19 +322,18 @@ class ApiService {
 
       // Handle server response status
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print("User registered successfully");
-        print("message: ${response.data['message']} user: ${response.data['user']}");
+        log("User registered successfully");
         return true;
       } else {
         // Capture error message from the server response, if available
         var errorData = response.data;
         String errorMessage = errorData['message'] ?? 'Unknown error';
-        print('Registration failed: $errorMessage');
+        log('Registration failed: $errorMessage');
         throw Exception('Registration failed: $errorMessage');
       }
     } catch (e) {
       // Handle unexpected errors such as network issues or invalid responses
-      print('Error during registration: $e');
+      log('Error during registration: $e');
       return false;
     }
   }
@@ -302,7 +341,7 @@ class ApiService {
   Future<bool> updateUser(List<dynamic> userData, String userId) async {
     try {
       if (token.isEmpty) {
-        print('Error: Authorization token is missing');
+        log('Error: Authorization token is missing');
         return false;
       }
 
@@ -346,14 +385,14 @@ class ApiService {
       final response = await dio.post('$baseUrl/callHandler/', data: formData);
 
       if (response.statusCode == 200 || response.statusCode == 204) {
-        print("User updated successfully");
+        //log("User updated successfully");
         return true;
       } else {
-        print('Update failed: ${response.statusCode}, ${response.data}');
+        //log('Update failed: ${response.statusCode}, ${response.data}');
         return false;
       }
     } catch (e) {
-      print('Error during update: $e');
+      log('Error during update: $e');
       return false;
     }
   }
@@ -375,7 +414,7 @@ class ApiService {
     try {
       // Check if token is null or empty before making the request
       if (token.isEmpty) {
-        print('Error: Authorization token is missing');
+        log('Error: Authorization token is missing');
         throw Exception('Failed: No Auth Token');
       }
       dio.options.headers['Authorization'] = 'Token $token';
@@ -388,7 +427,6 @@ class ApiService {
       );
       // Handle server response status
       if (response.statusCode == 200) {
-        print(response.data);
         if (response.data is List<dynamic>) {
           return response.data;
         } else if (response.data is String) {
@@ -402,23 +440,19 @@ class ApiService {
       }
     } catch (e) {
       // Handle unexpected errors such as network issues or invalid responses
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load tasks: $e');
     }
   }
 
   Future<bool> getUser(BuildContext context) async  {
     dio.options.headers['Authorization'] = 'Token $token';
-    print('getUser Called');
 
     try {
       final response = await dio.get('$baseUrl/callHandler/');
-      print(response.data);
-      print(response.statusCode);
 
       if (response.statusCode == 200) {
         var userData = response.data['data'];
-        print(userData);
         UserId = userData['id'] ?? '';
         phone = userData['phone_number'] ?? 'Error';
         first_name = userData['first_name'] ?? '';
@@ -437,7 +471,7 @@ class ApiService {
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
-        print('401 Error: Unauthorized');
+        log('401 Error: Unauthorized');
         this.isAuthenticated = false;
         this.token = '';
         await saveData();
@@ -445,11 +479,11 @@ class ApiService {
         showDialogMsg(context, 'You Have been logged Out', 'Please Sign in again!');
         return false;
       } else {
-        print('Dio error: ${e.response?.statusCode} - ${e.message}');
+        log('Dio error: ${e.response?.statusCode} - ${e.message}');
         // You could also show a dialog/snackbar depending on the use case
       }
     } catch (e) {
-      print('Unexpected error: $e');
+      log('Unexpected error: $e');
     }
 
     return false;
@@ -457,7 +491,6 @@ class ApiService {
 
   Future<dynamic> getHashtags() async  {
     dio.options.headers['Authorization'] = 'Token $token';
-    print('getHashTags Called');
 
     try {
       final response = await dio.post(
@@ -467,17 +500,13 @@ class ApiService {
         },
       );
 
-      print(response.data);
-      print(response.statusCode);
-
       if (response.statusCode == 200) {
         // Assuming the response data contains a list of user data.
-        print(response.data);
         return response.data;
       }
 
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load user data: $e');
     }
     return false;
@@ -487,7 +516,7 @@ class ApiService {
     try {
       // Check if token is null or empty before making the request
       if (token.isEmpty) {
-        print('Error: Authorization token is missing');
+        log('Error: Authorization token is missing');
         throw Exception('Failed: No Auth Token');
       }
       dio.options.headers['Authorization'] = 'Token $token';
@@ -504,7 +533,6 @@ class ApiService {
       );
       // Handle server response status
       if (response.statusCode == 200) {
-        print(response.data);
         if (response.data is List<dynamic>) {
           return response.data;
         } else if (response.data is String) {
@@ -518,23 +546,58 @@ class ApiService {
       }
     } catch (e) {
       // Handle unexpected errors such as network issues or invalid responses
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load tasks: $e');
     }
   }
+
+  Future<int> getInfluencerCount(String krId) async {
+    try {
+      // Check if token is null or empty before making the request
+      if (token.isEmpty) {
+        log('Error: Authorization token is missing');
+        throw Exception('Failed: No Auth Token');
+      }
+
+      dio.options.headers['Authorization'] = 'Token $token';
+
+      // Send request to get the count of influencers
+      final response = await dio.post(
+        '$baseUrl/callHandler/',
+        data: {
+          'action': "getInfluencerCount", // <-- updated action
+          'KR_id': krId,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data is Map<String, dynamic> && data.containsKey('count')) {
+          return data['count'] as int;
+        } else {
+          throw Exception('Invalid response format: ${response.data}');
+        }
+      } else {
+        throw Exception('Failed to get count. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      log('Error: $e');
+      throw Exception('Failed to get influencer count: $e');
+    }
+  }
+
 
   Future<List<dynamic>> get_unapproved_profiles() async {
     dio.options.headers['Authorization'] = 'Token $token';
 
     try {
       final response = await dio.post('$baseUrl/callHandler/',data: {'action':'get_unapproved_profiles'});
-      //print(response.data);
+      //log(response.data);
 
       if (response.statusCode == 200) {
-        //print('my supervisor ${response.data}');
+        //log('my supervisor ${response.data}');
 
         if (response.statusCode == 200) {
-          print(response.data);
           if (response.data is List<dynamic>) {
             return response.data;
           } else if (response.data is String) {
@@ -552,7 +615,7 @@ class ApiService {
 
 
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load supervisor: $e');
     }
   }
@@ -561,7 +624,7 @@ class ApiService {
     try {
       // Check if token is null or empty before making the request
       if (token.isEmpty) {
-        print('Error: Authorization token is missing');
+        log('Error: Authorization token is missing');
         throw Exception('Failed: No Auth Token');
       }
       dio.options.headers['Authorization'] = 'Token $token';
@@ -574,7 +637,6 @@ class ApiService {
       );
       // Handle server response status
       if (response.statusCode == 200) {
-        print(response.data);
         if (response.data is List<dynamic>) {
           return response.data;
         } else if (response.data is String) {
@@ -588,7 +650,7 @@ class ApiService {
       }
     } catch (e) {
       // Handle unexpected errors such as network issues or invalid responses
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load tasks: $e');
     }
   }
@@ -597,7 +659,7 @@ class ApiService {
     try {
       // Check if token is null or empty before making the request
       if (token.isEmpty) {
-        print('Error: Authorization token is missing');
+        log('Error: Authorization token is missing');
         throw Exception('Failed: No Auth Token');
       }
       dio.options.headers['Authorization'] = 'Token $token';
@@ -610,7 +672,6 @@ class ApiService {
       );
       // Handle server response status
       if (response.statusCode == 200) {
-        print(response.data);
         if (response.data is List<dynamic>) {
           return response.data;
         } else if (response.data is String) {
@@ -624,7 +685,7 @@ class ApiService {
       }
     } catch (e) {
       // Handle unexpected errors such as network issues or invalid responses
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load tasks: $e');
     }
   }
@@ -633,7 +694,7 @@ class ApiService {
     try {
       // Check if token is null or empty before making the request
       if (token.isEmpty) {
-        print('Error: Authorization token is missing');
+        log('Error: Authorization token is missing');
         throw Exception('Failed: No Auth Token');
       }
       dio.options.headers['Authorization'] = 'Token $token';
@@ -647,7 +708,6 @@ class ApiService {
       );
       // Handle server response status
       if (response.statusCode == 200) {
-        print(response.data);
         if (response.data is List<dynamic>) {
           return response.data;
         } else if (response.data is String) {
@@ -661,16 +721,16 @@ class ApiService {
       }
     } catch (e) {
       // Handle unexpected errors such as network issues or invalid responses
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load tasks: $e');
     }
   }
 
-  Future<List<dynamic>> getShreniPramukhs() async{
+  Future<List<dynamic>> getShreniPramukhs(String krId) async{
     try {
       // Check if token is null or empty before making the request
       if (token.isEmpty) {
-        print('Error: Authorization token is missing');
+        log('Error: Authorization token is missing');
         throw Exception('Failed: No Auth Token');
       }
       dio.options.headers['Authorization'] = 'Token $token';
@@ -679,11 +739,11 @@ class ApiService {
         '$baseUrl/callHandler/',
         data: {
           "action":"getShreniPramukhs",
+          "krId": krId,
         },
       );
       // Handle server response status
       if (response.statusCode == 200) {
-        print(response.data);
         if (response.data is List<dynamic>) {
           return response.data;
         } else if (response.data is String) {
@@ -697,7 +757,7 @@ class ApiService {
       }
     } catch (e) {
       // Handle unexpected errors such as network issues or invalid responses
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load tasks: $e');
     }
   }
@@ -705,12 +765,10 @@ class ApiService {
   Future<bool> createGanyaVyakthi(BuildContext context, List<dynamic> UserData) async {
     try {
       if (token.isEmpty) {
-        print('Error: Authorization token is missing');
+        log('Error: Authorization token is missing');
         showDialogMsg(context, 'Authorization Error', 'Token is missing. Please login again.');
         return false;
       }
-
-      print("Registration started");
 
       File orgImage = await UserData[14];
       List<int> resizedImageBytes = await imageResize(orgImage, true, 600);
@@ -772,11 +830,11 @@ class ApiService {
             'Make sure all fields are filled! \n code ${response?.statusCode ?? 'unknown'}';
 
         showDialogMsg(context, 'Registration Failed', errorMessage);
-        print('DioException: $errorMessage');
+        log('DioException: $errorMessage');
         return false;
       } else {
         showDialogMsg(context, 'Unexpected Error', 'An error occurred: $e');
-        print('Unexpected error during registration: $e');
+        log('Unexpected error during registration: $e');
         return false;
       }
     }
@@ -785,7 +843,7 @@ class ApiService {
   Future<bool> updateGanyaVyakthi(List<dynamic> UserData, String gvId) async {
     try {
       if (token.isEmpty) {
-        print('Error: Authorization token is missing');
+        log('Error: Authorization token is missing');
         return false;
       }
 
@@ -831,8 +889,6 @@ class ApiService {
 
       updatePayload["action"] = "UpdateGanyaVyakti";
 
-      print('data $updatePayload');
-
       FormData formData = FormData.fromMap(updatePayload);
 
       dio.options.headers['Authorization'] = 'Token $token';
@@ -843,14 +899,13 @@ class ApiService {
       );
 
       if (response.statusCode == 200 || response.statusCode == 204) {
-        print("GanyaVyakthi updated successfully");
         return true;
       } else {
-        print('Update failed: ${response.statusCode}, ${response.data}');
+        log('Update failed: ${response.statusCode}');
         return false;
       }
     } catch (e) {
-      print('Error during update: $e');
+      log('Error during update: $e');
       return false;
     }
   }
@@ -872,14 +927,13 @@ class ApiService {
 
 
       if (response.statusCode == 200) {
-        print("Profile and image deleted successfully.");
         return true;
       } else {
-        print("Deletion failed: ${response.data}");
+        log("Deletion failed: ${response.data}");
         return false;
       }
     } catch (e) {
-      print("Error deleting profile: $e");
+      log("Error deleting profile: $e");
       return false;
     }
   }
@@ -891,7 +945,7 @@ class ApiService {
       return [];
       final response = await dio.get('$baseUrl/tasks/');
       if (response.statusCode == 200) {
-        print(response.data);
+        log(response.data);
         if (response.data is List<dynamic>) {
           return response.data;
         } else if (response.data is String) {
@@ -904,7 +958,7 @@ class ApiService {
         throw Exception('Failed to load tasks. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load tasks: $e');
     }
   }
@@ -929,7 +983,6 @@ class ApiService {
         }
         else if (response.data is Map<String, dynamic>) {
           if (response.data.containsKey('groups') && response.data['groups'] is List<dynamic>) {
-            print(response.data['groups']);
             return response.data['groups'];
           } else {
             throw Exception('Expected "groups" field to be a List but got ${response.data['groups']?.runtimeType}');
@@ -942,7 +995,7 @@ class ApiService {
         throw Exception('Failed to load Groups. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load Groups: $e');
     }
   }
@@ -962,7 +1015,6 @@ class ApiService {
 
   Future<int> getOTP(String phone, String mail) async {
     try {
-      print('$baseUrl - $phone'); // Debugging: Logs the URL and phone number.
 
       // Making the POST request to get OTP
       final response = await dio.post(
@@ -970,26 +1022,22 @@ class ApiService {
         data: {'action': 'get_otp', 'mail': mail, 'phone': phone},
       );
 
-      print('Response body: ${response.data}'); // Logs the server's response body.
-
       // Check if the response status code indicates success (e.g., 200 or 201)
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (response.data != null && response.data.isNotEmpty) {
-          // Assuming the OTP is returned in the response as a key 'otp'
-          print('OTP sent: ${response.data['otp']}');
           return 200; // Successfully sent OTP
         } else {
-          print('Received empty response body');
+          log('Received empty response body');
           throw Exception('Empty response body');
         }
       } else {
         // If the status code is not 200 or 201, throw an error with the message from the response
         var errorData = response.data;
-        print('Error Data: $errorData'); // Log the error data for debugging
+        log('Error Data: $errorData'); // Log the error data for debugging
         throw Exception('Failed to get OTP: ${errorData['message'] ?? 'Unknown error'}');
       }
     } catch (e) {
-      print('Error getting OTP: $e'); // Catching errors from API request or response parsing
+      log('Error getting OTP: $e'); // Catching errors from API request or response parsing
 
       // If the error has a response, return its status code. Otherwise, return 400.
       if (e is DioException && e.response != null) {
@@ -1012,7 +1060,6 @@ class ApiService {
           'otp': otp,
         },
       );
-      print('data ${response.data}');
 
       // Check for success status code
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -1020,7 +1067,6 @@ class ApiService {
 
         // Ensure responseData is a Map and contains the expected keys
         if (responseData is Map<String, dynamic>) {
-          print(responseData);
           token = responseData['token'];
           first_name = responseData['userName'];
           lvl = responseData['level'] ?? 1;
@@ -1028,7 +1074,7 @@ class ApiService {
 
           if (responseData['token'] != null) {
             await getUser(context);
-            //print('Login successful. Token: $token UserName: $first_name');
+            //log('Login successful. Token: $token UserName: $first_name');
             isAuthenticated = true;
             privacyPolicyAgreed = true;
             await saveData(); // Save the data as needed
@@ -1054,8 +1100,7 @@ class ApiService {
       if (e is DioException) {
         // Handle specific Dio exceptions
         if (e.response?.statusCode == 401) {
-          print('Login failed: Invalid OTP or authentication issue');
-          showDialogMsg(context, 'Samparka', 'Invalid OTP or authentication issue');
+          showDialogMsg(context, 'Samparka', 'Invalid OTP');
           return Response(
             requestOptions: RequestOptions(path: ''), // Dummy RequestOptions
             statusCode: 401,
@@ -1063,7 +1108,6 @@ class ApiService {
           );
         } else {
           // Handle other Dio errors
-          print('Dio error: ${e.message}');
           showDialogMsg(context, 'Samparka', 'Dio error: ${e.message}');
           return Response(
             requestOptions: RequestOptions(path: ''), // Dummy RequestOptions
@@ -1073,7 +1117,6 @@ class ApiService {
         }
       } else {
         // Handle non-Dio errors
-        print('Error during login: $e');
         showDialogMsg(context, 'Samparka', 'Unexpected error occurred: $e');
         return Response(
           requestOptions: RequestOptions(path: ''), // Dummy RequestOptions
@@ -1095,11 +1138,10 @@ class ApiService {
           'email': email,
         },
       );
-      print(response.data);
       txt = response.data['message'] as String;
 
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
     }
     return true;
   }
@@ -1113,7 +1155,7 @@ class ApiService {
         },
       );
     } catch (e) {
-      print('Error during logout: $e');
+      log('Error during logout: $e');
       return false;
     } finally {
       // this should be inside try after response.
@@ -1126,7 +1168,6 @@ class ApiService {
       /************/
       //await Future.delayed(const Duration(milliseconds: 1000));
     }
-    print('object');
     return true;
 
   }
@@ -1136,19 +1177,16 @@ class ApiService {
 
     try {
       final response = await dio.get('$baseUrl/callHandler/');
-      print(response.data);
-
 
       if (response.statusCode == 200) {
         showDialogMsg(context, 'Success', '$first_name $last_name is authenticated!');
       } else {
-        print("UnAuthorized");
         showDialogMsg(context, 'Failed', '$first_name $last_name is not authenticated!');
         throw Exception('Failed to check user auth. Status code: ${response.statusCode}');
       }
 
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
     }
   }
 
@@ -1157,16 +1195,16 @@ class ApiService {
 
     try {
       final response = await dio.post('$baseUrl/callHandler/',data: {'action':'Subordinates'});
-      //print(response.data);
+      //log(response.data);
 
       if (response.statusCode == 200) {
-        //print(response.data);
+        //log(response.data);
       } else {
         throw Exception('Failed to check user auth. Status code: ${response.statusCode}');
       }
 
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
     }
   }
 
@@ -1175,10 +1213,10 @@ class ApiService {
 
     try {
       final response = await dio.post('$baseUrl/callHandler/',data: {'action':'mySupervisor'});
-      //print(response.data);
+      //log(response.data);
 
       if (response.statusCode == 200) {
-        //print('my supervisor ${response.data}');
+        //log('my supervisor ${response.data}');
 
         if (response.data is List<dynamic>) {
           return response.data;
@@ -1193,7 +1231,7 @@ class ApiService {
 
 
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load supervisor: $e');
     }
   }
@@ -1203,10 +1241,10 @@ class ApiService {
 
     try {
       final response = await dio.post('$baseUrl/callHandler/',data: {'action':'myLead'});
-      //print(response.data);
+      //log(response.data);
 
       if (response.statusCode == 200) {
-        //print('my Lead ${response.data}');
+        //log('my Lead ${response.data}');
 
         if (response.data is List<dynamic>) {
           return response.data;
@@ -1221,7 +1259,7 @@ class ApiService {
 
 
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load supervisor: $e');
     }
   }
@@ -1231,10 +1269,10 @@ class ApiService {
 
     try {
       final response = await dio.post('$baseUrl/callHandler/',data: {'action':'getGanyavyakthi','GV_id':GV_id});
-      //print(response.data);
+      //log(response.data);
 
       if (response.statusCode == 200) {
-        //print('GV ${response.data[0]}');
+        //log('GV ${response.data[0]}');
 
         if (response.data is List<dynamic>) {
           return response.data;
@@ -1249,7 +1287,7 @@ class ApiService {
 
 
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load supervisor: $e');
     }
   }
@@ -1259,10 +1297,10 @@ class ApiService {
 
     try {
       final response = await dio.post('$baseUrl/callHandler/',data: {'action':'getKaryakartha','KR_id':KR_id});
-      //print(response.data);
+      //log(response.data);
 
       if (response.statusCode == 200) {
-        //print('RV ${response.data[0]}');
+        //log('RV ${response.data[0]}');
 
         if (response.data is List<dynamic>) {
           return response.data;
@@ -1277,7 +1315,7 @@ class ApiService {
 
 
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load supervisor: $e');
     }
   }
@@ -1289,10 +1327,10 @@ class ApiService {
       final response = await dio.post('$baseUrl/callHandler/',
           data: {'action':'ApproveGanyaVyakti','GV_id':GV_id,'KR_id':KR_id}
       );
-      //print(response.data);
+      //log(response.data);
 
       if (response.statusCode == 200) {
-        //print('my supervisor ${response.data}');
+        //log('my supervisor ${response.data}');
 
         if (response.data is List<dynamic>) {
           return response.data;
@@ -1307,7 +1345,7 @@ class ApiService {
 
 
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load supervisor: $e');
     }
   }
@@ -1317,16 +1355,16 @@ class ApiService {
 
     try {
       final response = await dio.post('$baseUrl/callHandler/',data: {'action':'RecursiveSubordinates'});
-      print(response.data);
 
       if (response.statusCode == 200) {
-        print(response.data);
+        log("Recuring subordinates fetched");
+        //log(response.data);
       } else {
         throw Exception('Failed to check user auth. Status code: ${response.statusCode}');
       }
 
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
     }
   }
 
@@ -1344,13 +1382,13 @@ class ApiService {
         return true;
       } else {
         // Log and throw exception if status code is not 200
-        print('Failed to create task: ${response.statusCode}');
+        log('Failed to create task: ${response.statusCode}');
         return false;
         throw Exception('Failed to create task. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      // Print the error and rethrow it
-      print('Error: $e');
+      // log the error and rethrow it
+      log('Error: $e');
       throw Exception('Failed to create task: $e');
     }
 
@@ -1372,13 +1410,13 @@ class ApiService {
         return true;
       } else {
         // Log and throw exception if status code is not 200
-        print('Failed to delete task: ${response.statusCode}');
+        log('Failed to delete task: ${response.statusCode}');
         return false;
         throw Exception('Failed to create task. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      // Print the error and rethrow it
-      print('Error: $e');
+      // log the error and rethrow it
+      log('Error: $e');
       throw Exception('Failed to create task: $e');
     }
 
@@ -1412,13 +1450,13 @@ class ApiService {
         return true;
       } else {
         // Log and throw exception if status code is not 200
-        print('Failed to create interaction: ${response.statusCode}');
+        log('Failed to create interaction: ${response.statusCode}');
         return false;
         throw Exception('Failed to create task. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      // Print the error and rethrow it
-      print('Error: $e');
+      // log the error and rethrow it
+      log('Error: $e');
       return false;
       throw Exception('Failed to create task: $e');
       return false;
@@ -1453,13 +1491,13 @@ class ApiService {
         return true;
       } else {
         // Log and throw exception if status code is not 200
-        print('Failed to create task: ${response.statusCode}');
+        log('Failed to create task: ${response.statusCode}');
         return false;
         throw Exception('Failed to create task. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      // Print the error and rethrow it
-      print('Error: $e');
+      // log the error and rethrow it
+      log('Error: $e');
       throw Exception('Failed to create task: $e');
     }
 
@@ -1472,10 +1510,10 @@ class ApiService {
 
     try {
       final response = await dio.post('$baseUrl/callHandler/',data: {'action':'get_task','GV_id':GV_id});
-      //print(response.data);
+      //log(response.data);
 
       if (response.statusCode == 200) {
-        //print('TS ${response.data}');
+        //log('TS ${response.data}');
 
         if (response.data is List<dynamic>) {
           return response.data;
@@ -1490,7 +1528,7 @@ class ApiService {
 
 
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load supervisor: $e');
     }
   }
@@ -1504,8 +1542,6 @@ class ApiService {
       'file': await MultipartFile.fromFile(file.path, filename: file.uri.pathSegments.last),
     });
 
-    print("FormData: $formData");
-
     try {
       // Step 3: Send the file to the server via a POST request
       final response = await dio.post(
@@ -1519,14 +1555,14 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        print("File uploaded successfully!");
+        log("File uploaded successfully!");
         return true;  // Return true on success
       } else {
-        print("Failed to upload file. Status code: ${response.statusCode}");
+        log("Failed to upload file. Status code: ${response.statusCode}");
         return false;  // Return false on failure
       }
     } catch (e) {
-      print("Error occurred: $e");
+      log("Error occurred: $e");
       return false;  // Return false if there's an exception
     }
   }
@@ -1540,8 +1576,6 @@ class ApiService {
       'file': await MultipartFile.fromFile(file.path, filename: file.uri.pathSegments.last),
     });
 
-    print("FormData: $formData");
-
     try {
       // Step 3: Send the file to the server via a POST request
       final response = await dio.post(
@@ -1555,14 +1589,14 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        print("File uploaded successfully!");
+        log("File uploaded successfully!");
         return true;  // Return true on success
       } else {
-        print("Failed to upload file. Status code: ${response.statusCode}");
+        log("Failed to upload file. Status code: ${response.statusCode}");
         return false;  // Return false on failure
       }
     } catch (e) {
-      print("Error occurred: $e");
+      log("Error occurred: $e");
       return false;  // Return false if there's an exception
     }
   }
@@ -1591,28 +1625,26 @@ class ApiService {
         String fileName = 'failed_ganyavyakthi_uploads.xlsx';
         var exPath = await _getExternalDirectory();
         await Directory(exPath).create(recursive: true);
-        print("Saved Path: $exPath");
         String filePath = '$exPath/$fileName';
 
         int count = 1;
         while (await File(filePath).exists()) {
-          filePath = '$exPath/failed_ganyavyakthi_uploads_${count}.xlsx';
+          filePath = '$exPath/failed_ganyavyakthi_uploads_$count.xlsx';
           count++;
         }
 
         final File failedFile = File(filePath);
         await failedFile.writeAsBytes(response.data);
 
-        print("Failed Excel saved to: $filePath");
         return failedFile;
       }
 
       // If upload is successful and no file is returned
-      print("File uploaded successfully with no failures.");
+      log("File uploaded successfully with no failures.");
       return null;
 
     } catch (e) {
-      print("Error during addGV: $e");
+      log("Error during addGV: $e");
       return null;
     }
   }
@@ -1641,28 +1673,25 @@ class ApiService {
         String fileName = 'failed_Karyakartha_uploads.xlsx';
         var exPath = await _getExternalDirectory();
         await Directory(exPath).create(recursive: true);
-        print("Saved Path: $exPath");
         String filePath = '$exPath/$fileName';
 
         int count = 1;
         while (await File(filePath).exists()) {
-          filePath = '$exPath/failed_Karyakartha_uploads_${count}.xlsx';
+          filePath = '$exPath/failed_Karyakartha_uploads_$count.xlsx';
           count++;
         }
 
         final File failedFile = File(filePath);
         await failedFile.writeAsBytes(response.data);
-
-        print("Failed Excel saved to: $filePath");
         return failedFile;
       }
 
       // If upload is successful and no file is returned
-      print("File uploaded successfully with no failures.");
+      //log("File uploaded successfully with no failures.");
       return null;
 
     } catch (e) {
-      print("Error during addKR: $e");
+      log("Error during addKR: $e");
       return null;
     }
   }
@@ -1671,12 +1700,12 @@ class ApiService {
     dio.options.headers['Authorization'] = 'Token $token';
 
     try {
-      //print(IR_id);
+      //log(IR_id);
       final response = await dio.post('$baseUrl/callHandler/',data: {'action':'get_interaction_by_id','id':IR_id});
-      //print(response.data);
+      //log(response.data);
 
       if (response.statusCode == 200) {
-        //print('TS ${response.data}');
+        //log('TS ${response.data}');
 
         if (response.data is List<dynamic>) {
           return [response.data];
@@ -1689,7 +1718,7 @@ class ApiService {
         throw Exception('Failed to load lead. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load interaction: $e');
     }
   }
@@ -1698,12 +1727,12 @@ class ApiService {
     dio.options.headers['Authorization'] = 'Token $token';
 
     try {
-      print(meetingTypeID);
+      //log(meetingTypeID);
       final response = await dio.post('$baseUrl/callHandler/',data: {'action':'get_interaction_by_id','id':meetingID});
-      //print(response.data);
+      //log(response.data);
 
       if (response.statusCode == 200) {
-        //print('TS ${response.data}');
+        //log('TS ${response.data}');
 
         if (response.data is List<dynamic>) {
           return [response.data];
@@ -1718,7 +1747,7 @@ class ApiService {
 
 
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load supervisor: $e');
     }
   }
@@ -1728,10 +1757,9 @@ class ApiService {
 
     try {
       final response = await dio.post('$baseUrl/callHandler/',data: {'action':'getEventByStatus'});
-      print(response.data);
 
       if (response.statusCode == 200) {
-        //print('TS ${response.data}');
+        //log('TS ${response.data}');
 
         if (response.data is List<dynamic>) {
           return [response.data];
@@ -1746,7 +1774,7 @@ class ApiService {
 
 
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load supervisor: $e');
     }
   }
@@ -1755,12 +1783,12 @@ class ApiService {
     dio.options.headers['Authorization'] = 'Token $token';
 
     try {
-      print(GV_id);
+      //log(GV_id);
       final response = await dio.post('$baseUrl/callHandler/',data: {'action':'get_interaction','GV_id':GV_id});
-      //print(response.data);
+      //log(response.data);
 
       if (response.statusCode == 200) {
-        //print('TS ${response.data}');
+        //log('TS ${response.data}');
 
         if (response.data is List<dynamic>) {
           return response.data;
@@ -1775,7 +1803,7 @@ class ApiService {
 
 
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load supervisor: $e');
     }
   }
@@ -1785,7 +1813,6 @@ class ApiService {
 
     try {
       final response = await dio.post('$baseUrl/callHandler/',data: {'action':'reportPage', 'user_id': id, 'fromDate':fromDate,'toDate':toDate});
-      print(response.data);
 
       if (response.statusCode == 200) {
         if (response.data is List<dynamic>) {
@@ -1796,8 +1823,7 @@ class ApiService {
           throw Exception('Unexpected data type: ${response.data.runtimeType}');
         }
       } else if (response.statusCode == 500){
-        print('error');
-        print(response);
+        log('error');
         throw Exception('Failed to load lead. Status code: ${response.statusCode}');
       } else {
         throw Exception('Failed to load lead. Status code: ${response.statusCode}');
@@ -1805,7 +1831,7 @@ class ApiService {
 
 
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load supervisor: $e');
     }
   }
@@ -1815,7 +1841,6 @@ class ApiService {
 
     try {
       final response = await dio.post('$baseUrl/callHandler/',data: {'action':'reportMeetings','type':meetType,'fromDate':fromDate,'toDate':toDate});
-      print(response.data);
 
       if (response.statusCode == 200) {
         if (response.data is List<dynamic>) {
@@ -1826,8 +1851,7 @@ class ApiService {
           throw Exception('Unexpected data type: ${response.data.runtimeType}');
         }
       } else if (response.statusCode == 500){
-        print('error');
-        print(response);
+        log('error');
         throw Exception('Failed to load lead. Status code: ${response.statusCode}');
       } else {
         throw Exception('Failed to load lead. Status code: ${response.statusCode}');
@@ -1835,7 +1859,7 @@ class ApiService {
 
 
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load supervisor: $e');
     }
   }
@@ -1844,15 +1868,13 @@ class ApiService {
     dio.options.headers['Authorization'] = 'Token $token';
 
     try {
-      print('meeting ID: $meetingTypeID');
+      //log('meeting ID: $meetingTypeID');
       final response = await dio.post('$baseUrl/callHandler/',data: {'action':'getEvents','EventType':meetingTypeID,'KR_id':UserId});
-      print(response.data);
 
       if (response.statusCode == 200) {
-        //print('TS ${response.data}');
+        //log('TS ${response.data}');
 
         if (response.data is List<dynamic>) {
-          print('images : ${response.data[0]['images']}');
           return response.data;
         } else if (response.data is Map<String, dynamic>) {
           return [response.data];
@@ -1865,7 +1887,7 @@ class ApiService {
 
 
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load supervisor: $e');
     }
   }
@@ -1874,16 +1896,16 @@ class ApiService {
     dio.options.headers['Authorization'] = 'Token $token';
 
     try {
-      print('meeting ID: $meetingTypeID');
+      //log('meeting ID: $meetingTypeID');
       final response = await dio.post('$baseUrl/callHandler/',data: {'action':'getEventImage','EventType':meetingTypeID,'id':id});
-      //print('meeting images');
-      //print(response.data);
+      //log('meeting images');
+      //log(response.data);
 
       if (response.statusCode == 200) {
-        //print('TS ${response.data}');
+        //log('TS ${response.data}');
 
         if (response.data is List<dynamic>) {
-          //print('images : ${response.data[0]['images'].length}');
+          //log('images : ${response.data[0]['images'].length}');
           return response.data;
         } else if (response.data is Map<String, dynamic>) {
           return [response.data];
@@ -1896,7 +1918,7 @@ class ApiService {
 
 
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to load supervisor: $e');
     }
   }
@@ -1908,7 +1930,6 @@ class ApiService {
 
       // Get external directory path based on platform
       var exPath = await _getExternalDirectory();
-      print("Saved Path: $exPath");
 
       // Create the directory if it does not exist
       await Directory(exPath).create(recursive: true);
@@ -1924,7 +1945,6 @@ class ApiService {
           responseType: ResponseType.bytes,  // Ensure we get binary data (PDF)
         ),
       );
-      print('Response: ${response.data}');
 
       if (response.statusCode == 200) {
         // Check that the response data is of expected type (binary)
@@ -1935,7 +1955,7 @@ class ApiService {
           // Check if the file already exists, and if so, increment the filename
           int count = 1;
           while (await File(filePath).exists()) {
-            filePath = '$exPath/Samparka_Report_${count}.pdf';
+            filePath = '$exPath/Samparka_Report_$count.pdf';
             count++;
           }
 
@@ -1944,8 +1964,8 @@ class ApiService {
           // Write PDF data to the file
           //await file.writeAsBytes(response.data);
 
-          // Print file path for confirmation
-          //print('PDF saved to: $filePath');
+          // log file path for confirmation
+          //log('PDF saved to: $filePath');
           return response.data;
         } else {
           throw Exception('Unexpected data format. Expected binary data for PDF.');
@@ -1954,7 +1974,7 @@ class ApiService {
         throw Exception('Failed to download report. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       throw Exception('Failed to download report: $e');
     }
   }
@@ -2000,8 +2020,6 @@ class ApiService {
 
     try {
       final response = await dio.post('$baseUrl/callHandler/', data: {'action': 'search_inf', 'search': str});
-      print("searchGV");
-      print(response.data);
 
       if (response.statusCode == 200) {
         if (response.data is List<dynamic>) {
@@ -2018,7 +2036,7 @@ class ApiService {
         throw Exception('Failed to Search inf. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       return false;
       throw Exception('Failed to search inf: $e');
     }
@@ -2029,8 +2047,6 @@ class ApiService {
 
     try {
       final response = await dio.post('$baseUrl/callHandler/', data: {'action': 'search_Karyakartha', 'search': str});
-      print("searchKR");
-      print(response.data);
 
       if (response.statusCode == 200) {
         if (response.data is List<dynamic>) {
@@ -2047,11 +2063,62 @@ class ApiService {
         throw Exception('Failed to Search inf. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error: $e');
+      log('Error: $e');
       return false;
       throw Exception('Failed to search inf: $e');
     }
   }
+
+  Future<Map<String, dynamic>> migrateInfluencers(List<String> influencerIds, String targetUserId) async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      final response = await dio.post(
+        '$baseUrl/callHandler/',
+        data: {
+          'action': 'MigrateInfluencer',
+          'influencerIds': influencerIds,
+          'targetUserId': targetUserId,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        log('Failed to migrate. Status code: ${response.statusCode}');
+        throw Exception('Migration failed with status ${response.statusCode}');
+      }
+    } catch (e) {
+      log('Migration exception: $e');
+      throw Exception('Migration exception: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> migrateKaryakartha(List<String> influencerIds, String targetUserId) async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      final response = await dio.post(
+        '$baseUrl/callHandler/',
+        data: {
+          'action': 'MigrateInfluencer',
+          'influencerIds': influencerIds,
+          'targetUserId': targetUserId,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        log('Failed to migrate. Status code: ${response.statusCode}');
+        throw Exception('Migration failed with status ${response.statusCode}');
+      }
+    } catch (e) {
+      log('Migration exception: $e');
+      throw Exception('Migration exception: $e');
+    }
+  }
+
 
   Future<bool> markTaskComplete(taskId) async {
     dio.options.headers['Authorization'] = 'Token $token';
@@ -2067,13 +2134,13 @@ class ApiService {
         return true;
       } else {
         // Log and throw exception if status code is not 200
-        print('Failed to create task: ${response.statusCode}');
+        log('Failed to create task: ${response.statusCode}');
         return false;
         throw Exception('Failed to create task. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      // Print the error and rethrow it
-      print('Error: $e');
+      // log the error and rethrow it
+      log('Error: $e');
       throw Exception('Failed to create task: $e');
     }
   }
@@ -2127,7 +2194,7 @@ class ApiService {
       // Convert the binary images to base64 for sending in the request
       List<String> base64Images = binaryImages.map((imageBytes) => base64Encode(imageBytes)).toList();
 
-      print('Sub func $id $base64Images $reportData');
+      //log('Sub func $id $base64Images $reportData');
       // Make the POST request
       final response = await dio.post('$baseUrl/callHandler/',
         data: {
@@ -2144,12 +2211,12 @@ class ApiService {
         return true;
       } else {
         // Log and throw exception if status code is not 200
-        print('Failed to submit report: ${response.statusCode}');
+        log('Failed to submit report: ${response.statusCode}');
         return false;
       }
     } catch (e) {
-      // Print the error and rethrow it
-      print('Error: $e');
+      // log the error and rethrow it
+      log('Error: $e');
       throw Exception('Failed to submit report: $e');
     }
   }
@@ -2217,7 +2284,7 @@ class ApiService {
         imageFiles.add(await MultipartFile.fromFile(tempFile.path, filename: tempFile.uri.pathSegments.last));
       }
 
-      print('Sub func $id $imageFiles $reportData');
+      //log('Sub func $id $imageFiles $reportData');
 
       // Make the POST request with FormData
       FormData formData = FormData.fromMap({
@@ -2235,12 +2302,12 @@ class ApiService {
         return true;
       } else {
         // Log and throw exception if status code is not 200
-        print('Failed to submit report: ${response.statusCode}');
+        log('Failed to submit report: ${response.statusCode}');
         return false;
       }
     } catch (e) {
-      // Print the error and rethrow it
-      print('Error: $e');
+      // log the error and rethrow it
+      log('Error: $e');
       throw Exception('Failed to submit report: $e');
     }
   }
@@ -2268,10 +2335,57 @@ class ApiService {
       },
     );
 
-    // Dismiss the dialog after 2 seconds
-    Future.delayed(Duration(seconds: 2), () {
+    // Dismiss the dialog after 4 seconds
+    Future.delayed(Duration(seconds: 4), () {
       Navigator.of(context).pop();
     });
+  }
+
+  Future<bool> sendFeedBack(List<dynamic> data) async {
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    try {
+      //log("Data at Feedback: $data");
+      final String email = data[0];
+      final String description = data[1];
+      final List<File> images = List<File>.from(data[2]);
+
+      List<MultipartFile> multipartImages = [];
+
+      for (File image in images) {
+        // Resize each image
+        List<int> resizedImageBytes = await imageResize(image, true, 600);
+
+        // Write to a temp file
+        String tempFilePath = '${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+        File tempFile = File(tempFilePath)..writeAsBytesSync(resizedImageBytes);
+
+        // Add to Multipart list
+        MultipartFile multipartFile = await MultipartFile.fromFile(
+          tempFile.path,
+          filename: tempFile.uri.pathSegments.last,
+        );
+
+        multipartImages.add(multipartFile);
+      }
+
+      FormData formData = FormData.fromMap({
+        'action': 'submitFeedBack',
+        'email': email,
+        'description': description,
+        'images': multipartImages,
+      });
+
+      final response = await dio.post(
+        '$baseUrl/FeedbackHandler/',
+        data: formData,
+      );
+
+      return true;
+    } catch (e) {
+      log('Error: $e');
+      return false;
+    }
   }
 
 

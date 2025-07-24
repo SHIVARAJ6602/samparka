@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -133,7 +134,7 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
         designationController.text = data['designation'] ?? '';
         profileImage = result[0]['profile_image']??'';
         profileImageOrg = result[0]['profile_image']??'';
-        print("porfile image : $profileImage");
+        //log("porfile image : $profileImage");
         selectedState = states.contains(data['state']) ? data['state'] : null;
         districts = selectedState != null ? stateDistricts[selectedState!] ?? [] : [];
 

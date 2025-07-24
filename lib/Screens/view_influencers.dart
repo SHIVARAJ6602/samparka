@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -38,10 +39,10 @@ class _ViewInfluencersPageState extends State<ViewInfluencersPage> {
       result = await apiService.getHashtags();
       setState(() {
         hashtags = result;
-        print('hastags\'s $result');
+        //('hastags\'s $result');
       });
     } catch (e) {
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
   }
 
@@ -67,7 +68,7 @@ class _ViewInfluencersPageState extends State<ViewInfluencersPage> {
     try {
       // Call the apiService.homePage() and store the result
       result = await apiService.getInfluencer(0, 100,widget.id);
-      print(result);
+      //log(result);
       setState(() {
         result.forEach((inf) {
           if (inf['soochi'] == 'AkhilaBharthiya') {
@@ -92,7 +93,7 @@ class _ViewInfluencersPageState extends State<ViewInfluencersPage> {
       });
     } catch (e) {
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
   }
 
@@ -114,7 +115,7 @@ class _ViewInfluencersPageState extends State<ViewInfluencersPage> {
         itemCount: influencers.length,
         itemBuilder: (context, index) {
           final influencer = influencers[index];
-          //print('name: ${influencer['fname']}');
+          //log('name: ${influencer['fname']}');
           return Padding(
             padding: const EdgeInsets.only(bottom: 20),
             child: InfluencerCard(
@@ -167,7 +168,7 @@ class InfluencerList extends StatelessWidget {
       itemCount: influencerData.length,
       itemBuilder: (context, index) {
         final influencer = influencerData[index];
-        //print('name: ${influencer['fname']}');
+        //log('name: ${influencer['fname']}');
         return Padding(
           padding: const EdgeInsets.only(bottom: 20),
           child: InfluencerCard(

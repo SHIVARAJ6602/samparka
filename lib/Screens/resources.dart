@@ -96,7 +96,7 @@ class _ResourcesPageState extends State<ResourcesPage> {
               ),
               SizedBox(height: 25),
               Text(
-                'Other Notifications',
+                'Other Resources',
                 style: TextStyle(
                   fontSize: MediaQuery.of(context).size.width * 0.041+15,
                   fontWeight: FontWeight.w900,

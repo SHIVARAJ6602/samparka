@@ -1,10 +1,9 @@
-import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:samparka/Screens/update_influencer_profile.dart';
 import 'package:samparka/Screens/schedule_interaction.dart';
-import 'package:samparka/Screens/view_influencers.dart';
 import 'package:samparka/Screens/view_interaction.dart';
 import 'package:flutter/services.dart'; // For Clipboard
 import 'package:fluttertoast/fluttertoast.dart'; // For Toast
@@ -17,17 +16,17 @@ class InfluencerProfilePage extends StatefulWidget {
   final String id;
 
   // Receiving the id directly through the constructor
-  InfluencerProfilePage(this.id);
+  const InfluencerProfilePage(this.id, {super.key});
 
   @override
-  _InfluencerProfilePageState createState() => _InfluencerProfilePageState();
+  InfluencerProfilePageState createState() => InfluencerProfilePageState();
 }
 
-class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
+class InfluencerProfilePageState extends State<InfluencerProfilePage> {
 
   final apiService = ApiService();
 
-  List<dynamic> meetings = [{"id":"MT00001","title":"meet1","description":"adadad"},{"id":"MT00002","title":"meet2","description":"adadad"}];
+  List<dynamic> meetings = [{"id":"MT00001","title":"meet1","description":""},{"id":"MT00002","title":"meet2","description":""}];
   late List<dynamic> result;
   List<dynamic> tasks = [];
   List<dynamic> interactions = [];
@@ -61,7 +60,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
     super.initState();
     setState(() {loading = true;});
     GV_id = widget.id;
-    print(GV_id[0][0]);
+    //log(GV_id[0][0]);
     fetchHashtags();
     getGanyavyakthi();
     fetchTasks(GV_id);
@@ -80,12 +79,12 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
       var tags = await apiService.getHashtags();
       setState(() {
         fetchedHashtags = tags;
-        //print('hastags\'s $result');
+        //log('hashtags\'s $result');
         isTagsLoaded = true;
       });
 
     } catch (e) {
-      print("Error fetching tags: $e");
+      log("Error fetching tags: $e");
     }
   }
 
@@ -147,8 +146,8 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
         profileImage = result[0]['profile_image']??'';
         assignedKaryakartha = result[0]['assigned_karyakarta']??'';
         hashtags = getHashtagNames(result[0]['hashtags'], fetchedHashtags);
-        print('Image: ${result[0]['profile_image']??''}');
-        print(result);
+        //log('Image: ${result[0]['profile_image']??''}');
+        //log('$result');
         setState(() {});
 
       });
@@ -163,7 +162,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
       return true;
     } catch (e) {
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
     return false;
   }
@@ -184,7 +183,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
       });
     } catch (e) {
       // Handle any errors here
-      print("Error fetching interactions: $e");
+      log("Error fetching interactions: $e");
     }
   }
 
@@ -195,28 +194,12 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
       setState(() {
         // Update the influencers list with the fetched data
         meetings = result;
-        //print('interactions: $meetings');
+        //log('interactions: $meetings');
       });
     } catch (e) {
       // Handle any errors here
-      print("Error fetching influencers: $e");
+      log("Error fetching influencers: $e");
     }
-  }
-
-  Future<bool> fetchInfluencers() async {
-    try {
-      // Call the apiService.homePage() and store the result
-      var result = await apiService.homePage();
-      setState(() {
-        // Update the influencers list with the fetched data
-        //meetings = result;
-      });
-      return true;
-    } catch (e) {
-      // Handle any errors here
-      print("Error fetching influencers: $e");
-    }
-    return false;
   }
 
 
@@ -224,7 +207,8 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
     double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
     double largeFontSize = normFontSize+4; //20
     double smallFontSize = normFontSize-2;
-
+    largeFontSize = largeFontSize;
+    smallFontSize = smallFontSize;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -380,8 +364,8 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
   @override
   Widget build(BuildContext context) {
     String GV_id = widget.id;
-    print(GV_id);
-    print(widget.id);
+    //log(GV_id);
+    //log(widget.id);
     double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
     double largeFontSize = normFontSize+4; //20
     double smallFontSize = normFontSize-2; //14
@@ -397,7 +381,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
             icon: const Icon(Icons.notifications, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
             onPressed: () {
               // Handle the notification icon tap here (you can add navigation or other actions)
-              print('Notifications tapped');
+              //log('Notifications tapped');
             },
           ),
         ],
@@ -494,7 +478,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                                       builder: (context, constraints) {
                                         double fontSize = largeFontSize + 6; // Default font size
                                         double availableWidth = name.length*largeFontSize;
-                                        //print('$fontSize $availableWidth ${MediaQuery.of(context).size.width * 0.38*2}');
+                                        //log('$fontSize $availableWidth ${MediaQuery.of(context).size.width * 0.38*2}');
 
                                         if (availableWidth > MediaQuery.of(context).size.width * 0.38*2) {
                                           fontSize = 16; // Adjust this to your needs
@@ -540,7 +524,7 @@ class _InfluencerProfilePageState extends State<InfluencerProfilePage> {
                                       ),
                                     ),
                                     SizedBox(height: 4),
-                                    // Sahavasa (Row with Containers)
+                                    // Sahavas (Row with Containers)
                                     Row(
                                       children: [
                                         Container(
