@@ -68,8 +68,8 @@ class _ForceUpdatePageState extends State<ForceUpdatePage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Image.asset('assets/logo/logo.png', height: 150),
-              const SizedBox(height: 20),
+              Image.asset('assets/logo/samparka.png', height: 100),
+              const SizedBox(height: 30),
               const CupertinoActivityIndicator(
                 color: Colors.green,
                 radius: 20, // Customize the radius of the activity indicator

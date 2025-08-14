@@ -86,7 +86,7 @@ class AboutDeveloperPage extends StatelessWidget {
             _sectionTitle('Contact'),
             _infoRow(context, Icons.email, 'shivaraj6602@gmail.com', normFontSize),
             _infoRow(context, Icons.link, 'linkedin.com/in/shivaraj6602', normFontSize),
-            _infoRow(context, Icons.link, 'github.com/SHIVARAJ6602', normFontSize),
+            //_infoRow(context, Icons.link, 'github.com/SHIVARAJ6602', normFontSize),
             _infoRow(context, Icons.location_on, 'Mysuru, India', normFontSize),
 
           ],

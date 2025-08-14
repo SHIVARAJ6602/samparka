@@ -80,18 +80,20 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 elevation: 8,
-                shadowColor: Colors.black.withOpacity(0.2),
+                shadowColor: Colors.black.withAlpha(44),
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      SizedBox(height: 15),
                       Center(
                         child: Image.asset(
-                          'assets/logo/logo.png',
-                          height: 150,
+                          'assets/logo/samparka.png',
+                          height: 70,
                         ),
                       ),
+                      SizedBox(height: 35),
                       const Text(
                         'Privacy Policy Agreement',
                         style: TextStyle(

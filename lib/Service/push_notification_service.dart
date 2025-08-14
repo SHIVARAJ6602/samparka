@@ -1,8 +1,36 @@
+import 'dart:developer';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 FlutterLocalNotificationsPlugin();
+
+void handleMessageData(Map<String, dynamic> data, BuildContext context) {
+  final screen = data['screen'];
+  final id = data['id'];
+
+  if (screen == 'event_detail' && id != null) {
+    Navigator.pushNamed(
+      context,
+      '/event_detail',
+      arguments: {'id': id}, // or just `id` depending on your route setup
+    );
+  } else if (screen == 'Baitak' && id != null) {
+    Navigator.pushNamed(
+      context,
+      '/Baitak',
+      arguments: {'id': id}, // or just `id` depending on your route setup
+    );
+  } else if (screen == 'program' && id != null) {
+    Navigator.pushNamed(
+      context,
+      '/program',
+      arguments: {'id': id}, // or just `id` depending on your route setup
+    );
+  }
+}
 
 Future<void> setupFCMListeners() async {
   const AndroidInitializationSettings initializationSettingsAndroid =
@@ -16,7 +44,7 @@ Future<void> setupFCMListeners() async {
 
   // Handle foreground messages
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    print('📬 Foreground: ${message.notification?.title}');
+    log('📬 Foreground: ${message.notification?.title}');
 
     RemoteNotification? notification = message.notification;
     AndroidNotification? android = message.notification?.android;
@@ -39,15 +67,15 @@ Future<void> setupFCMListeners() async {
     }
   });
 
-  // Handle when app is opened from a terminated state
-  FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
-    if (message != null) {
-      print('🚀 App launched from notification: ${message.data}');
-    }
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    log('📲 Notification clicked: ${message.data}');
+    //handleMessageData(message.data, context);
   });
 
-  // When app is in background and opened via tapping
-  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    print('📲 Notification clicked: ${message.data}');
+  FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+    if (message != null) {
+      log('🚀 App launched from notification: ${message.data}');
+      //handleMessageData(message.data, context);
+    }
   });
 }
