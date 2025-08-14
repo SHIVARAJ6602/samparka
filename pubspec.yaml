@@ -85,19 +85,20 @@ flutter_icons:
 
 flutter_native_splash:
   color: "#ffffff"  # Set the background color to white
-  image: assets/logo/logo_v2.jpg  # (Optional) Add logo to the splash screen
+  #image: assets/logo/samparka.png  # (Optional) Add logo to the splash screen
+  background_image: assets/logo/samparka_1by1.png
   android: true  # Enable for Android
   ios: true  # Enable for iOS
 
   android_12:
-    image: assets/logo/logo_v2.jpg  # (Optional) Add logo to the splash screen
+    image: assets/logo/samparka_1by1.png  # (Optional) Add logo to the splash screen
     icon_background_color: "#ffffff"
-    image_dark: assets/logo/logo_v2.jpg
+    image_dark: assets/logo/samparka_1by1.png
     icon_background_color_dark: "#ffffff"
     android: true  # Enable for Android
     ios: true
 
-  #run cmd - above - flutter pub run flutter_native_splash:create remove dart run flutter_native_splash:remove
+  #run cmd - above - flutter pub run flutter_native_splash:create - remove dart run flutter_native_splash:remove
 
 
 dev_dependencies:
@@ -110,8 +111,6 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
-  flutter_launcher_icons: ^0.14.2
-  flutter_native_splash: ^2.4.5
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

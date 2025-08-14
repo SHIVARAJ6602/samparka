@@ -9,13 +9,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:new_version_plus/new_version_plus.dart';
 import 'package:no_screenshot/no_screenshot.dart';
-import 'package:samparka/Screens/PrivacyPolicyScreen.dart';
+import 'package:samparka/Screens/privacy_policy_screen.dart';
 import 'package:samparka/Screens/home.dart'; //InfluencersPage()
 import 'package:samparka/Screens/login.dart'; //LoginPage()
 import 'package:samparka/Screens/error_page.dart'; //ErrorPage()
 import 'package:samparka/Service/api_service.dart';
-import 'Screens/ForceUpdatePage.dart';
-import 'Service/PushNotificationService.dart'; //TaskListScreen()
+import 'package:samparka/utils/global_navigator_key.dart';
+import 'Screens/event_detail.dart';
+import 'Screens/force_update_page.dart';
+import 'Service/push_notification_service.dart'; //TaskListScreen()
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure bindings are initialized
@@ -29,14 +31,30 @@ Future<void> main() async {
     statusBarBrightness: Brightness.light, // for iOS (optional)
   ));
   NoScreenshot.instance.screenshotOff();
+  //final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>(); //global navigator for cases like notification tap
+
   //screenshotOn()
   //runApp(MyApp());
   //runApp(VersionCheck()); //MyApp called inside VersionCheck
 
-  runApp(MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: ForceUpdatePage(nextPage: MyApp()),
-  ));
+  runApp(
+      MaterialApp(
+        debugShowCheckedModeBanner: false,
+        navigatorKey: navigatorKey,
+        home: ForceUpdatePage(nextPage: MyApp()),
+        routes: {
+          '/event_detail': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments
+            as Map<String, dynamic>;
+            return EventDetailPage(
+              eventId: args['id'],
+              meetingTypeId: args['meetingTypeId'],
+            );
+          },
+        },
+      )
+  );
+
 }
 
 
@@ -86,9 +104,10 @@ class MyApp extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset(
-                'assets/logo/logo.png',
-                height: 150,
+                'assets/logo/samparka.png',
+                height: 100,
               ),
+              SizedBox(height: 30),
               const CupertinoActivityIndicator(
                 color: Colors.green,
                 radius: 20, // Customize the radius of the activity indicator

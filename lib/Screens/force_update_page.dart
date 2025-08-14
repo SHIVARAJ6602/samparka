@@ -11,10 +11,10 @@ class ForceUpdatePage extends StatefulWidget {
   const ForceUpdatePage({super.key, required this.nextPage});
 
   @override
-  State<ForceUpdatePage> createState() => _ForceUpdatePageState();
+  State<ForceUpdatePage> createState() => ForceUpdatePageState();
 }
 
-class _ForceUpdatePageState extends State<ForceUpdatePage> {
+class ForceUpdatePageState extends State<ForceUpdatePage> {
   final apiService = ApiService();
   bool _checkingVersion = true;
   NewVersionPlus? _newVersion;

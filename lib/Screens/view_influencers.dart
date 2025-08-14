@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -6,7 +5,6 @@ import 'package:flutter/services.dart';
 
 import '../Service/api_service.dart';
 import '../widgets/influencer_card.dart';
-import 'influencer_profile.dart';
 
 class ViewInfluencersPage extends StatefulWidget {
   final String id;
@@ -14,10 +12,10 @@ class ViewInfluencersPage extends StatefulWidget {
   const ViewInfluencersPage(this.id,{super.key});
 
   @override
-  _ViewInfluencersPageState createState() => _ViewInfluencersPageState();
+  ViewInfluencersPageState createState() => ViewInfluencersPageState();
 }
 
-class _ViewInfluencersPageState extends State<ViewInfluencersPage> {
+class ViewInfluencersPageState extends State<ViewInfluencersPage> {
   final apiService = ApiService();
 
   List<dynamic> influencers = [];
@@ -39,7 +37,7 @@ class _ViewInfluencersPageState extends State<ViewInfluencersPage> {
       result = await apiService.getHashtags();
       setState(() {
         hashtags = result;
-        //('hastags\'s $result');
+        //('hashtags\'s $result');
       });
     } catch (e) {
       log("Error fetching influencers: $e");
@@ -70,7 +68,7 @@ class _ViewInfluencersPageState extends State<ViewInfluencersPage> {
       result = await apiService.getInfluencer(0, 100,widget.id);
       //log(result);
       setState(() {
-        result.forEach((inf) {
+        for (var inf in result) {
           if (inf['soochi'] == 'AkhilaBharthiya') {
             inf['soochi'] = 'AB';
           } else if (inf['soochi'] == 'PranthyaSampark') {
@@ -87,7 +85,7 @@ class _ViewInfluencersPageState extends State<ViewInfluencersPage> {
           } else if (inf['interaction_level'] == 'Sahabhag') {
             inf['interaction_level'] = 'S4';
           }
-        });
+        }
         // Update the influencers list with the fetched data
         influencers = result;
       });
@@ -102,6 +100,8 @@ class _ViewInfluencersPageState extends State<ViewInfluencersPage> {
     double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
     double largeFontSize = normFontSize+4; //20
     double smallFontSize = normFontSize-2; //14
+    largeFontSize = largeFontSize;
+    smallFontSize = smallFontSize;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -120,7 +120,7 @@ class _ViewInfluencersPageState extends State<ViewInfluencersPage> {
             padding: const EdgeInsets.only(bottom: 20),
             child: InfluencerCard(
               id: influencer['id']!,
-              name: '${influencer['fname'] ?? ''} ${influencer['lname'] ?? '.'}'??'',
+              name: '${influencer['fname'] ?? ''} ${influencer['lname'] ?? '.'}',
               designation: influencer['designation']!,
               description: influencer['description']??'',
               //hashtags: influencer['hashtags']??'',

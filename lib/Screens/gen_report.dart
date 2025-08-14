@@ -6,16 +6,20 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:samparka/Screens/meeting.dart';
-import 'package:samparka/Screens/ProfilePage.dart';
+import 'package:samparka/Screens/profile_page.dart';
 import 'package:samparka/Screens/team.dart';
 import 'package:samparka/Screens/view_report_meetings.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:open_file/open_file.dart';
 import '../Service/api_service.dart';
+import '../widgets/menu_drawer.dart';
 import 'add_influencer.dart';
 import 'help.dart';
 import 'home.dart';
 import 'package:flutter/services.dart';
+import 'login.dart';
+import 'manage_influnecer.dart';
+import 'manage_karyakartha.dart';
 import 'notifications.dart';
 
 //openfile
@@ -379,15 +383,19 @@ class GenReportPageState extends State<GenReportPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.person, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
+        leading: apiService.lvl <= 2
+            ? IconButton(
+          icon: Transform.rotate(
+            angle: 3.1416,
+            child: const Icon(
+              Icons.exit_to_app_rounded,
+              color: Color.fromRGBO(5, 50, 70, 1.0),
+            ),
+          ),
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => ProfilePage()),
-            );
+            SystemNavigator.pop(); // This exits the app
           },
-        ),
+        ):null,
         backgroundColor: Colors.transparent,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
         elevation: 0, // Remove the app bar shadow
@@ -414,6 +422,9 @@ class GenReportPageState extends State<GenReportPage> {
           ),
         ],
       ),
+      /**************menu***********************/
+      drawer: MenuDrawer(apiService: apiService),
+      /***************************menu end*************************************/
       body: Stack(
         children: [
           SingleChildScrollView(

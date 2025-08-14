@@ -1,18 +1,21 @@
 import 'dart:developer';
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:samparka/Screens/home.dart';
 import 'package:samparka/Screens/schedule_meeting.dart';
-import 'package:samparka/Screens/ProfilePage.dart';
+import 'package:samparka/Screens/profile_page.dart';
 import 'package:samparka/Screens/submit_report.dart';
 import 'package:samparka/Screens/team.dart';
 import 'package:samparka/Screens/view_influencers.dart';
 import 'package:samparka/Screens/view_meeting.dart';
+import 'package:samparka/widgets/loading_indicator.dart';
 
 import '../Service/api_service.dart';
-import 'API_TEST.dart';
+import '../widgets/menu_drawer.dart';
+import 'api_test.dart';
 import 'gen_report.dart';
 import 'help.dart';
 import 'notifications.dart';
@@ -100,7 +103,9 @@ class MeetingPageState extends State<MeetingPage> {
     fetchMeeting('1');
     fetchMeeting('2');
     fetchMeeting('3');
-    loading = false;
+    setState(() {
+      loading = false;
+    });
   }
 
   // State variables for radio buttons
@@ -185,25 +190,19 @@ class MeetingPageState extends State<MeetingPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        leading: apiService.lvl > 2
+        leading: apiService.lvl <= 2
             ? IconButton(
-              icon: const Icon(Icons.person, color: Color.fromRGBO(5, 50, 70, 1.0)),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ProfilePage()),
-                );
-              },
-            )
-            : IconButton(
-          icon: const Icon(Icons.home_outlined, color: Color.fromRGBO(5, 50, 70, 1.0)), // Notification icon
+          icon: Transform.rotate(
+            angle: 3.1416,
+            child: const Icon(
+              Icons.exit_to_app_rounded,
+              color: Color.fromRGBO(5, 50, 70, 1.0),
+            ),
+          ),
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => InfluencersPage()),
-            );
+            SystemNavigator.pop(); // This exits the app
           },
-        ),
+        ):null,
         backgroundColor: Colors.transparent,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
         elevation: 0,
@@ -231,256 +230,7 @@ class MeetingPageState extends State<MeetingPage> {
         ],
       ),
       /**************menu***********************/
-      /*
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            DrawerHeader(
-              decoration: BoxDecoration(
-                color: Color.fromRGBO(60, 245, 200, 1.0),
-              ),
-              child: Text(
-                'Menu',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
-              ),
-            ),
-            Container(
-              width: squareSize,
-              height: squareSize,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(80),
-                border: Border.all(color: Colors.grey.shade400),
-                color: Colors.grey[200],
-                boxShadow: [
-                  if(apiService.profileImage != '')
-                    BoxShadow(
-                      color: Color.fromRGBO(5, 50, 70, 1.0).withOpacity(0.5), // Grey shadow color with opacity
-                      spreadRadius: 1, // Spread radius of the shadow
-                      blurRadius: 7, // Blur radius of the shadow
-                      offset: Offset(0, 4), // Shadow position (x, y)
-                    ),
-                  if(apiService.profileImage == '')
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
-                      spreadRadius: 1, // Spread radius of the shadow
-                      blurRadius: 3, // Blur radius of the shadow
-                      offset: Offset(0, 4), // Shadow position (x, y)
-                    ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(80),
-                child: (apiService.profileImage != '')
-                    ? Image.network(
-                  apiService.profileImage,  // Ensure the URL is encoded
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) {
-                      return child;  // Image loaded successfully
-                    } else {
-                      return Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                              (loadingProgress.expectedTotalBytes ?? 1)
-                              : null,
-                        ),
-                      );
-                    }
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.white,  // Placeholder color for invalid image URLs
-                      child: Center(
-                        child: Icon(Icons.error, color: Colors.white),  // Display error icon
-                      ),
-                    );
-                  },
-                )
-                    : Icon(
-                  Icons.person,
-                  color: Colors.white,
-                  size: MediaQuery.of(context).size.width * 0.25,
-                ),
-              ),
-            ),
-            ListTile(
-              title: Text('Username: $username'),
-            ),
-            ListTile(
-              title: Text('Is Authenticated: $isAuthenticated'),
-            ),
-            ListTile(
-              title: Text('Token: ${token.length > 20 ? token.substring(0, 20) : token}..'),
-            ),
-            ListTile(
-              title: Text('User level: $level'),
-            ),
-            Divider(),
-            ListTile(
-              title: Text('API URL: ${currentUrl.length>28 ? currentUrl.substring(8,30): currentUrl}..'),
-            ),
-            // Submenu with radio buttons
-            ExpansionTile(
-              title: Text('Change API URL'),
-              children: [
-                ListTile(
-                  title: Row(
-                    children: [
-                      Radio<String>(
-                        value: 'url1',
-                        groupValue: selectedRadio,
-                        onChanged: (value) {
-                          setState(() {
-                            selectedRadio = value;
-                          });
-                        },
-                      ),
-                      Text(apiService.baseUrl1.substring(8,24)),
-                    ],
-                  ),
-                ),
-                ListTile(
-                  title: Row(
-                    children: [
-                      Radio<String>(
-                        value: 'url2',
-                        groupValue: selectedRadio,
-                        onChanged: (value) {
-                          setState(() {
-                            selectedRadio = value;
-                          });
-                        },
-                      ),
-                      Text(apiService.baseUrl2.substring(8,32)),
-                    ],
-                  ),
-                ),
-                ListTile(
-                  title: Row(
-                    children: [
-                      Radio<String>(
-                        value: 'url3',
-                        groupValue: selectedRadio,
-                        onChanged: (value) {
-                          setState(() {
-                            selectedRadio = value;
-                          });
-                        },
-                      ),
-                      Text(apiService.baseUrl3.substring(8,30)),
-                    ],
-                  ),
-                ),
-                ListTile(
-                  title: TextField(
-                    controller: newUrlController,
-                    decoration: InputDecoration(
-                      labelText: 'Enter a new URL',
-                    ),
-                  ),
-                ),
-                ListTile(
-                  title: ElevatedButton(
-                    onPressed: handleButtonPress,
-                    child: Text('Set url'),
-                  ),
-                ),
-              ],
-            ),
-            //Divider(),
-            // Perform action button
-
-            Divider(),
-            // Login button
-            ListTile(
-              title: ElevatedButton(
-                onPressed: () {
-                  // Navigate to the login page
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                  );
-                },
-                child: Text('Login'),
-              ),
-            ),
-            ListTile(
-              title: ElevatedButton(
-                onPressed: () async {
-                  // Show confirmation dialog
-                  showDialog(
-                    context: context,
-                    builder: (_) => AlertDialog(
-                      title: Text('Logout'),
-                      content: Text('Do you want to logout?'),
-                      actions: <Widget>[
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context); // Close the dialog if canceled
-                          },
-                          child: Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () async {
-                            // Close the confirmation dialog first
-                            Navigator.pop(context);
-
-                            // Show loading dialog during logout
-                            showDialog(
-                              context: context,
-                              builder: (_) => AlertDialog(
-                                title: Text('Logging out...'),
-                                content: Container(
-                                  width: 50,
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(25),
-                                  ),
-                                  child: const Center(
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 5,  // You can adjust this to modify the thickness of the circle
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                            await apiService.logout();
-                            Navigator.pop(context);
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(builder: (context) => LoginPage()),
-                            );
-                          },
-                          child: Text('Yes'),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-                child: Text('LogOut'),
-              ),
-            ),
-            ListTile(
-              title: ElevatedButton(
-                onPressed: () async {
-                  // Show confirmation dialog
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ApiScreen()),
-                  );
-                },
-                child: Text('API'),
-              ),
-            ),
-          ],
-        ),
-      ),
-      */
+      drawer: MenuDrawer(apiService: apiService),
       /***************************menu end*************************************/
       body: Stack(
         children: [
@@ -610,61 +360,91 @@ class MeetingPageState extends State<MeetingPage> {
                       const SizedBox(height: 20),
 
                       Row(
-                        //mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           Expanded(
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    TextButton(
-                                      onPressed: () {
-                                        setState((){
-                                          selectedMeetingType = "baitak";
-                                        });
-                                      },
-                                      child: Text(
-                                        "Baitaks",
-                                        style: selectedMeetingType == "baitak"
-                                            ? TextStyle(color: const Color.fromRGBO(5, 50, 70, 1.0),fontWeight: FontWeight.w600, fontSize: largeFontSize,decoration: TextDecoration.underline)
-                                            : TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600, fontSize: largeFontSize),
-                                      ),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        setState((){
-                                          selectedMeetingType = "program";
-                                        });
-                                      },
-                                      child: Text(
-                                        "Programs",
-                                        style: selectedMeetingType == "program"
-                                            ? TextStyle(color: const Color.fromRGBO(5, 50, 70, 1.0),fontWeight: FontWeight.w600, fontSize: largeFontSize,decoration: TextDecoration.underline)
-                                            : TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600, fontSize: largeFontSize),
-                                      ),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        setState((){
-                                          selectedMeetingType = "smg";
-                                        });
-                                      },
-                                      child: Text(
-                                        "Small Group\nEvents",
-                                        style: selectedMeetingType == "smg"
-                                            ? TextStyle(color: const Color.fromRGBO(5, 50, 70, 1.0),fontWeight: FontWeight.w600, fontSize: normFontSize,decoration: TextDecoration.underline,)
-                                            : TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600, fontSize: normFontSize),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  ],
+                            child: TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  selectedMeetingType = "baitak";
+                                });
+                              },
+                              child: Text(
+                                "Baitaks",
+                                style: selectedMeetingType == "baitak"
+                                    ? TextStyle(
+                                  color: const Color.fromRGBO(5, 50, 70, 1.0),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: largeFontSize,
+                                  decoration: TextDecoration.underline,
+                                )
+                                    : TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: largeFontSize,
                                 ),
-                              ],
+                                textAlign: TextAlign.center,
+                                softWrap: true,
+                                maxLines: 2,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  selectedMeetingType = "program";
+                                });
+                              },
+                              child: Text(
+                                "Programs",
+                                style: selectedMeetingType == "program"
+                                    ? TextStyle(
+                                  color: const Color.fromRGBO(5, 50, 70, 1.0),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: largeFontSize,
+                                  decoration: TextDecoration.underline,
+                                )
+                                    : TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: largeFontSize,
+                                ),
+                                textAlign: TextAlign.center,
+                                softWrap: true,
+                                maxLines: 2,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  selectedMeetingType = "smg";
+                                });
+                              },
+                              child: Text(
+                                "Small Group Events", // <-- no \n needed
+                                style: selectedMeetingType == "smg"
+                                    ? TextStyle(
+                                  color: const Color.fromRGBO(5, 50, 70, 1.0),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: normFontSize,
+                                  decoration: TextDecoration.underline,
+                                )
+                                    : TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: normFontSize,
+                                ),
+                                textAlign: TextAlign.center,
+                                softWrap: true,
+                                maxLines: 2,
+                              ),
                             ),
                           ),
                         ],
                       ),
+
                       Divider(color: Colors.teal,thickness: 1),
                       //scheduled Meeting Title
                       //Row(children: [Text('Scheduled',style: TextStyle(fontSize: largeFontSize,color: const Color.fromRGBO(5, 50, 70, 1.0),fontWeight: FontWeight.w600))],),
@@ -681,9 +461,7 @@ class MeetingPageState extends State<MeetingPage> {
                                 // If the list is empty, show a message
                                 if (loading)
                                   Center(
-                                    child: CircularProgressIndicator(
-                                      backgroundColor: Colors.blue,
-                                    ),
+                                    child: LoadingIndicatorGreen(),
                                   )
                                 else
                                   if (baitak.isEmpty)
@@ -1228,7 +1006,9 @@ class MeetingCard extends StatelessWidget {
     required this.description,
     required this.id,
     required this.dateTime,
-    required this.data, required this.typeId, required this.onReportSubmitted,
+    required this.data,
+    required this.typeId,
+    required this.onReportSubmitted,
   });
 
   @override
@@ -1289,175 +1069,165 @@ class MeetingCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.only(bottom: 1.0), // Adjusted padding
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween, // Added to space out the content
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // Left Column: Meeting details
-              SizedBox(
-                width: MediaQuery.of(context).size.width * 0.50, // Adjust width for details
+              Expanded( // <-- changed from SizedBox with width%
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,  // Dynamic name
+                    AutoSizeText(
+                      title,
                       style: TextStyle(
-                        fontSize: largeFontSize + 6,
-                        fontWeight: FontWeight.bold,
+                        fontSize: largeFontSize+6,
                         color: Colors.white,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     Row(
                       children: [
                         Text(
-                          'Date: ',  // Dynamic description
+                          'Date: ',
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: smallFontSize,
                             color: Colors.white,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          formatDate(dateTime),  // Dynamic description
+                          formatDate(dateTime),
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: smallFontSize,
                             color: Colors.white,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                     Row(
                       children: [
                         Text(
-                          'Time: ',  // Dynamic description
+                          'Time: ',
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: smallFontSize,
                             color: Colors.white,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          formatTime(dateTime),  // Dynamic description
+                          formatTime(dateTime),
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: smallFontSize,
                             color: Colors.white,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
-
-                    SizedBox(height: 1),
+                    const SizedBox(height: 1),
                     Row(
                       children: [
                         Text(
-                          'Location: ',  // Dynamic description
+                          'Location: ',
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: smallFontSize,
                             color: Colors.white,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                        Text(
-                          data['venue'],  // Dynamic description
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: smallFontSize,
-                            color: Colors.white,
+                        Expanded(
+                          child: Text(
+                            data['venue'] ?? '',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: smallFontSize,
+                              color: Colors.greenAccent,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
-                    )
+                    ),
                   ],
                 ),
               ),
 
-              // Right Column: Buttons
-              SizedBox(
-                width: MediaQuery.of(context).size.width * 0.315, // Adjust width for buttons
-                child: Column(
-                  children: [
-                    if(data['status'] == 'scheduled')
-                    Container(
-                      width: MediaQuery.of(context).size.width * 0.30,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: const Color.fromRGBO(5, 50, 70, 1.0),
-                      ),
-                      child: TextButton(
-                        onPressed: () async {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => SubmitReportPage(id,typeId,data)),
-                          );
-
-                          if (result == true) {
-                            onReportSubmitted!(); // Refresh the data
-                          }
-                        },
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.all(10),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              // Right Column: Buttons (only if scheduled)
+              if (data['status'] == 'scheduled')
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.315,
+                  child: Column(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: const Color.fromRGBO(5, 50, 70, 1.0),
                         ),
-                        child: Center(
-                          child: Text(
-                            'Submit Report',
-                            style: TextStyle(
-                              fontSize: smallFontSize,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                        child: TextButton(
+                          onPressed: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => SubmitReportPage(id, typeId, data),
+                              ),
+                            );
+                            if (result == true) {
+                              onReportSubmitted?.call();
+                            }
+                          },
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.all(10),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Submit Report',
+                              style: TextStyle(
+                                fontSize: smallFontSize,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    SizedBox(height: 8),
-                    if(data['status'] == 'scheduled')
-                    Container(
-                      width: MediaQuery.of(context).size.width * 0.30     ,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        gradient: const LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [
-                            Color.fromRGBO(133, 1, 1, 1.0),
-                            Color.fromRGBO(237, 62, 62, 1.0),
-                          ],
+                      const SizedBox(height: 8),
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          gradient: const LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: [
+                              Color.fromRGBO(133, 1, 1, 1.0),
+                              Color.fromRGBO(237, 62, 62, 1.0),
+                            ],
+                          ),
                         ),
-                      ),
-                      child: TextButton(
-                        onPressed: () {},
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.all(10),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Cancel Event',
-                            style: TextStyle(
-                              fontSize: smallFontSize,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                        child: TextButton(
+                          onPressed: () {},
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.all(10),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Cancel Event',
+                              style: TextStyle(
+                                fontSize: smallFontSize,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
             ],
           ),
         ),

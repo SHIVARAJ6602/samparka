@@ -4,7 +4,7 @@ import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:samparka/Screens/home.dart';
-import 'package:samparka/Service/FCM.dart';
+import 'package:samparka/Service/fcm.dart';
 import 'package:samparka/Service/api_service.dart';
 
 class LoginPage extends StatefulWidget {
@@ -51,11 +51,11 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    //spoofUser();
+    //spoofUser('378a16794ca889728cbc404fca062b6ff312ee51');
   }
 
-  Future<void> spoofUser() async {
-    apiService.token = '35bed6d5f6f8ea817de3b6e08c5a83f2a1a64813';
+  Future<void> spoofUser(String token) async {
+    apiService.token = token;
     apiService.privacyPolicyAgreed = true;
     apiService.isAuthenticated = true;
     apiService.userAuth(context);

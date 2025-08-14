@@ -3,11 +3,13 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:samparka/Screens/migrate_influencer.dart';
 import 'package:samparka/Screens/user_profile_page.dart';
 import '../Service/api_service.dart';
 import '../widgets/influencer_card.dart';
 import '../widgets/member_card.dart';
 import 'influencer_profile.dart';
+import 'migrate_influencer_for_migrate_user.dart';
 
 class MigrateUserPage extends StatefulWidget {
   final String userId;
@@ -16,10 +18,10 @@ class MigrateUserPage extends StatefulWidget {
   const MigrateUserPage({required this.userId, required this.lvl, super.key});
 
   @override
-  _MigrateUserPageState createState() => _MigrateUserPageState();
+  MigrateUserPageState createState() => MigrateUserPageState();
 }
 
-class _MigrateUserPageState extends State<MigrateUserPage> {
+class MigrateUserPageState extends State<MigrateUserPage> {
   final apiService = ApiService();
 
   bool loading = true;
@@ -56,6 +58,7 @@ class _MigrateUserPageState extends State<MigrateUserPage> {
   Set<dynamic> _expandedMjIds = {};
   Set<dynamic> _expandedSpIds = {};
   bool isLoading = false;
+  bool migrateInfluencer = false;
 
 
 
@@ -141,7 +144,6 @@ class _MigrateUserPageState extends State<MigrateUserPage> {
       return -1;
     }
   }
-
 
   Future<void> _loadAllData() async {
     setState(() => loading = true);
@@ -319,7 +321,7 @@ class _MigrateUserPageState extends State<MigrateUserPage> {
           backgroundColor: Colors.transparent,
           systemOverlayStyle: SystemUiOverlayStyle.dark,
           elevation: 0,
-          title: Text("Migrate Influencers"),
+          title: Text("Migrate Karyakartha"),
         ),
         body: Center(child: CircularProgressIndicator()),
       );
@@ -333,177 +335,202 @@ class _MigrateUserPageState extends State<MigrateUserPage> {
         elevation: 0,
         title: Text("Migrate Karyakartha"),
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if ((myGatanayaks.isNotEmpty ?? false))
-              Column(
-                mainAxisAlignment: MainAxisAlignment.start,
+      body: Stack(
+        children: [
+          /*
+          if(migrateInfluencer)
+            SingleChildScrollView(
+              child: Column(
                 children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      "My Gatanayaks",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
+                  Container(
+                    padding: EdgeInsets.all(16),
+                    child: SizedBox(height: 600,),
                   ),
-                  ...myGatanayaks.map((gk) {
-                    final gkId = gk['id'];
-                    final gkName = "${gk['first_name']} ${gk['last_name']}";
-                    return ListTile(
-                      title: _buildKaryakarthaProfile(gk, allowTap: false),
-                      onTap: () => _showConfirmationDialog("${gk['first_name']} ${gk['last_name']}", gk['id'], gk, apiService.UserId, apiService.lvl,apiService.UserId),
-                    );
-                  }).toList(),
+                  Text('Migrate inf 1'),
+                  ElevatedButton(onPressed: () {
+                    setState(() {
+                      migrateInfluencer = false;
+                    });
+                  }, child: Text('disable Migrate'),
+                  ),
                 ],
               ),
-
-            Divider(),
-
-            Column(
+            ),
+          */
+          if(!migrateInfluencer)
+            SingleChildScrollView(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    " My Shreni Pramukhs",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Column(
-                  children: myShreniPramukhs.map((sp) {
-                  final spId = sp['id'];
-                  final spName = "${sp['first_name']} ${sp['last_name']}";
-
-                  return ExpansionTile(
-                    key: ValueKey(spId), // Helps maintain state during rebuilds
-                    title: _expandedTileIds.contains(spId)
-                        ? Text(spName)
-                        : AbsorbPointer(child: _buildKaryakarthaProfile(sp, allowTap: false)),
-                    onExpansionChanged: (expanded) {
-                      setState(() {
-                        if (expanded) {
-                          _expandedTileIds.add(spId);
-                        } else {
-                          _expandedTileIds.remove(spId);
-                        }
-                      });
-                    },
+                if ((myGatanayaks.isNotEmpty ?? false))
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      ListTile(
-                        title: _buildKaryakarthaProfile(sp, allowTap: false),
-                        onTap: () => _showConfirmationDialog(spName, spId, sp, myProfile, apiService.lvl , myProfile),
-                      ),
-                      if ((shreniPramukhGatanayaks[spId]?.isNotEmpty ?? false))
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          child: Text("Gatanayaks", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[700])),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "My Gatanayaks",
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
-                      ...?shreniPramukhGatanayaks[spId]?.map((gk) {
+                      ),
+                      ...myGatanayaks.map((gk) {
                         final gkId = gk['id'];
                         final gkName = "${gk['first_name']} ${gk['last_name']}";
                         return ListTile(
                           title: _buildKaryakarthaProfile(gk, allowTap: false),
-                          onTap: () => _showConfirmationDialog("${gk['first_name']} ${gk['last_name']}", gk['id'], gk, myProfile, apiService.lvl , sp),
+                          onTap: () => _showConfirmationDialog("${gk['first_name']} ${gk['last_name']}", gk['id'], gk, apiService.UserId, apiService.lvl,apiService.UserId),
                         );
                       }).toList(),
                     ],
-                  );
-                }).toList(),
+                  ),
+
+                Divider(),
+
+                Column(
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        " My Shreni Pramukhs",
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Column(
+                      children: myShreniPramukhs.map((sp) {
+                        final spId = sp['id'];
+                        final spName = "${sp['first_name']} ${sp['last_name']}";
+
+                        return ExpansionTile(
+                          key: ValueKey(spId), // Helps maintain state during rebuilds
+                          title: _expandedTileIds.contains(spId)
+                              ? Text(spName)
+                              : AbsorbPointer(child: _buildKaryakarthaProfile(sp, allowTap: false)),
+                          onExpansionChanged: (expanded) {
+                            setState(() {
+                              if (expanded) {
+                                _expandedTileIds.add(spId);
+                              } else {
+                                _expandedTileIds.remove(spId);
+                              }
+                            });
+                          },
+                          children: [
+                            ListTile(
+                              title: _buildKaryakarthaProfile(sp, allowTap: false),
+                              onTap: () => _showConfirmationDialog(spName, spId, sp, myProfile, apiService.lvl , myProfile),
+                            ),
+                            if ((shreniPramukhGatanayaks[spId]?.isNotEmpty ?? false))
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                child: Text("Gatanayaks", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[700])),
+                              ),
+                            ...?shreniPramukhGatanayaks[spId]?.map((gk) {
+                              final gkId = gk['id'];
+                              final gkName = "${gk['first_name']} ${gk['last_name']}";
+                              return ListTile(
+                                title: _buildKaryakarthaProfile(gk, allowTap: false),
+                                onTap: () => _showConfirmationDialog("${gk['first_name']} ${gk['last_name']}", gk['id'], gk, myProfile, apiService.lvl , sp),
+                              );
+                            }).toList(),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  ],
                 ),
+
+                Divider(),
+
+                if (mjSP.isNotEmpty)
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "My MJ Samparka Pramukhs",
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Column(
+                        children: mjSP.map((mj) {
+                          final mjId = mj['id'];
+                          final mjName = "${mj['first_name']} ${mj['last_name']}";
+
+                          return ExpansionTile(
+                            key: ValueKey("mj_$mjId"),
+                            title: _expandedMjIds.contains(mjId)
+                                ? Text(mjName)
+                                : AbsorbPointer(child: _buildKaryakarthaProfile(mj, allowTap: false)),
+                            onExpansionChanged: (expanded) {
+                              setState(() {
+                                if (expanded) {
+                                  _expandedMjIds.add(mjId);
+                                } else {
+                                  _expandedMjIds.remove(mjId);
+                                }
+                              });
+                            },
+                            children: [
+                              ListTile(
+                                title: _buildKaryakarthaProfile(mj, allowTap: false),
+                                onTap: () => _showConfirmationDialog(mjName, mjId, mj,myProfile, apiService.lvl, myProfile),
+                              ),
+
+                              // Gatanayaks under MJ
+                              ...?mjSPGatanayaks[mjId]?.map((gk) {
+                                final gkName = "${gk['first_name']} ${gk['last_name']}";
+                                return ListTile(
+                                  title: _buildKaryakarthaProfile(gk, allowTap: false),
+                                  onTap: () => _showConfirmationDialog(gkName, gk['id'], gk,mj,mj['level'],mj),
+                                );
+                              }),
+
+                              // Shreni Pramukhs under MJSP
+                              ...?mjSPShreniPramukhs[mjId]?.map((sp) {
+                                final spId = sp['id'];
+                                final spName = "${sp['first_name']} ${sp['last_name']}";
+
+                                return ExpansionTile(
+                                  key: ValueKey("sp_$spId"),
+                                  title: _expandedSpIds.contains(spId)
+                                      ? Text(spName)
+                                      : AbsorbPointer(child: _buildKaryakarthaProfile(sp, allowTap: false)),
+                                  onExpansionChanged: (expanded) {
+                                    setState(() {
+                                      if (expanded) {
+                                        _expandedSpIds.add(spId);
+                                      } else {
+                                        _expandedSpIds.remove(spId);
+                                      }
+                                    });
+                                  },
+                                  children: [
+                                    ListTile(
+                                      title: _buildKaryakarthaProfile(sp, allowTap: false),
+                                      onTap: () => _showConfirmationDialog(spName, spId, sp,mj,mj['level'],mj),
+                                    ),
+                                    ...?shreniPramukhGatanayaks[spId]?.map((gk) {
+                                      final gkName = "${gk['first_name']} ${gk['last_name']}";
+                                      return ListTile(
+                                        title: _buildKaryakarthaProfile(gk, allowTap: false),
+                                        onTap: () => _showConfirmationDialog(gkName, gk['id'], gk,mj,mj['level'],sp),
+                                      );
+                                    }),
+                                  ],
+                                );
+                              }),
+                            ],
+                          );
+                        }).toList(),
+                      )
+                    ],
+                  ),
               ],
             ),
-
-            Divider(),
-
-            if (mjSP.isNotEmpty)
-              Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      "My MJ Samparka Pramukhs",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Column(
-                    children: mjSP.map((mj) {
-                      final mjId = mj['id'];
-                      final mjName = "${mj['first_name']} ${mj['last_name']}";
-
-                      return ExpansionTile(
-                        key: ValueKey("mj_$mjId"),
-                        title: _expandedMjIds.contains(mjId)
-                            ? Text(mjName)
-                            : AbsorbPointer(child: _buildKaryakarthaProfile(mj, allowTap: false)),
-                        onExpansionChanged: (expanded) {
-                          setState(() {
-                            if (expanded) {
-                              _expandedMjIds.add(mjId);
-                            } else {
-                              _expandedMjIds.remove(mjId);
-                            }
-                          });
-                        },
-                        children: [
-                          ListTile(
-                            title: _buildKaryakarthaProfile(mj, allowTap: false),
-                            onTap: () => _showConfirmationDialog(mjName, mjId, mj,myProfile, apiService.lvl, myProfile),
-                          ),
-
-                          // Gatanayaks under MJ
-                          ...?mjSPGatanayaks[mjId]?.map((gk) {
-                            final gkName = "${gk['first_name']} ${gk['last_name']}";
-                            return ListTile(
-                              title: _buildKaryakarthaProfile(gk, allowTap: false),
-                              onTap: () => _showConfirmationDialog(gkName, gk['id'], gk,mj,mj['level'],mj),
-                            );
-                          }),
-
-                          // Shreni Pramukhs under MJSP
-                          ...?mjSPShreniPramukhs[mjId]?.map((sp) {
-                            final spId = sp['id'];
-                            final spName = "${sp['first_name']} ${sp['last_name']}";
-
-                            return ExpansionTile(
-                              key: ValueKey("sp_$spId"),
-                              title: _expandedSpIds.contains(spId)
-                                  ? Text(spName)
-                                  : AbsorbPointer(child: _buildKaryakarthaProfile(sp, allowTap: false)),
-                              onExpansionChanged: (expanded) {
-                                setState(() {
-                                  if (expanded) {
-                                    _expandedSpIds.add(spId);
-                                  } else {
-                                    _expandedSpIds.remove(spId);
-                                  }
-                                });
-                              },
-                              children: [
-                                ListTile(
-                                  title: _buildKaryakarthaProfile(sp, allowTap: false),
-                                  onTap: () => _showConfirmationDialog(spName, spId, sp,mj,mj['level'],mj),
-                                ),
-                                ...?shreniPramukhGatanayaks[spId]?.map((gk) {
-                                  final gkName = "${gk['first_name']} ${gk['last_name']}";
-                                  return ListTile(
-                                    title: _buildKaryakarthaProfile(gk, allowTap: false),
-                                    onTap: () => _showConfirmationDialog(gkName, gk['id'], gk,mj,mj['level'],sp),
-                                  );
-                                }),
-                              ],
-                            );
-                          }),
-                        ],
-                      );
-                    }).toList(),
-                  )
-                ],
-              ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -645,7 +672,6 @@ class _MigrateUserPageState extends State<MigrateUserPage> {
       ],
     );
   }
-
 
   Widget _buildInfluencerSelectionList(List<dynamic> influencers, String listKey) {
     if (influencers.isEmpty) return Text("No influencers available.");
@@ -1136,6 +1162,9 @@ class _MigrateUserPageState extends State<MigrateUserPage> {
     );
   }
 
+  var karyakarthaHasInfluencers = false;
+  var karyakarthaHasInfluencersAcknowledged = false;
+
   void _showTransferTargetDialog(BuildContext context, dynamic karyakartha, dynamic supervisor, int supervisorLvl, dynamic shreniPramukh) {
     String selectedGroupId = karyakartha['level'].toString();
     int positionId = selectedGroupId == '1'
@@ -1145,212 +1174,474 @@ class _MigrateUserPageState extends State<MigrateUserPage> {
     selectedKaryakarthaId = null;
     selectedShreni = null;
     selectedShreniPramukhId = null;
+    karyakarthaHasInfluencers = false;
+    karyakarthaHasInfluencersAcknowledged = false;
+    var karyakarthaHasInfluencersChecked = false;
+    print('karyakarth : $karyakartha');
+    print('karyakartha.runtimeType: ${karyakartha.runtimeType}');
+    if (karyakartha['shreni'] != null && shrenis.contains(karyakartha['shreni'])) {
+      selectedShreni = karyakartha['shreni'];
+    }
+
+    List<dynamic> validGroups = groups.where((group) {
+      int groupLevel = int.tryParse(group['id'].toString()) ?? 0;
+      return group['id'].toString() == selectedGroupId || groupLevel != karyakartha['level'];
+    }).toList();
+
+    // Prevent duplicate items with same ID
+    final seenIds = <String>{};
+    validGroups = validGroups.where((group) {
+      final id = group['id'].toString();
+      if (seenIds.contains(id)) return false;
+      seenIds.add(id);
+      return true;
+    }).toList();
+
+
+    bool isShreniRequired = selectedGroupId == '1' || selectedGroupId == '2';
+    bool isShreniPramukhRequired = selectedGroupId == '1';
+
+    List<dynamic>? getSupervisorsData() {
+      if (selectedGroupId == '3') {
+        return mjSP;
+      } else if (selectedGroupId == '4') {
+        return mjSP;
+      } else {
+        return mjSP;
+      }
+    }
+
+    Future<bool> checkKaryakarthaHasInfluencer() async {
+      int count = await apiService.getInfluencerCount(karyakartha['id']);
+      karyakarthaHasInfluencers = count > 0;
+      karyakarthaHasInfluencersAcknowledged = !karyakarthaHasInfluencers;
+      return karyakarthaHasInfluencers;
+    }
+
+    List<dynamic> getShreniPramukhData() {
+      if (selectedSupervisorId == apiService.UserId) {
+        return myShreniPramukhs;
+      }
+
+      if (selectedGroupId == '3' || selectedGroupId == '4') {
+        return mjSP;
+      }
+
+      final supervisors = getSupervisorsData();
+      final supervisor = supervisors?.firstWhere(
+            (member) => member['id'].toString() == selectedSupervisorId,
+        orElse: () => null,
+      );
+
+      final pramukhs = mjSPShreniPramukhs[selectedSupervisorId];
+
+      if (pramukhs == null || pramukhs.isEmpty) {
+        return supervisor != null ? [supervisor] : [];
+      }
+
+      final pramukhList = List<Map<String, dynamic>>.from(pramukhs);
+      final alreadyExists = pramukhList.any(
+            (member) => member['id'].toString() == selectedSupervisorId,
+      );
+
+      if (!alreadyExists && supervisor != null) {
+        pramukhList.add(supervisor);
+      }
+
+      return pramukhList;
+    }
+
+
     var positions = ['none','none','none','MSP or JSP','MSP or JSP','Vibhaga Samparka Pramukh','Pranthya Samparka Pramukh','Mahanagara Samparka Pramukh','Mahanagara Samparka Pramukh'];
     showDialog(
       context: context,
       builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            List<dynamic> validGroups = groups.where((group) {
-              int groupLevel = int.tryParse(group['id'].toString()) ?? 0;
-              return group['id'].toString() == selectedGroupId || groupLevel != karyakartha['level'];
-            }).toList();
+        return Stack(
+          children: [
+            StatefulBuilder(
+              builder: (BuildContext context, StateSetter setState) {
+                return AlertDialog(
+                  title: Text("Select Karyakartha you want to transfer under"),
+                  content: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Supervisor
+                        _buildStyledDropdown(
+                          context: context,
+                          hint: 'Select ${positions[positionId]}',
+                          value: selectedSupervisorId,
+                          items: getSupervisorsData()!.map((member) {
+                            return DropdownMenuItem<String>(
+                              value: member['id'],
+                              child: Text('  ${member['first_name']} ${member['last_name']}'),
+                            );
+                          }).toList(),
+                          onChanged: (val) async {
+                            setState(() {
+                              selectedShreniPramukhId = null;
+                              selectedSupervisorId = val;
 
-            // Prevent duplicate items with same ID
-            final seenIds = <String>{};
-            validGroups = validGroups.where((group) {
-              final id = group['id'].toString();
-              if (seenIds.contains(id)) return false;
-              seenIds.add(id);
-              return true;
-            }).toList();
-
-
-            bool isShreniRequired = selectedGroupId == '1' || selectedGroupId == '2';
-            bool isShreniPramukhRequired = selectedGroupId == '1';
-
-            List<dynamic>? getSupervisorsData() {
-              if (selectedGroupId == '3') {
-                return mjSP;
-              } else if (selectedGroupId == '4') {
-                return mjSP;
-              } else {
-                return mjSP;
-              }
-            }
-
-            List<dynamic> getShreniPramukhData() {
-              if (selectedSupervisorId == apiService.UserId) {
-                return myShreniPramukhs;
-              }
-
-              if (selectedGroupId == '3' || selectedGroupId == '4') {
-                return mjSP;
-              }
-
-              final supervisors = getSupervisorsData();
-              final supervisor = supervisors?.firstWhere(
-                    (member) => member['id'].toString() == selectedSupervisorId,
-                orElse: () => null,
-              );
-
-              final pramukhs = mjSPShreniPramukhs[selectedSupervisorId];
-
-              if (pramukhs == null || pramukhs.isEmpty) {
-                return supervisor != null ? [supervisor] : [];
-              }
-
-              final pramukhList = List<Map<String, dynamic>>.from(pramukhs);
-              final alreadyExists = pramukhList.any(
-                    (member) => member['id'].toString() == selectedSupervisorId,
-              );
-
-              if (!alreadyExists && supervisor != null) {
-                pramukhList.add(supervisor);
-              }
-
-              return pramukhList;
-            }
-
-
-
-
-
-            return AlertDialog(
-              title: Text("Select Karyakartha you want to transfer under"),
-              content: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Supervisor
-                    _buildStyledDropdown(
-                      context: context,
-                      hint: 'Select ${positions[positionId]}',
-                      value: selectedSupervisorId,
-                      items: getSupervisorsData()!.map((member) {
-                        return DropdownMenuItem<String>(
-                          value: member['id'],
-                          child: Text('  ${member['first_name']} ${member['last_name']}'),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        setState(() {
-                          selectedShreniPramukhId = null;
-                          selectedSupervisorId = val;
-
-                          // 🔔 Check if pramukhs are missing and show alert
-                          final pramukhs = mjSPShreniPramukhs[val];
-                          if (pramukhs == null || pramukhs.isEmpty) {
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              showDialog(
-                                context: context,
-                                builder: (_) => AlertDialog(
-                                  title: Text("No Shreni Pramukh Found"),
-                                  content: Text(
-                                    "No Shreni Pramukh available under this supervisor. Please select Supervisor as Shreni Pramukh.",
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.of(context).pop(),
-                                      child: Text("OK"),
+                              // checking Shreni Pramukh
+                              final pramukhs = mjSPShreniPramukhs[val];
+                              if (pramukhs == null || pramukhs.isEmpty && int.parse(selectedGroupId)==1) {
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) => AlertDialog(
+                                      title: Text("No Shreni Pramukh Found"),
+                                      content: Text(
+                                        "No Shreni Pramukh available under this supervisor. Please select Supervisor as Shreni Pramukh.",
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.of(context).pop(),
+                                          child: Text("OK"),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              );
+                                  );
+                                });
+                              }
+
+                              //check for influencer under user, to other than gatanayak
+                              if(int.parse(selectedGroupId)>2 && selectedSupervisorId!=null){
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) => AlertDialog(
+                                      title: Text("Influencers Found"),
+                                      content: Text(
+                                        "Before Proceeding:\n This Karyakartha has assigned influencers. Do you want to keep them here or transfer them to another Karyakartha?",
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                            // Add logic to keep influencers with the current Karyakartha
+                                            //handleKeepInfluencers();
+                                          },
+                                          child: Text("Keep with Current"),
+                                        ),
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                            // Navigate to transfer screen or show another dialog
+                                            //handleTransferInfluencers();
+                                          },
+                                          child: Text("Transfer to Another"),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                });
+                              }
+
                             });
-                          }
-                        });
-                      },
-                    ),
-
-
-                    if (isShreniPramukhRequired && selectedSupervisorId != null) ...[
-                      SizedBox(height: 20),
-                      // ShreniPramukh
-                      _buildStyledDropdown(
-                        context: context,
-                        hint: 'Select Shreni Pramukh',
-                        value: selectedShreniPramukhId,
-                        items: getShreniPramukhData()!.map<DropdownMenuItem<String>>((member) {
-                          return DropdownMenuItem<String>(
-                            value: member['id'].toString(),
-                            child: Text('  ${member['first_name']} ${member['last_name']}'),
-                          );
-                        }).toList(),
-                        onChanged: (val) => setState(() => selectedShreniPramukhId = val),
-                      ),
-                    ],
-
-                    if (isShreniRequired) ...[
-                      SizedBox(height: 20),
-                      // Shreni
-                      _buildStyledDropdown(
-                        context: context,
-                        hint: ' Select Shreni',
-                        value: selectedShreni,
-                        items: shrenis.map((shreni) {
-                          return DropdownMenuItem<String>(
-                            value: shreni,
-                            child: Text('  $shreni'),
-                          );
-                        }).toList(),
-                        onChanged: (val) => setState(() => selectedShreni = val),
-                      ),
-                    ],
-
-                    SizedBox(height: 30),
-
-                    // Continue button
-                    if (_isMigrationValid(karyakartha))
-                      Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          gradient: const LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: [
-                              Color.fromRGBO(2, 40, 60, 1),
-                              Color.fromRGBO(60, 170, 145, 1.0)
-                            ],
-                          ),
-                        ),
-                        child: TextButton(
-                          onPressed: () {
-                            // Trigger migration logic
-                            Navigator.of(context).pop();
-                            // TODO: Call API with selectedGroupId, selectedSupervisorId, selectedShreni, etc.
+                            // check for influencer under user, for gatanayak and Shreni Pramukh
+                            if ((int.parse(selectedGroupId) == 1 && selectedSupervisorId != null && selectedShreniPramukhId != null && selectedShreni != null) ||
+                                (int.parse(selectedGroupId) == 2 && selectedSupervisorId != null && selectedShreni != null)) {
+                              isLoading = true;
+                              bool hasInfluencers = await checkKaryakarthaHasInfluencer();
+                              isLoading = false;
+                              if (hasInfluencers) {
+                                setState(() {
+                                  WidgetsBinding.instance.addPostFrameCallback((
+                                      _) {
+                                    showDialog(
+                                      context: context,
+                                      builder: (_) =>
+                                          AlertDialog(
+                                            title: Text("Influencers Found"),
+                                            content: Text(
+                                              "Before Proceeding:\n This Karyakartha has assigned influencers. Do you want to keep them here or transfer them to another Karyakartha?",
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () {
+                                                  setState(()
+                                                  {
+                                                    karyakarthaHasInfluencersAcknowledged = true;
+                                                  }
+                                                  );
+                                                  Navigator.of(context).pop();
+                                                  // Add logic to keep influencers with the current Karyakartha
+                                                },
+                                                child: Text("Keep with Current"),
+                                              ),
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                  setState((){migrateInfluencer = true;});
+                                                  print('karyakartha.runtimeType: ${karyakartha.runtimeType}');
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) => MigrateInfluencerForUserPage(karyakartha['id'], karyakartha: karyakartha,),
+                                                    ),
+                                                  );
+                                                  // Add logic to transfer influencers
+                                                },
+                                                child: Text(
+                                                    "Transfer to Another"),
+                                              ),
+                                            ],
+                                          ),
+                                    );
+                                  });
+                                });
+                              }
+                            }
                           },
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text(
-                                'Continue',
-                                style: TextStyle(
-                                  fontSize: 23,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        ),
+
+
+                        //Shreni Pramukh
+                        if (isShreniPramukhRequired  && selectedSupervisorId != null) ...[
+                          SizedBox(height: 20),
+                          // ShreniPramukh
+                          _buildStyledDropdown(
+                            context: context,
+                            hint: 'Select Shreni Pramukh',
+                            value: selectedShreniPramukhId,
+                            items: getShreniPramukhData().map<DropdownMenuItem<String>>((member) {
+                              return DropdownMenuItem<String>(
+                                value: member['id'].toString(),
+                                child: Text('  ${member['first_name']} ${member['last_name']}'),
+                              );
+                            }).toList(),
+                            onChanged: (val) async {
+                              // Update state with selected value first
+                              setState(() {
+                                selectedShreniPramukhId = val;
+                              });
+
+                              log('selected shreni $selectedShreni');
+                              log('selected Groupid: $selectedGroupId');
+                              log('Selected Supervisor: $selectedSupervisorId');
+                              log('Selected Shreni Pramukh: $selectedShreniPramukhId');
+                              log('Selected Shreni: $selectedShreni');
+
+                              // check for influencer under user, for gatanayak and shreni pramukh
+                              if ((int.parse(selectedGroupId) == 1 && selectedSupervisorId != null && selectedShreniPramukhId != null && selectedShreni != null) ||
+                                  (int.parse(selectedGroupId) == 2 && selectedSupervisorId != null && selectedShreni != null)) {
+                                if(!karyakarthaHasInfluencersChecked){
+                                  isLoading = true;
+                                  bool hasInfluencers = await checkKaryakarthaHasInfluencer();
+                                  print('Has influencers: $hasInfluencers');
+                                  karyakarthaHasInfluencersChecked = true;
+                                  setState((){});
+                                  isLoading = false;
+                                  if (hasInfluencers) {
+                                    setState(() {
+                                      WidgetsBinding.instance.addPostFrameCallback((
+                                          _) {
+                                        showDialog(
+                                          context: context,
+                                          builder: (_) =>
+                                              AlertDialog(
+                                                title: Text("Influencers Found"),
+                                                content: Text(
+                                                  "Before Proceeding:\n This Karyakartha has assigned influencers. Do you want to keep them here or transfer them to another Karyakartha?",
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      setState(()
+                                                      {
+                                                        karyakarthaHasInfluencersAcknowledged = true;
+                                                      }
+                                                      );
+                                                      Navigator.of(context).pop();
+                                                      // Add logic to keep influencers with the current Karyakartha
+                                                    },
+                                                    child: Text("Keep with Current"),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(context).pop();
+                                                      setState((){
+                                                        migrateInfluencer = true;
+                                                      });
+                                                      // Add logic to transfer influencers
+                                                    },
+                                                    child: Text(
+                                                        "Transfer to Another"),
+                                                  ),
+                                                ],
+                                              ),
+                                        );
+                                      });
+                                    });
+                                  }
+                                }
+                              }
+                            },
+
+                          ),
+                        ],
+
+
+
+                        //select shreni
+                        if (isShreniRequired) ...[
+                          SizedBox(height: 20),
+                          // Shreni
+                          _buildStyledDropdown(
+                            context: context,
+                            hint: ' Select Shreni',
+                            value: selectedShreni,
+                            items: shrenis.map((shreni) {
+                              return DropdownMenuItem<String>(
+                                value: shreni,
+                                child: Text('  $shreni'),
+                              );
+                            }).toList(),
+                            onChanged: (val) async {
+                              // Update state with selected value first
+                              setState(() {
+                                selectedShreni = val;
+                              });
+
+                              log('selected shreni $selectedShreni');
+
+                              // check for influencer under user, for gatanayak and Shreni Pramukh
+                              if ((int.parse(selectedGroupId) == 1 && selectedSupervisorId != null && selectedShreniPramukhId != null && selectedShreni != null) ||
+                                  (int.parse(selectedGroupId) == 2 && selectedSupervisorId != null && selectedShreni != null)) {
+                                isLoading = true;
+                                bool hasInfluencers = await checkKaryakarthaHasInfluencer();
+                                isLoading = false;
+                                if (hasInfluencers) {
+                                  setState(() {
+                                    WidgetsBinding.instance.addPostFrameCallback((
+                                        _) {
+                                      showDialog(
+                                        context: context,
+                                        builder: (_) =>
+                                            AlertDialog(
+                                              title: Text("Influencers Found"),
+                                              content: Text(
+                                                "Before Proceeding:\n This Karyakartha has assigned influencers. Do you want to keep them here or transfer them to another Karyakartha?",
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () {
+                                                    setState(()
+                                                    {
+                                                      karyakarthaHasInfluencersAcknowledged = true;
+                                                    }
+                                                    );
+                                                    Navigator.of(context).pop();
+                                                    // Add logic to keep influencers with the current Karyakartha
+                                                  },
+                                                  child: Text("Keep with Current"),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                    setState((){migrateInfluencer = true;});
+                                                    print('karyakartha.runtimeType: ${karyakartha.runtimeType}');
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) => MigrateInfluencerForUserPage(karyakartha['id'], karyakartha: karyakartha,),
+                                                      ),
+                                                    );
+                                                    // Add logic to transfer influencers
+                                                  },
+                                                  child: Text("Transfer to Another"),
+                                                ),
+                                              ],
+                                            ),
+                                      );
+                                    });
+                                  });
+                                }
+                              }
+                            },
+                          ),
+                        ],
+
+                        SizedBox(height: 30),
+
+                        if (_isMigrationValid(karyakartha)) ...[
+                          Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              gradient: const LinearGradient(
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                                colors: [
+                                  Color.fromRGBO(2, 40, 60, 1),
+                                  Color.fromRGBO(60, 170, 145, 1.0)
+                                ],
                               ),
-                              const SizedBox(width: 8),
-                              Transform.rotate(
-                                angle: 4.7124,
-                                child: Image.asset(
-                                  'assets/icon/arrow.png',
-                                  color: Colors.white,
-                                  width: 15,
-                                  height: 15,
-                                ),
+                            ),
+                            child: TextButton(
+                              onPressed: () {
+                                // Trigger migration logic
+                                Navigator.of(context).pop();
+                                // TODO: Call API with selectedGroupId, selectedSupervisorId, selectedShreni, etc.
+                              },
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text(
+                                    'Continue',
+                                    style: TextStyle(
+                                      fontSize: 23,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Transform.rotate(
+                                    angle: 4.7124,
+                                    child: Image.asset(
+                                      'assets/icon/arrow.png',
+                                      color: Colors.white,
+                                      width: 15,
+                                      height: 15,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+            if(isLoading)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withOpacity(0.5), // Semi-transparent overlay
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(
+                          color: Colors.white,
+                        ),
+                        const SizedBox(height: 10), // Space between the indicator and text
+                        const Text(
+                          'Loading...',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            );
-          },
+          ],
         );
       },
     );
@@ -1386,11 +1677,22 @@ class _MigrateUserPageState extends State<MigrateUserPage> {
   }
 
   bool _isMigrationValid(dynamic karyakartha) {
+    log('validate called');
+    log('karyakarthaHasInfluencersAcknowledged ${!karyakarthaHasInfluencersAcknowledged}');
+    log('selectedGroupId $selectedGroupId');
+    log('selectedSupervisorId $selectedSupervisorId');
+    log('selectedShreniPramukhId $selectedShreniPramukhId');
+    log('selectedShreni $selectedShreni');
+
     if (selectedGroupId == null || selectedSupervisorId == null) return false;
-
+    log('check1 complete');
     if ((selectedGroupId == '1' || selectedGroupId == '2') && selectedShreni == null) return false;
-
-    if (selectedGroupId == '1' && selectedSupervisorId == null || selectedShreniPramukhId == null) return false;
+    log('check2 complete');
+    if (selectedGroupId == '1' && (selectedSupervisorId == null || selectedShreniPramukhId == null)) return false;
+    log('check3 complete');
+    if(karyakarthaHasInfluencersAcknowledged == false) return false;
+    log('check4 complete');
+    log('validated');
 
     return true;
   }
@@ -1424,6 +1726,7 @@ class _MigrateUserPageState extends State<MigrateUserPage> {
     showDialog(
       context: context,
       builder: (context) {
+        var migrateInfluencerChecked = false;
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: Text(
@@ -1473,6 +1776,38 @@ class _MigrateUserPageState extends State<MigrateUserPage> {
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  void _showMigrateInfluencerDialog(String userName, String userId, dynamic karyakartha,dynamic supervisor, int supervisorLvl,dynamic shreniPramukh) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Influencers Found"),
+          content: Text(
+            "Before Proceeding:\n This Karyakartha has assigned influencers. Do you want to keep them here or transfer them to another Karyakartha?",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Add logic to keep influencers with the current Karyakartha
+                //handleKeepInfluencers();
+              },
+              child: Text("Keep with Current"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Navigate to transfer screen or show another dialog
+                //handleTransferInfluencers();
+              },
+              child: Text("Transfer to Another"),
+            ),
+          ],
         );
       },
     );

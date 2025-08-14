@@ -1,15 +1,13 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-
+import 'package:samparka/widgets/loading_indicator.dart';
 import '../Service/api_service.dart';
 
 class ViewInteractionPage extends StatefulWidget {
   final String id;
 
-  // Receiving the id directly through the constructor
   const ViewInteractionPage(this.id, {super.key});
 
   @override
@@ -17,73 +15,32 @@ class ViewInteractionPage extends StatefulWidget {
 }
 
 class _ViewInteractionPageState extends State<ViewInteractionPage> {
-
   final ApiService apiService = ApiService();
-
-  // These controllers can be replaced with the meeting data from your API or passed data
-  final TextEditingController summaryDataController = TextEditingController();
-  final TextEditingController titleDataController = TextEditingController();
-  final TextEditingController placeDataController = TextEditingController();
-  final TextEditingController descriptionController = TextEditingController();
-  final TextEditingController materials_distributedController = TextEditingController();
-  final TextEditingController virtual_meeting_linkController = TextEditingController();
-  final TextEditingController discussion_pointsController = TextEditingController();
-
-  List<String> status = ['scheduled', 'completed', 'cancelled'];
-
-  DateTime? selectedDate;
-  DateTime? selectedMeetDate;
-  String? selectedStatus = 'scheduled';
-  //late List<dynamic> result;
-  late List<dynamic> Interaction = [];
+  Map<String, dynamic>? interaction;
 
   @override
   void initState() {
     super.initState();
-    //log('id : ${widget.id} - view interaction');
     fetchInteraction(widget.id);
-    /*titleDataController.text = Interaction[0]['title']??'';
-    placeDataController.text = Interaction[0]['meeting_place']??'';
-    selectedMeetDate = DateTime.parse(Interaction[0]['meeting_datetime']??'');
-    selectedStatus = Interaction[0]['status'];
-    descriptionController.text = Interaction[0]['description'];
-    materials_distributedController.text = Interaction[0]['materials_distributed']??'';
-    virtual_meeting_linkController.text = 'virtualLink'??'';
-    discussion_pointsController.text = 'discussionPoints';*/
-    //log(apiService.getInteractionByID(widget.id));
   }
 
-  Future<bool> fetchInteraction(MT_id)async{
-    try{
-      var result = await apiService.getInteractionByID(MT_id);
-      setState(() {
-        Interaction = result;
-        titleDataController.text = Interaction[0]['title']??'';
-        placeDataController.text = Interaction[0]['meeting_place']??'';
-        //selectedMeetDate = DateTime.parse(Interaction[0]['meeting_datetime']??'1970-01-01T00:00:00Z');
-        selectedMeetDate = DateTime.tryParse(Interaction[0]['meeting_datetime'] ?? '1970-01-01T00:00:00Z');
-        //selectedMeetDate = DateFormat('yyyy-MM-dd HH:mm a').format(DateTime.parse(Interaction[0]['meeting_datetime'] ?? '1970-01-01T00:00:00Z'));;
-        selectedStatus = Interaction[0]['status'];
-        descriptionController.text = Interaction[0]['description'];
-        materials_distributedController.text = Interaction[0]['materials_distributed']??'';
-        virtual_meeting_linkController.text = 'virtualLink'??'';
-        discussion_pointsController.text = Interaction[0]['discussion_points'];
-      });
-      setState(() {
-
-      });
-      return true;
+  Future<void> fetchInteraction(String mtId) async {
+    try {
+      var result = await apiService.getInteractionByID(mtId);
+      if (result.isNotEmpty) {
+        setState(() {
+          interaction = result[0];
+        });
+      }
     } catch (e) {
       log("Error fetching interaction: $e");
     }
-    return false;
   }
 
   @override
   Widget build(BuildContext context) {
-    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
-    double largeFontSize = normFontSize + 4; //20
-    double smallFontSize = normFontSize - 2; //14
+    double normFontSize = MediaQuery.of(context).size.width * 0.041;
+    double largeFontSize = normFontSize + 4;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -91,238 +48,138 @@ class _ViewInteractionPageState extends State<ViewInteractionPage> {
         backgroundColor: Colors.transparent,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
-                          child: Text(
-                            'Title: ${titleDataController.text}',
-                            style: TextStyle(
-                              fontSize: 23,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 30),
-                        Container(
-                          width: MediaQuery.of(context).size.width*0.9,
-                          padding: const EdgeInsets.all(10.0),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
-                            //color: Color.fromRGBO(255, 255, 255, 0.1), // Background color
-                            borderRadius: BorderRadius.circular(12), // Rounded corners for the border
-                            border: Border.all(
-                              color: Colors.grey.shade400, // Border color
-                              width: 1, // Border width
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 8.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,  // Ensure text aligns to the left
-                                    children: [
-                                      Text(
-                                        'Description:',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w900,
-                                          fontSize: largeFontSize,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                      Text(
-                                        descriptionController.text.trim(),
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w400,
-                                          fontSize: normFontSize,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Divider(),
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 8.0),
-                                  child: Text(
-                                    'Place: ${placeDataController.text}',
-                                    style: TextStyle(
-                                      fontSize: normFontSize,
-                                      fontStyle: FontStyle.italic,
-                                      color: Colors.blueAccent,
-                                    ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 8.0),
-                                  child: Text(
-                                    'Date & Time: ${selectedMeetDate == null
-                                        ? "Date & Time not set"
-                                        : DateFormat('yyyy-MM-dd hh:mm a').format(selectedMeetDate!.toLocal())}',
-                                    style: TextStyle(
-                                      fontSize: normFontSize,
-                                      color: selectedMeetDate == null ? Colors.red : Colors.green,
-                                    ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 8.0),
-                                  child: Text(
-                                    'Discussion Points:\n ${discussion_pointsController.text}',
-                                    style: TextStyle(
-                                      fontSize: normFontSize,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 8.0),
-                                  child: Text(
-                                    'Materials Given:\n ${materials_distributedController.text}',
-                                    style: TextStyle(
-                                      fontSize: normFontSize,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 8.0),
-                                  child: Text(
-                                    'Status: ${selectedStatus ?? "Scheduled"}',
-                                    style: TextStyle(
-                                      fontSize: normFontSize,
-                                      fontWeight: FontWeight.bold,
-                                      color: selectedStatus == null ? Colors.orange : Colors.green,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                          ),
-                        ),
-                        /*
-                        _buildReadOnlyField("Meeting Title", titleDataController),
-
-                        SizedBox(height: 16),
-                        _buildReadOnlyField("Meeting Description", descriptionController),
-
-                        SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildReadOnlyField("Location", placeDataController),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[200], // Background color
-                                  borderRadius: BorderRadius.circular(12), // Rounded corners for the border
-                                  border: Border.all(
-                                    color: Colors.grey.shade400, // Border color
-                                    width: 1, // Border width
-                                  ),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12), // Padding inside the container
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.calendar_today,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        selectedMeetDate == null
-                                            ? "Date & Time"
-                                            : "${selectedMeetDate!.toLocal()}".split(' ')[0],
-                                        style: TextStyle(color: Colors.grey.shade600, fontSize: normFontSize),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 16),
-                        _buildReadOnlyField("Discussion Points", discussion_pointsController),
-                        SizedBox(height: 16),
-                        _buildReadOnlyField("Virtual Meeting Link", virtual_meeting_linkController),
-                        SizedBox(height: 16),
-                        _buildReadOnlyField("Materials Distributed", materials_distributedController),
-                        SizedBox(height: 16),
-                        // Display the status dropdown
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(15),
-                            border: Border.all(color: Colors.grey.shade400, width: 1.0),
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 10),
-                            child: Text(
-                              selectedStatus ?? "Scheduled",
-                              style: TextStyle(color: Colors.grey.shade600, fontSize: normFontSize),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 20),*/
-                      ],
-                    ),
-                  ),
+      body: interaction == null
+          ? const Center(child: LoadingIndicatorGreen())
+          : SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Title - bold
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Text(
+                interaction!['title'] ?? 'No Title',
+                style: TextStyle(
+                  fontSize: 23,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
               ),
-            ],
-          ),
-        ],
+            ),
+            const SizedBox(height: 20),
+
+            // Main Container (same old style)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade400, width: 1),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Discussion Points at top
+                  Text(
+                    "Discussion Points:",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: largeFontSize,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    interaction!['discussion_points']?.toString().trim() ??
+                        'No discussion points',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w400,
+                        fontSize: normFontSize,
+                        color: Colors.black87),
+                  ),
+                  SizedBox(height: 8,),
+                  // Action Points
+                  Text(
+                    "Action Points:",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: largeFontSize,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    interaction!['action_points'] ?? 'No action points',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w400,
+                        fontSize: normFontSize,
+                        color: Colors.black87),
+                  ),
+                  SizedBox(height: 8,),
+                  // Materials
+                  Text(
+                    "Materials Given:",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: largeFontSize,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    interaction!['materials_distributed'] ??
+                        'No materials given',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w400,
+                        fontSize: normFontSize,
+                        color: Colors.black87),
+                  ),
+
+                  const Divider(height: 24),
+
+                  // Place
+                  Text(
+                    "Place: ${interaction!['meeting_place'] ?? 'Not specified'}",
+                    style: TextStyle(
+                      fontSize: normFontSize,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.blueAccent,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Date (only date)
+                  Text(
+                    "Date: ${_formatDate(interaction!['meeting_datetime'])}",
+                    style: TextStyle(
+                      fontSize: normFontSize,
+                      color: interaction!['meeting_datetime'] == null
+                          ? Colors.red
+                          : Colors.green,
+                    ),
+                  ),
+
+
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildReadOnlyField(String hint, TextEditingController controller) {
-    return TextField(
-      controller: controller,
-      readOnly: true,
-      decoration: InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: Colors.grey[200],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(
-            color: Colors.grey.shade400, // Set the grey border color
-            width: 1.0,  // Set the border width
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(
-            color: Colors.grey.shade600, // Darker grey when focused
-            width: 1.5, // Slightly thicker border when focused
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(
-            color: Colors.grey.shade400, // Light grey when not focused
-            width: 1.0,
-          ),
-        ),
-      ),
-    );
+  String _formatDate(String? dateTimeString) {
+    if (dateTimeString == null || dateTimeString.isEmpty) {
+      return 'Date not set';
+    }
+    try {
+      final parsedDate = DateTime.tryParse(dateTimeString);
+      if (parsedDate == null) return 'Invalid Date';
+      return DateFormat('yyyy-MM-dd').format(parsedDate.toLocal());
+    } catch (e) {
+      return 'Invalid Date';
+    }
   }
 }

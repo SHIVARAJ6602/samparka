@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
 import '../Screens/influencer_profile.dart';
@@ -74,14 +74,14 @@ class InfluencerCard extends StatelessWidget {
                         boxShadow: [
                           if(profileImage.isNotEmpty)
                             BoxShadow(
-                              color: Color.fromRGBO(5, 50, 70, 1.0).withOpacity(0.5), // Grey shadow color with opacity
+                              color: Color.fromRGBO(5, 50, 70, 1.0).withAlpha(180), // Grey shadow color with opacity
                               spreadRadius: 1, // Spread radius of the shadow
                               blurRadius: 7, // Blur radius of the shadow
                               offset: Offset(0, 4), // Shadow position (x, y)
                             ),
                           if(profileImage.isEmpty)
                             BoxShadow(
-                              color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
+                              color: Colors.grey.withAlpha(180), // Grey shadow color with opacity
                               spreadRadius: 1, // Spread radius of the shadow
                               blurRadius: 3, // Blur radius of the shadow
                               offset: Offset(0, 4), // Shadow position (x, y)
@@ -131,7 +131,7 @@ class InfluencerCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            name, // Dynamic name
+                            name,
                             style: TextStyle(
                               fontSize: largeFontSize+6,
                               fontWeight: FontWeight.bold,
@@ -140,11 +140,17 @@ class InfluencerCard extends StatelessWidget {
                           ),
                           Row(
                             children: [
-                              Text(
-                                designation,
-                                style: TextStyle(
-                                  fontSize: smallFontSize,
-                                  color: Color.fromRGBO(5, 50, 70, 1.0),
+                              Expanded(
+                                child: AutoSizeText(
+                                  designation,
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                    fontSize: smallFontSize,
+                                    color: Color.fromRGBO(5, 50, 70, 1.0),
+                                  ),
+                                  minFontSize: smallFontSize.floorToDouble(),
+                                  stepGranularity: 1.0,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               SizedBox(width: 5),
@@ -156,11 +162,17 @@ class InfluencerCard extends StatelessWidget {
                                     color: Color.fromRGBO(5, 50, 70, 1.0),
                                   )),
                               SizedBox(width: 5),
-                              Text(
-                                shreni,
-                                style: TextStyle(
-                                  fontSize: smallFontSize,
-                                  color: Color.fromRGBO(5, 50, 70, 1.0),
+                              Expanded(
+                                child: AutoSizeText(
+                                  shreni,
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                    fontSize: smallFontSize,
+                                    color: Color.fromRGBO(5, 50, 70, 1.0),
+                                  ),
+                                  minFontSize: smallFontSize.floorToDouble(),
+                                  stepGranularity: 1.0,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],

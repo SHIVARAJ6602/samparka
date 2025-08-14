@@ -1,391 +1,329 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import '../Service/api_service.dart';
 
 class AddInteractionPage extends StatefulWidget {
-  final String id;
+  final String id; // Interaction ID passed from previous screen
 
-  // Receiving the id directly through the constructor
-  AddInteractionPage(this.id);
+  const AddInteractionPage(this.id, {super.key});
 
   @override
-  _AddInteractionPageState createState() => _AddInteractionPageState();
+  AddInteractionPageState createState() => AddInteractionPageState();
 }
 
-class _AddInteractionPageState extends State<AddInteractionPage> {
-
+class AddInteractionPageState extends State<AddInteractionPage> {
   final apiService = ApiService();
 
-  final TextEditingController summaryDataController = TextEditingController();
-  final TextEditingController titleDataController = TextEditingController();
-  final TextEditingController placeDataController = TextEditingController();
-  final TextEditingController descriptionController = TextEditingController();
-  final TextEditingController materials_distributedController = TextEditingController();
-  final TextEditingController virtual_meeting_linkController = TextEditingController();
-  final TextEditingController discussion_pointsController = TextEditingController();
-  //final TextEditingController discussion_pointsDataController = TextEditingController();
-  //final TextEditingController action_pointsDataController = TextEditingController();
+  // Controllers
+  final TextEditingController discussionPointsController = TextEditingController();
+  final TextEditingController actionPointsController = TextEditingController();
+  final TextEditingController materialsDistributedController = TextEditingController();
 
+  // Dropdown values
+  final List<String> meetTypes = [
+    'Routine Samparka (Regular Connect)',
+    'Invitation Meeting',
+    'Accidental / Chance Meeting',
+    'Follow-up Meeting',
+    'Special Purpose Meeting',
+    'Others'
+  ];
+  String selectedMeetType = 'Routine Samparka (Regular Connect)';
 
-  List<String> status = ['scheduled', 'completed', 'cancelled'];
+  final List<String> locationTypes = [
+    'Home / Residence',
+    'Office / Workplace',
+    'Event / Function Venue',
+    'Public Place / Hotel'
+  ];
+  String selectedLocationType = 'Home / Residence';
 
-  DateTime? selectedDate;
+  // Dates
   DateTime? selectedMeetDate;
-  String? selectedStatus = 'scheduled';
 
-
-  // Function to show the DatePicker and update the selected date
-  Future<void> _selectDateTime(BuildContext context, bool isFromDate) async {
-    final DateTime initialDate = DateTime.now();
-    final DateTime firstDate = DateTime(2000);
-    final DateTime lastDate = DateTime(2101);
-
-    // Pick date
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: firstDate,
-      lastDate: lastDate,
-    );
-
-    if (pickedDate != null) {
-      // Pick time
-      final TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(initialDate),
-      );
-
-      if (pickedTime != null) {
-        setState(() {
-          // Combine selected date and time
-          selectedMeetDate = DateTime(
-            pickedDate.year,
-            pickedDate.month,
-            pickedDate.day,
-            pickedTime.hour,
-            pickedTime.minute,
-          );
-          //log(selectedMeetDate);
-        });
-      }
-    }
+  @override
+  void initState() {
+    super.initState();
+    selectedMeetDate = DateTime.now(); // default today's date
   }
 
-  // Function to show the DatePicker and update the selected date
-  Future<void> _selectDate(BuildContext context, bool isFromDate) async {
-    final DateTime initialDate = DateTime.now();
-    final DateTime firstDate = DateTime(2000);
-    final DateTime lastDate = DateTime(2101);
-
+  /// Select date (no time picker)
+  Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: initialDate,
-      firstDate: firstDate,
-      lastDate: lastDate,
+      initialDate: selectedMeetDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
     );
 
-    if (picked != null && picked != initialDate) {
+    if (picked != null) {
       setState(() {
-        selectedDate = picked;
+        selectedMeetDate = picked;
       });
     }
   }
 
-  Future<bool> createInteraction(){
-    List<dynamic> interactionData = [
-      titleDataController.text, // 0: Meeting Title
-      placeDataController.text, // 1: Meeting Place
-      selectedMeetDate?.toIso8601String(), // 2: Meeting Date
-      selectedStatus, // 3: Meeting Status
-      descriptionController.text, // 4: Description
-      materials_distributedController.text, // 5: Materials Distributed
-      virtual_meeting_linkController.text, // 6: Virtual Meeting Link
-      discussion_pointsController.text,//7
-      widget.id, // 8: Interaction ID (or widget ID)
-    ];
-    return apiService.createInteraction(interactionData);
+  /// API call with validation
+  Future<void> _saveInteraction() async {
+    if (discussionPointsController.text.trim().isEmpty ||
+        actionPointsController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill in Discussion and Action Points'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
+    final interactionData = {
+      "title": selectedMeetType,
+      "locationType": selectedLocationType,
+      "meetingDate": selectedMeetDate?.toIso8601String(),
+      "discussionPoints": discussionPointsController.text.trim(),
+      "actionPoints": actionPointsController.text.trim(),
+      "materialsDistributed": materialsDistributedController.text.trim(),
+      "ganyavyaktiId": widget.id
+    };
+
+    final success = await apiService.createInteraction(interactionData);
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Interaction Saved'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to save interaction, please try later.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
+  @override
+  void dispose() {
+    discussionPointsController.dispose();
+    actionPointsController.dispose();
+    materialsDistributedController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    //log(widget.id);
-    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
-    double largeFontSize = normFontSize+4; //20
-    double smallFontSize = normFontSize-2; //14
+    double normFontSize = MediaQuery.of(context).size.width * 0.041;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        title: const Text(
+          "Add Meeting",
+          style: TextStyle(color: Color.fromRGBO(5, 50, 70, 1.0)),
+        ),
+        centerTitle: true,
         backgroundColor: Colors.transparent,
-        systemOverlayStyle: SystemUiOverlayStyle.dark,
         elevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Schedule or Create Meeting",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              color: Color.fromRGBO(5, 50, 70, 1.0),
-                            ),
-                          ),
-                          SizedBox(height: 30),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Meeting Type
+            _buildDropdown(
+              value: selectedMeetType,
+              items: meetTypes,
+              onChanged: (val) => setState(() => selectedMeetType = val!),
+              hint: 'Meeting Type',
+            ),
+            const SizedBox(height: 10),
 
-                          _buildTextField(hint: "Meeting Title", controller: titleDataController),
-
-                          SizedBox(height: 16),
-                          TextField(
-                            controller: descriptionController,
-                            maxLines: null,
-                            minLines: 3,
-                            decoration: InputDecoration(
-                              hintText: 'Meeting Description',
-                              filled: true,
-                              fillColor: Colors.grey[200],
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
-                                borderSide: BorderSide(color: Colors.grey.shade400),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
-                                borderSide: BorderSide(color: Colors.grey.shade600, width: 1.5),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
-                                borderSide: BorderSide(
-                                  color: Colors.grey.shade400, // Light grey when not focused
-                                  width: 1.0,
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 10),
-
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(hint: "Location", controller: placeDataController),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[200], // Background color
-                                    borderRadius: BorderRadius.circular(12), // Rounded corners for the border
-                                    border: Border.all(
-                                      color: Colors.grey.shade400, // Border color
-                                      width: 1, // Border width
-                                    ),
-                                  ),
-                                  child: TextButton(
-                                    onPressed: () => _selectDateTime(context, true),
-                                    style: TextButton.styleFrom(
-                                      padding: const EdgeInsets.all(12), // Remove default padding of TextButton
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.calendar_today,
-                                          color: Colors.grey.shade600,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          selectedMeetDate == null
-                                              ? "Date & Time"
-                                              : "${selectedMeetDate!.toLocal()}".split(' ')[0],
-                                          style: TextStyle(color: Colors.grey.shade600,fontSize: normFontSize),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 16),
-                          TextField(
-                            controller: discussion_pointsController,
-                            maxLines: null,
-                            minLines: 5,
-                            decoration: InputDecoration(
-                              hintText: 'note any discussion points.',
-                              filled: true,
-                              fillColor: Colors.grey[200],
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
-                                borderSide: BorderSide(color: Colors.grey.shade400),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
-                                borderSide: BorderSide(color: Colors.grey.shade600, width: 1.5),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
-                                borderSide: BorderSide(
-                                  color: Colors.grey.shade400, // Light grey when not focused
-                                  width: 1.0,
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 16),
-                          _buildTextField(hint: "Virtual Meeting Link", controller: virtual_meeting_linkController),
-                          SizedBox(height: 16),
-                          _buildTextField(hint: "Materials Distributed", controller: materials_distributedController),
-                          SizedBox(height: 16),
-                          //status
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(15),
-                              border: Border.all(color: Colors.grey.shade400, width: 1.0),
-                            ),
-                            child: DropdownButton<String>(
-                              hint: Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 10),
-                                child: Text('Scheduled'),
-                              ),
-                              value: selectedStatus,
-                              onChanged: (String? newState) {
-                                setState(() {
-                                  selectedStatus = newState;
-                                });
-                                //log(selectedStatus);
-                              },
-                              items: status.map<DropdownMenuItem<String>>((state) {
-                                return DropdownMenuItem<String>(
-                                  value: state,
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 10),
-                                    child: Text(state),
-                                  ),
-                                );
-                              }).toList(),
-                              isExpanded: true,
-                              underline: Container(),
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          // Submit Button
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                gradient: const LinearGradient(
-                                  begin: Alignment.centerLeft,
-                                  end: Alignment.centerRight,
-                                  colors: [
-                                    Color.fromRGBO(2, 40, 60, 1),
-                                    Color.fromRGBO(60, 170, 145, 1.0),
-                                  ],
-                                ),
-                              ),
-                              child: TextButton(
-                                onPressed: () async {
-                                  if (await createInteraction()) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Created interaction'),
-                                        backgroundColor: Colors.green,
-                                      ),
-                                    );
-                                    Navigator.pop(context);
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Failed to create interaction'),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                  }
-                                },
-                                style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
-                                ),
-                                child: Center(
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Text(
-                                        'Submit',
-                                        style: TextStyle(
-                                          fontSize: 23,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Transform.rotate(
-                                        angle: 4.7124,
-                                        child: Image.asset(
-                                          'assets/icon/arrow.png',
-                                          color: Colors.white,
-                                          width: 15,
-                                          height: 15,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 20),
-                        ],
-                      ),
-                    ),
+            // Location & Date row
+            Row(
+              children: [
+                Expanded(
+                  child: _buildDropdown(
+                    value: selectedLocationType,
+                    items: locationTypes,
+                    onChanged: (val) => setState(() => selectedLocationType = val!),
+                    hint: 'Location Type',
                   ),
-              ),
-            ],
-          ),
-        ],
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildDatePickerButton(normFontSize, context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Discussion points
+            _buildMultiLineField(
+              controller: discussionPointsController,
+              hint: 'Discussion Points',
+              minLines: 5,
+            ),
+            const SizedBox(height: 10),
+
+            // Action points
+            _buildMultiLineField(
+              controller: actionPointsController,
+              hint: 'Action Points',
+              minLines: 3,
+            ),
+            const SizedBox(height: 16),
+
+            // Materials given
+            _buildTextField(
+              controller: materialsDistributedController,
+              hint: "Books / Materials Given",
+            ),
+            const SizedBox(height: 20),
+
+            // Save button
+            _buildSaveButton(),
+          ],
+        ),
       ),
     );
   }
 
+  /// Common dropdown builder
+  Widget _buildDropdown({
+    required String value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+    required String hint,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.grey.shade400, width: 1.0),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          onChanged: onChanged,
+          items: items.map((item) {
+            return DropdownMenuItem(
+              value: item,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Text(item),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  /// Common text field
   Widget _buildTextField({required String hint, required TextEditingController controller}) {
     return TextField(
-      controller: controller, // Assign the dynamic controller
-      decoration: InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: Colors.grey[200],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(
-            color: Colors.grey.shade400, // Set the grey border color
-            width: 1.0,  // Set the border width
-          ),
+      controller: controller,
+      decoration: _inputDecoration(hint),
+    );
+  }
+
+  /// Common multiline text field
+  Widget _buildMultiLineField({
+    required String hint,
+    required TextEditingController controller,
+    int minLines = 3,
+  }) {
+    return TextField(
+      controller: controller,
+      minLines: minLines,
+      maxLines: null,
+      decoration: _inputDecoration(hint),
+    );
+  }
+
+  /// Input Decoration
+  InputDecoration _inputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      filled: true,
+      fillColor: Colors.grey[200],
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: BorderSide(color: Colors.grey.shade400),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: BorderSide(color: Colors.grey.shade600, width: 1.5),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: BorderSide(color: Colors.grey.shade400, width: 1.0),
+      ),
+    );
+  }
+
+  /// Date picker button
+  Widget _buildDatePickerButton(double fontSize, BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade400, width: 1),
+      ),
+      child: TextButton(
+        onPressed: () => _selectDate(context),
+        style: TextButton.styleFrom(padding: const EdgeInsets.all(12)),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_today, color: Colors.grey.shade600),
+            const SizedBox(width: 8),
+            Text(
+              selectedMeetDate == null
+                  ? "Select Date"
+                  : "${selectedMeetDate!.toLocal()}".split(' ')[0],
+              style: TextStyle(color: Colors.grey.shade600, fontSize: fontSize),
+            ),
+          ],
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(
-            color: Colors.grey.shade600, // Darker grey when focused
-            width: 1.5, // Slightly thicker border when focused
-          ),
+      ),
+    );
+  }
+
+  /// Save button
+  Widget _buildSaveButton() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        gradient: const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            Color.fromRGBO(2, 40, 60, 1),
+            Color.fromRGBO(60, 170, 145, 1.0),
+          ],
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(
-            color: Colors.grey.shade400, // Light grey when not focused
-            width: 1.0,
-          ),
+      ),
+      child: TextButton(
+        onPressed: _saveInteraction,
+        style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 10)),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Text(
+              'Save',
+              style: TextStyle(fontSize: 23, color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(width: 8),
+            Icon(Icons.check_circle, color: Colors.white)
+          ],
         ),
       ),
     );

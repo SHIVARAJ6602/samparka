@@ -1,29 +1,24 @@
-import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
-import 'dart:io';
 
 import '../Service/api_service.dart';
 import '../widgets/influencer_card.dart';
 import 'user_profile_page.dart';
-import 'influencer_profile.dart';
 
 class ViewEventPage extends StatefulWidget {
   final String id;
   final String type;
   final Map<String, dynamic> data;
 
-  // Receiving the id directly through the constructor
   const ViewEventPage(this.id,this.data,this.type, {super.key});
 
   @override
-  _ViewEventPageState createState() => _ViewEventPageState();
+  ViewEventPageState createState() => ViewEventPageState();
 }
 
-class _ViewEventPageState extends State<ViewEventPage> {
+class ViewEventPageState extends State<ViewEventPage> {
 
   final ApiService apiService = ApiService();
 
@@ -32,9 +27,9 @@ class _ViewEventPageState extends State<ViewEventPage> {
   final TextEditingController titleDataController = TextEditingController();
   final TextEditingController placeDataController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
-  final TextEditingController materials_distributedController = TextEditingController();
-  final TextEditingController virtual_meeting_linkController = TextEditingController();
-  final TextEditingController discussion_pointsController = TextEditingController();
+  final TextEditingController materialsDistributedController = TextEditingController();
+  final TextEditingController virtualMeetingLinkController = TextEditingController();
+  final TextEditingController discussionPointsController = TextEditingController();
 
   List<String> status = ['scheduled', 'completed', 'cancelled'];
 
@@ -43,8 +38,8 @@ class _ViewEventPageState extends State<ViewEventPage> {
   String? selectedStatus = 'scheduled';
   //late List<dynamic> result;
   late List<dynamic> images = [];
-  late List<dynamic> Interaction = [];
-  late List<dynamic> GanyaVyakthis = [];
+  late List<dynamic> interaction = [];
+  late List<dynamic> ganyavyakthis = [];
   late List<dynamic> karyakartha = [];
 
   @override
@@ -52,6 +47,7 @@ class _ViewEventPageState extends State<ViewEventPage> {
     super.initState();
     //log('data = ${widget.data}');
     //log(widget.data['meeting_datetime']);
+    print(widget.data);
     if(widget.data['ganyavyakti'] != null){
       if(widget.data['ganyavyakti'].isNotEmpty){
         //log('GV = ${widget.data['ganyavyakti']}');
@@ -65,23 +61,12 @@ class _ViewEventPageState extends State<ViewEventPage> {
     }
 
     fetchEventImages('1');
-
-    //fetchEvent(widget.id);
-    /*titleDataController.text = Interaction[0]['title']??'';
-    placeDataController.text = Interaction[0]['meeting_place']??'';
-    selectedMeetDate = DateTime.parse(Interaction[0]['meeting_datetime']??'');
-    selectedStatus = Interaction[0]['status'];
-    descriptionController.text = Interaction[0]['description'];
-    materials_distributedController.text = Interaction[0]['materials_distributed']??'';
-    virtual_meeting_linkController.text = 'virtualLink'??'';
-    discussion_pointsController.text = 'discussionPoints';*/
-    //log(apiService.getInteractionByID(widget.id));
   }
 
-  Future<bool> fetchGanyavyakthi(List<dynamic> GV_ids) async {
+  Future<bool> fetchGanyavyakthi(List<dynamic> gvIds) async {
     try {
-      for (var GV in GV_ids) {  // Corrected loop syntax
-        var result = await apiService.getGanyavyakthi(GV);
+      for (var gv in gvIds) {  // Corrected loop syntax
+        var result = await apiService.getGanyavyakthi(gv);
         if (result[0]['soochi'] == 'AkhilaBharthiya') {
           result[0]['soochi'] = 'AB';
         } else if (result[0]['soochi'] == 'PranthyaSampark') {
@@ -98,7 +83,7 @@ class _ViewEventPageState extends State<ViewEventPage> {
         } else if (result[0]['interaction_level'] == 'Sahabhag') {
           result[0]['interaction_level'] = 'S4';
         }// Call your service
-        GanyaVyakthis.add(result);
+        ganyavyakthis.add(result);
       }
       setState(() {
         // Trigger a UI update (this might be inside a StatefulWidget)
@@ -110,10 +95,10 @@ class _ViewEventPageState extends State<ViewEventPage> {
     return false;
   }
 
-  Future<bool> fetchKaryakartha(List<dynamic> KR_ids) async {
+  Future<bool> fetchKaryakartha(List<dynamic> krIds) async {
       try {
-        for (var KR in KR_ids) {  // Corrected loop syntax
-          var result = await apiService.getKaryakartha(KR);  // Call your service
+        for (var kr in krIds) {  // Corrected loop syntax
+          var result = await apiService.getKaryakartha(kr);  // Call your service
           karyakartha.add(result);
         }
         setState(() {
@@ -126,22 +111,22 @@ class _ViewEventPageState extends State<ViewEventPage> {
       return false;
     }
 
-  Future<bool> fetchEvent(Event_id)async{
+  Future<bool> fetchEvent(eventId)async{
     try{
-      var result = await apiService.getInteractionByID(Event_id);
+      var result = await apiService.getInteractionByID(eventId);
       setState(() {
         //log("fetching event by ID");
-        Interaction = result;
-        titleDataController.text = Interaction[0]['title']??'';
-        placeDataController.text = Interaction[0]['meeting_place']??'';
-        selectedMeetDate = DateTime.parse(Interaction[0]['meeting_datetime']??'');
-        selectedMeetDate = DateTime.tryParse(Interaction[0]['meeting_datetime'] ?? '1970-01-01T00:00:00Z');
-        selectedStatus = Interaction[0]['status'];
-        descriptionController.text = Interaction[0]['description'];
-        materials_distributedController.text = Interaction[0]['materials_distributed']??'';
-        virtual_meeting_linkController.text = 'virtualLink'??'';
-        discussion_pointsController.text = Interaction[0]['discussion_points'];
-        selectedStatus = Interaction[0]['status'];
+        interaction = result;
+        titleDataController.text = interaction[0]['title']??'';
+        placeDataController.text = interaction[0]['meeting_place']??'';
+        selectedMeetDate = DateTime.parse(interaction[0]['meeting_datetime']??'');
+        selectedMeetDate = DateTime.tryParse(interaction[0]['meeting_datetime'] ?? '1970-01-01T00:00:00Z');
+        selectedStatus = interaction[0]['status'];
+        descriptionController.text = interaction[0]['description'];
+        materialsDistributedController.text = interaction[0]['materials_distributed']??'';
+        virtualMeetingLinkController.text = 'virtualLink';
+        discussionPointsController.text = interaction[0]['discussion_points'];
+        selectedStatus = interaction[0]['status'];
         //images = Interaction[0]['images'];
         //log("images : $images");
       });
@@ -155,63 +140,24 @@ class _ViewEventPageState extends State<ViewEventPage> {
     return false;
   }
 
-  Future<bool> fetchEventImages(Event_id)async{
-      try{
-        var imageResult = await apiService.getEventImages(widget.id, widget.type);
-        setState(() {
-          images = imageResult;
-          final imageCount = images.isNotEmpty ? (images[0]['images'] as List?)?.length ?? 0 : 0;
-          //log('images = $imageCount');
-        });
-        setState(() {
+  Future<bool> fetchEventImages(eventId)async{
+    try{
+      var imageResult = await apiService.getEventImages(widget.id, widget.type);
+      setState(() {
+        images = imageResult;
+        //final imageCount = images.isNotEmpty ? (images[0]['images'] as List?)?.length ?? 0 : 0;
+        //log('images = $imageCount');
+      });
+      setState(() {
 
-        });
-        return true;
-      } catch (e) {
-        log("Error fetching interaction: $e");
-      }
-      return false;
+      });
+      return true;
+    } catch (e) {
+      log("Error fetching interaction: $e");
     }
-
-  void _openFullScreenImage(BuildContext context, String imageUrl) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            iconTheme: IconThemeData(color: Colors.white),
-            elevation: 0,
-          ),
-          body: Center(
-            child: InteractiveViewer(
-              child: Image.network(
-                Uri.encodeFull(imageUrl),
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return Center(
-                    child: Icon(Icons.error, color: Colors.white),
-                  );
-                },
-                loadingBuilder: (context, child, progress) {
-                  if (progress == null) return child;
-                  return Center(
-                    child: CircularProgressIndicator(
-                      value: progress.expectedTotalBytes != null
-                          ? progress.cumulativeBytesLoaded /
-                          (progress.expectedTotalBytes ?? 1)
-                          : null,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+    return false;
   }
+
 
   void _openFullScreenGallery(BuildContext context, List imageList, int initialIndex) {
     Navigator.push(
@@ -231,6 +177,7 @@ class _ViewEventPageState extends State<ViewEventPage> {
     double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
     double largeFontSize = normFontSize + 4; //20
     double smallFontSize = normFontSize - 2; //14
+    smallFontSize = smallFontSize;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(),
@@ -376,7 +323,7 @@ class _ViewEventPageState extends State<ViewEventPage> {
                           ),
 
 
-                        if(GanyaVyakthis.isNotEmpty)
+                        if(ganyavyakthis.isNotEmpty)
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -397,12 +344,12 @@ class _ViewEventPageState extends State<ViewEventPage> {
                                 child: Column(
                                   children: [
                                     // If the list is empty, show a message
-                                    if (GanyaVyakthis.isNotEmpty)
+                                    if (ganyavyakthis.isNotEmpty)
                                       Column(
                                         children: List.generate(
-                                          (GanyaVyakthis.length < 4) ? GanyaVyakthis.length : 3, // Display either all members or just 3
+                                          (ganyavyakthis.length < 4) ? ganyavyakthis.length : 3, // Display either all members or just 3
                                               (index) {
-                                            final influencer = GanyaVyakthis[index]; // Access the member data
+                                            final influencer = ganyavyakthis[index]; // Access the member data
                                             return Padding(
                                               padding: const EdgeInsets.only(left: 10, right: 10, top: 10,bottom: 10),
                                               child: InfluencerCard(
@@ -429,33 +376,6 @@ class _ViewEventPageState extends State<ViewEventPage> {
                               SizedBox(height: 10,),
                             ],
                           ),
-
-                        /*if(images.isNotEmpty)
-                          Expanded(
-                            child: ListView.builder(
-                              itemCount: images[0]['images'].length,
-                              itemBuilder: (context, index) {
-                                String base64Image = images[0]['images'][index];
-                                return CircleAvatar(
-                                  radius: MediaQuery.of(context).size.width * 0.08,
-                                  backgroundColor: Colors.grey[200],
-                                  //backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-                                  backgroundImage: base64Image.isNotEmpty
-                                      ? MemoryImage(base64Decode(base64Image.split(',')[1]))
-                                      : null,
-                                  child: base64Image.isEmpty
-                                      ? Icon(
-                                    Icons.person,
-                                    color: Colors.white,
-                                    size: MediaQuery.of(context).size.width * 0.14,
-                                  )
-                                      : null,
-                                );
-                              },
-                            ),
-                          ),
-*/
-
 
                         if(karyakartha.isNotEmpty)
                           Column(
@@ -507,8 +427,8 @@ class _ViewEventPageState extends State<ViewEventPage> {
                                               padding: const EdgeInsets.only(left: 10, right: 10, top: 10,bottom: 10),
                                               child: MemberCard(
                                                 id: member[0]['id']!,
-                                                first_name: member[0]['first_name']!,
-                                                last_name: member[0]['last_name']!,
+                                                firstName: member[0]['first_name']!,
+                                                lastName: member[0]['last_name']!,
                                                 designation: member[0]['designation']??'',
                                                 profileImage: member[0]['profile_image'] != null && member[0]['profile_image']!.isNotEmpty
                                                     ? member[0]['profile_image']!
@@ -535,53 +455,20 @@ class _ViewEventPageState extends State<ViewEventPage> {
       ),
     );
   }
-
-  Widget _buildReadOnlyField(String hint, TextEditingController controller) {
-    return TextField(
-      controller: controller,
-      readOnly: true,
-      decoration: InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: Colors.grey[200],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(
-            color: Colors.grey.shade400, // Set the grey border color
-            width: 1.0,  // Set the border width
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(
-            color: Colors.grey.shade600, // Darker grey when focused
-            width: 1.5, // Slightly thicker border when focused
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(
-            color: Colors.grey.shade400, // Light grey when not focused
-            width: 1.0,
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class MemberCard extends StatelessWidget {
   final String id;
-  final String first_name;
-  final String last_name;
+  final String firstName;
+  final String lastName;
   final String designation;
   final String profileImage;
 
   const MemberCard({
     super.key,
 
-    required this.first_name,
-    required this.last_name,
+    required this.firstName,
+    required this.lastName,
     required this.designation,
     required this.profileImage,
     required this.id,
@@ -641,7 +528,7 @@ class MemberCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$first_name $last_name', // Dynamic name
+                      '$firstName $lastName', // Dynamic name
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
@@ -678,10 +565,10 @@ class FullScreenImageGallery extends StatefulWidget {
   });
 
   @override
-  _FullScreenImageGalleryState createState() => _FullScreenImageGalleryState();
+  FullScreenImageGalleryState createState() => FullScreenImageGalleryState();
 }
 
-class _FullScreenImageGalleryState extends State<FullScreenImageGallery> {
+class FullScreenImageGalleryState extends State<FullScreenImageGallery> {
   late PageController _pageController;
 
   @override

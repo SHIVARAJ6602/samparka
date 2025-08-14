@@ -345,94 +345,6 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                //Migrate Influencer
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start, // Align the text to the start
-                  children: [
-                    Text(
-                      "Migrate",
-                      style: TextStyle(
-                        fontSize: largeFontSize,
-                        fontWeight: FontWeight.w600,
-                        color: const Color.fromRGBO(5, 50, 70, 1.0),
-                      ),
-                    ),
-                    AutoSizeText(
-                      "Influencer",
-                      maxLines: 1,
-                      style: TextStyle(
-                        fontSize: largeFontSize * 2,
-                        fontWeight: FontWeight.bold,
-                        color: const Color.fromRGBO(5, 50, 70, 1.0),
-                      ),
-                      minFontSize: largeFontSize.floorToDouble(),
-                      stepGranularity: 1.0,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-                Expanded(child: SizedBox()),
-                if (apiService.lvl>2)
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      gradient: const LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [
-                          Color.fromRGBO(16, 115, 65, 1.0),
-                          Color.fromRGBO(60, 170, 145, 1.0),
-                        ],
-                      ),
-                    ),
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => MigrateInfluencerPage(apiService.UserId)),
-                          );
-                        },
-                        style: TextButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(6),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Migrate',
-                                style: TextStyle(
-                                  fontSize: normFontSize,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Transform.rotate(
-                                angle: 4.7124,
-                                child: Image.asset(
-                                  'assets/icon/arrow.png',
-                                  color: Colors.white,
-                                  width: 15,
-                                  height: 15,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
             // Title Section
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween, // Distribute space between the columns
@@ -465,7 +377,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                 ),
                 Expanded(child: SizedBox()),
                 // Second Column: Button with Upload and Rotated Arrow Icon (pushed to the right)
-                if (!apiService.UserId.startsWith('TKR'))
+                /*if (!apiService.UserId.startsWith('TKR'))
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
@@ -521,7 +433,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                       ),
                     ),
                   ),
-
+                */
               ],
             ),
             if (apiService.phone == '7337620623' || apiService.UserId.startsWith('TKR'))

@@ -1,25 +1,24 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:developer';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:samparka/Screens/meeting.dart';
-import 'package:samparka/Screens/my_team.dart';
-import 'package:samparka/Screens/ProfilePage.dart';
+import 'package:samparka/Screens/profile_page.dart';
 import 'package:samparka/Screens/team.dart';
+import 'package:samparka/Screens/view_meeting.dart';
+import '../utils/global_navigator_key.dart';
 import '../widgets/approval_card.dart';
 import '../widgets/influencer_card.dart';
-import 'Temp2.dart';
+import '../widgets/menu_drawer.dart';
 import 'add_influencer.dart';
+import 'event_detail.dart';
 import 'gen_report.dart';
 import 'help.dart';
-import 'influencer_profile.dart';
 import 'login.dart';
-import 'API_TEST.dart'; //TaskListScreen()
-import 'migrate_influencer.dart';
+import 'api_test.dart'; //TaskListScreen()
 import 'notifications.dart';
 import 'view_influencers.dart';
 import 'package:samparka/Service/api_service.dart';
@@ -160,12 +159,13 @@ class _InfluencersPageState extends State<InfluencersPage> {
       await Future.delayed(const Duration(seconds: 2));
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pop(context); // Pop the current screen
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => LoginPage()),
+              (route) => false, // removes all previous routes
         );
       });
+
     }
   }
 
@@ -413,7 +413,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
     return false;
   }
 
-  void createdmember(String id) {
+  void createdMember(String id) {
     final index = TeamMembers.indexWhere((member) => member['id'] == id);
 
     if (index != -1) {
@@ -426,7 +426,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
 
 
 
-  /******************************************************/
+  /// ***************************************************
 
   @override
   Widget build(BuildContext context) {
@@ -437,6 +437,20 @@ class _InfluencersPageState extends State<InfluencersPage> {
         child: Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
+            leading: apiService.lvl <= 2
+                ? IconButton(
+              icon: Transform.rotate(
+                angle: 3.1416,
+                child: const Icon(
+                  Icons.exit_to_app_rounded,
+                  color: Color.fromRGBO(5, 50, 70, 1.0),
+                ),
+              ),
+              onPressed: () {
+                SystemNavigator.pop(); // This exits the app
+              },
+            ):null,
+            /*
             leading: apiService.lvl > 2
                 ? IconButton(
               icon: const Icon(Icons.person, color: Color.fromRGBO(5, 50, 70, 1.0)),
@@ -458,7 +472,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                 onPressed: () {
                 SystemNavigator.pop(); // This exits the app
               },
-            ),
+            ),*/
             backgroundColor: Colors.transparent,
             systemOverlayStyle: SystemUiOverlayStyle.dark,
             elevation: 0,
@@ -487,181 +501,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
             ],
           ),
           /**************menu***********************/
-          drawer: Drawer(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: <Widget>[
-                DrawerHeader(
-                  decoration: BoxDecoration(
-                    color: Color.fromRGBO(60, 245, 200, 1.0),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        'Samparka',
-                        style: TextStyle(
-                          color: Colors.black54,
-                          fontSize: largeFontSize,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                ListTile(
-                  title: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => ProfilePage()),
-                      );
-                    },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min, // This will make the row wrap its content
-                      children: [
-                        Text('Profile'),
-                        SizedBox(width: 8), // Add some space between the text and the icon
-                        Icon(Icons.person), // Gear icon
-                      ],
-                    ),
-                  ),
-                ),
-                ListTile(
-                  title: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => MigrateInfluencerPage(apiService.UserId)),
-                      );
-                    },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min, // This will make the row wrap its content
-                      children: [
-                        Text('Migrate Influencer'),
-                        SizedBox(width: 8), // Add some space between the text and the icon
-                        Icon(Icons.person), // Gear icon
-                      ],
-                    ),
-                  ),
-                ),
-                ListTile(
-                  title: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => ProfilePage()),
-                      );
-                    },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min, // This will make the row wrap its content
-                      children: [
-                        Text('Profile'),
-                        SizedBox(width: 8), // Add some space between the text and the icon
-                        Icon(Icons.person), // Gear icon
-                      ],
-                    ),
-                  ),
-                ),
-                /*
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Colors.grey, // Border color
-                      width: 2,           // Border width
-                    ),
-                    borderRadius: BorderRadius.circular(8), // Optional: rounded corners
-                  ),
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => ProfilePage()),
-                      );
-                    },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min, // This will make the row wrap its content
-                      children: [
-                        Text('Profile'),
-                        SizedBox(width: 8), // Add some space between the text and the icon
-                        Icon(Icons.person), // Gear icon
-                      ],
-                    ),
-                  ),
-                ),
-
-                 */
-                Divider(),
-                ListTile(
-                  title: ElevatedButton(
-                    onPressed: () async {
-                      // Show confirmation dialog
-                      showDialog(
-                        context: context,
-                        builder: (_) => AlertDialog(
-                          title: Text('Logout'),
-                          content: Text('Do you want to logout?'),
-                          actions: <Widget>[
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(context); // Close the dialog if canceled
-                              },
-                              child: Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () async {
-                                // Close the confirmation dialog first
-                                Navigator.pop(context);
-
-                                // Show loading dialog during logout
-                                showDialog(
-                                  context: context,
-                                  builder: (_) => AlertDialog(
-                                    title: Text('Logging out...'),
-                                    content: Container(
-                                      width: 50,
-                                      height: 50,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(25),
-                                      ),
-                                      child: const Center(
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 5,  // You can adjust this to modify the thickness of the circle
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                                await apiService.logout();
-                                Navigator.pop(context);
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => LoginPage()),
-                                );
-                              },
-                              child: Text('Yes'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                    child: Text('Logout'),
-                  ),
-                ),
-                /*
-                ListTile(
-                  title: ElevatedButton(
-                    onPressed: () async {
-                      // Show confirmation dialog
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const ApiScreen()),
-                      );
-                    },
-                    child: Text('API'),
-                  ),
-                ),*/
-              ],
-            ),
-          ),
+          drawer: MenuDrawer(apiService: apiService),
           /***************************menu end*************************************/
           body: Stack(
             children: [
@@ -727,6 +567,33 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                 ],
                               ),
                             ),
+                          TextButton(
+                              onPressed: () async {
+                                final id = 'BT00000007';
+                                final typeId = '1';
+                                Map<String, dynamic> eventData;
+
+                                Future<Map<String, dynamic>> fetchEventData() async {
+                                  try {
+                                    final apiService = ApiService();
+                                    final result = await apiService.getEventByID(id, typeId);
+                                    if (result.isNotEmpty) {
+                                      return eventData = result[0];
+                                    }
+                                  } catch (e) {
+                                    log("Error loading event: $e");
+                                  }
+                                  return {}; // Return empty map if error occurs or result is empty
+                                }
+                                eventData = await fetchEventData();
+                                navigatorKey.currentState?.push(
+                                  MaterialPageRoute(
+                                    builder: (_) => ViewEventPage(id, eventData,typeId),
+                                  ),
+                                );
+                              },
+                              child: Text('data')
+                          ),
                           if(!isSearching)
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -797,7 +664,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                             //log('index $selectedIndex');
                                                             assign = true;
                                                           });
-                                                          createdmember(ApproveMember['created_by']);
+                                                          createdMember(ApproveMember['created_by']);
                                                           //log('Selected index: $selectedIndex'); // log selected index
                                                         },
                                                         soochi: influencer['soochi']??'',
@@ -881,7 +748,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                                   padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
                                                   child: InfluencerCard(
                                                     id: influencer['id']??'',
-                                                    name: '${influencer['fname']} ${influencer['lname']}'??'',
+                                                    name: '${influencer['fname']} ${influencer['lname']}',
                                                     designation: influencer['designation']??'',
                                                     description: influencer['description']??'',
                                                     //hashtags: influencer['hashtags']??'',
@@ -982,7 +849,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
               if(assign)
                 Positioned.fill(
                   child: Container(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withAlpha(180),
                     child: Center(
                       child: Container(
                         height: MediaQuery.of(context).size.height * 0.65,
@@ -1020,14 +887,14 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                           boxShadow: [
                                             if (ApproveMember.isNotEmpty && (ApproveMember['profile_image'] ?? '').isNotEmpty)
                                               BoxShadow(
-                                                color: Colors.white10.withOpacity(0.5), // Grey shadow color with opacity
+                                                color: Colors.white10.withAlpha(180), // Grey shadow color with opacity
                                                 spreadRadius: 1, // Spread radius of the shadow
                                                 blurRadius: 6, // Blur radius of the shadow
                                                 offset: Offset(0, 4), // Shadow position (x, y)
                                               ),
                                             if (ApproveMember.isNotEmpty && (ApproveMember['profile_image'] ?? '').isEmpty)
                                               BoxShadow(
-                                                color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
+                                                color: Colors.grey.withAlpha(180), // Grey shadow color with opacity
                                                 spreadRadius: 1, // Spread radius of the shadow
                                                 blurRadius: 3, // Blur radius of the shadow
                                                 offset: Offset(0, 4), // Shadow position (x, y)
@@ -1079,7 +946,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                             LayoutBuilder(
                                               builder: (context, constraints) {
                                                 double fontSize = largeFontSize + 6; // Default font size
-                                                var tmpname = "${ApproveMember['fname']} ${ApproveMember['lname']}"??'';
+                                                var tmpname = "${ApproveMember['fname']} ${ApproveMember['lname']}";
                                                 double availableWidth = tmpname.length*largeFontSize;
                                                 //log('$fontSize $availableWidth ${MediaQuery.of(context).size.width * 0.38*2}');
 
@@ -1422,7 +1289,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
               if(assignGatanayak)
                 Positioned.fill(
                   child: Container(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withAlpha(180),
                     child: Center(
                       child: Container(
                         height: MediaQuery.of(context).size.height * 0.65,
@@ -1460,14 +1327,14 @@ class _InfluencersPageState extends State<InfluencersPage> {
                                           boxShadow: [
                                             if (ApproveMember.isNotEmpty && (ApproveMember['profile_image'] ?? '').isNotEmpty)
                                               BoxShadow(
-                                                color: Colors.white10.withOpacity(0.5), // Grey shadow color with opacity
+                                                color: Colors.white10.withAlpha(180), // Grey shadow color with opacity
                                                 spreadRadius: 1, // Spread radius of the shadow
                                                 blurRadius: 6, // Blur radius of the shadow
                                                 offset: Offset(0, 4), // Shadow position (x, y)
                                               ),
                                             if (ApproveMember.isNotEmpty && (ApproveMember['profile_image'] ?? '').isEmpty)
                                               BoxShadow(
-                                                color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
+                                                color: Colors.grey.withAlpha(180), // Grey shadow color with opacity
                                                 spreadRadius: 1, // Spread radius of the shadow
                                                 blurRadius: 3, // Blur radius of the shadow
                                                 offset: Offset(0, 4), // Shadow position (x, y)
@@ -1992,7 +1859,7 @@ class _InfluencersPageState extends State<InfluencersPage> {
               if(loading)
                 Positioned.fill(
                   child: Container(
-                    color: Colors.black.withOpacity(0.5), // Semi-transparent overlay
+                    color: Colors.black.withAlpha(180), // Semi-transparent overlay
                     child: Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -2247,14 +2114,14 @@ class MemberCard extends StatelessWidget {
                   boxShadow: [
                     if(profileImage.isNotEmpty)
                       BoxShadow(
-                        color: Color.fromRGBO(5, 50, 70, 1.0).withOpacity(0.5), // Grey shadow color with opacity
+                        color: Color.fromRGBO(5, 50, 70, 1.0).withAlpha(180), // Grey shadow color with opacity
                         spreadRadius: 1, // Spread radius of the shadow
                         blurRadius: 7, // Blur radius of the shadow
                         offset: Offset(0, 4), // Shadow position (x, y)
                       ),
                     if(profileImage.isEmpty)
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
+                        color: Colors.grey.withAlpha(180), // Grey shadow color with opacity
                         spreadRadius: 1, // Spread radius of the shadow
                         blurRadius: 3, // Blur radius of the shadow
                         offset: Offset(0, 4), // Shadow position (x, y)

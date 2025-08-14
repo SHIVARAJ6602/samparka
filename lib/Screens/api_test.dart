@@ -2,28 +2,20 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:samparka/Screens/influencer_profile.dart';
-import 'package:samparka/Screens/ProfilePage.dart';
-import 'package:samparka/Screens/submit_report.dart';
 import 'package:samparka/Screens/update_user_profile.dart';
 import 'package:samparka/Screens/upload_gv_excel.dart';
 import 'package:samparka/Screens/upload_kr_excel.dart';
 import 'package:samparka/Service/api_service.dart';
-import 'Temp2.dart';
-import 'add_inf.dart';
-import 'drop_down.dart';
-import 'register_user.dart';
 import 'temp.dart';
-import '../Service/api_service.dart';
 class ApiScreen extends StatefulWidget {
   const ApiScreen({super.key});
 
 
   @override
-  _ApiScreenState createState() => _ApiScreenState();
+  ApiScreenState createState() => ApiScreenState();
 }
 
-class _ApiScreenState extends State<ApiScreen> {
+class ApiScreenState extends State<ApiScreen> {
   final apiService = ApiService();
   late Future<List<dynamic>> tasks;
   final TextEditingController _taskController = TextEditingController();
@@ -56,6 +48,8 @@ class _ApiScreenState extends State<ApiScreen> {
     double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
     double largeFontSize = normFontSize+4; //20
     double smallFontSize = normFontSize-2; //14
+    largeFontSize = largeFontSize;
+    smallFontSize = smallFontSize;
     return Scaffold(
       appBar: AppBar(
           backgroundColor: Colors.transparent,

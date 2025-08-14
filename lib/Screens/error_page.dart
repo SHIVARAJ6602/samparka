@@ -29,7 +29,7 @@ class _ErrorPageState extends State<ErrorPage> {
               ],
             ),
             child: Text(
-              'Sorry: Something went Wrong!',
+              'Sorry :( Something went Wrong!',
               style: TextStyle(
                 fontSize: 18, // Slightly larger font size
                 fontWeight: FontWeight.bold,

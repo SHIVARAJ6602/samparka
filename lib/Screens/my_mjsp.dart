@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/cupertino.dart';
@@ -19,15 +18,15 @@ class MyMJSPPage extends StatefulWidget {
   const MyMJSPPage({super.key, required this.type});
 
   @override
-  _MyMJSPPageState createState() => _MyMJSPPageState();
+  MyMJSPPageState createState() => MyMJSPPageState();
 }
 
-class _MyMJSPPageState extends State<MyMJSPPage> {
+class MyMJSPPageState extends State<MyMJSPPage> {
   final apiService = ApiService();
 
   int _selectedIndex = 1;
-  List<dynamic> Members = [];
-  List<dynamic> Gatanayaks = [];
+  List<dynamic> members = [];
+  List<dynamic> gatanayaks = [];
   late List<dynamic> result;
   bool loading = true;
 
@@ -90,7 +89,7 @@ class _MyMJSPPageState extends State<MyMJSPPage> {
       result = await apiService.myMJMembers(0, 100);
       setState(() {
         // Update the influencers list with the fetched data
-        Members = result;
+        members = result;
       });
       loading = false;
     } catch (e) {
@@ -105,7 +104,7 @@ class _MyMJSPPageState extends State<MyMJSPPage> {
       result = await apiService.getGatanayak(apiService.UserId);
       setState(() {
         // Update the influencers list with the fetched data
-        Members = result;
+        members = result;
         //TeamMembers.add({'id':apiService.UserId,'first_name':'${apiService.first_name}(self)','last_name':apiService.last_name,'designation':apiService.designation,'profileImage':apiService.profileImage});
         //log('Gatanayaks: $Members');
         loading = false;
@@ -121,6 +120,8 @@ class _MyMJSPPageState extends State<MyMJSPPage> {
     double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
     double largeFontSize = normFontSize+4; //20
     double smallFontSize = normFontSize-2; //14
+    largeFontSize = largeFontSize;
+    smallFontSize = smallFontSize;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -133,15 +134,15 @@ class _MyMJSPPageState extends State<MyMJSPPage> {
         children: [
           ListView.builder(
             padding: const EdgeInsets.all(1),
-            itemCount: Members.length,
+            itemCount: members.length,
             itemBuilder: (context, index) {
-              final member = Members[index];
+              final member = members[index];
               return Padding(
                 padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
                 child: MemberCard(
                   id: member['id']!,
-                  first_name: member['first_name']!,
-                  last_name: member['last_name']!,
+                  firstName: member['first_name']!,
+                  lastName: member['last_name']!,
                   designation: member['designation']??'Not Set',
                   profileImage: member['profile_image'] != null && member['profile_image']!.isNotEmpty
                       ? member['profile_image']!
@@ -154,7 +155,7 @@ class _MyMJSPPageState extends State<MyMJSPPage> {
           if(loading)
             Positioned.fill(
               child: Container(
-                color: Colors.black.withOpacity(0.5), // Semi-transparent overlay
+                color: Colors.black.withAlpha(180), // Semi-transparent overlay
                 child: Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -287,16 +288,16 @@ class _MyMJSPPageState extends State<MyMJSPPage> {
 
 class MemberCard extends StatelessWidget {
   final String id;
-  final String first_name;
-  final String last_name;
+  final String firstName;
+  final String lastName;
   final String designation;
   final String profileImage;
 
   const MemberCard({
     super.key,
 
-    required this.first_name,
-    required this.last_name,
+    required this.firstName,
+    required this.lastName,
     required this.designation,
     required this.profileImage,
     required this.id,
@@ -344,14 +345,14 @@ class MemberCard extends StatelessWidget {
                   boxShadow: [
                     if(profileImage.isNotEmpty)
                       BoxShadow(
-                        color: Color.fromRGBO(5, 50, 70, 1.0).withOpacity(0.5), // Grey shadow color with opacity
+                        color: Color.fromRGBO(5, 50, 70, 1.0).withAlpha(180), // Grey shadow color with opacity
                         spreadRadius: 1, // Spread radius of the shadow
                         blurRadius: 7, // Blur radius of the shadow
                         offset: Offset(0, 4), // Shadow position (x, y)
                       ),
                     if(profileImage.isEmpty)
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
+                        color: Colors.grey.withAlpha(180), // Grey shadow color with opacity
                         spreadRadius: 1, // Spread radius of the shadow
                         blurRadius: 3, // Blur radius of the shadow
                         offset: Offset(0, 4), // Shadow position (x, y)
@@ -401,7 +402,7 @@ class MemberCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$first_name $last_name', // Dynamic name
+                      '$firstName $lastName', // Dynamic name
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,

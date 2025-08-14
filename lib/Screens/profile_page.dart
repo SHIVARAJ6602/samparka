@@ -1,18 +1,19 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Required for SystemUiOverlayStyle
 import 'package:samparka/Screens/update_user_profile.dart';
 import '../Service/api_service.dart';
-import 'AboutDeveloper.dart';
-import 'PrivacyPolicyScreen.dart';
+import 'about_developer.dart';
+import 'privacy_policy_screen.dart';
 import 'login.dart';
 
 class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
+
   @override
-  _ProfilePageState createState() => _ProfilePageState();
+  ProfilePageState createState() => ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class ProfilePageState extends State<ProfilePage> {
   final apiService = ApiService();
   final TextEditingController newUrlController = TextEditingController();
 
@@ -168,14 +169,14 @@ class _ProfilePageState extends State<ProfilePage> {
                         boxShadow: [
                           if(apiService.profileImage != '')
                             BoxShadow(
-                              color: Color.fromRGBO(5, 50, 70, 1.0).withOpacity(0.5), // Grey shadow color with opacity
+                              color: Color.fromRGBO(5, 50, 70, 1.0).withAlpha(180), // Grey shadow color with opacity
                               spreadRadius: 1, // Spread radius of the shadow
                               blurRadius: 3, // Blur radius of the shadow
                               offset: Offset(0, 4), // Shadow position (x, y)
                             ),
                           if(apiService.profileImage == '')
                             BoxShadow(
-                              color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
+                              color: Colors.grey.withAlpha(180), // Grey shadow color with opacity
                               spreadRadius: 1, // Spread radius of the shadow
                               blurRadius: 3, // Blur radius of the shadow
                               offset: Offset(0, 4), // Shadow position (x, y)

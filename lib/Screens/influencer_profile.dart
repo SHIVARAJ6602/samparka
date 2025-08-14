@@ -1,12 +1,13 @@
 import 'dart:developer';
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:samparka/Screens/update_influencer_profile.dart';
 import 'package:samparka/Screens/schedule_interaction.dart';
 import 'package:samparka/Screens/view_interaction.dart';
 import 'package:flutter/services.dart'; // For Clipboard
-import 'package:fluttertoast/fluttertoast.dart'; // For Toast
+import 'package:samparka/widgets/loading_indicator.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../Service/api_service.dart';
@@ -26,7 +27,7 @@ class InfluencerProfilePageState extends State<InfluencerProfilePage> {
 
   final apiService = ApiService();
 
-  List<dynamic> meetings = [{"id":"MT00001","title":"meet1","description":""},{"id":"MT00002","title":"meet2","description":""}];
+  List<dynamic> meetings = [];
   late List<dynamic> result;
   List<dynamic> tasks = [];
   List<dynamic> interactions = [];
@@ -41,9 +42,9 @@ class InfluencerProfilePageState extends State<InfluencerProfilePage> {
   List<dynamic> fetchedHashtags = [];
   bool isTagsLoaded = false;
   late String profileImage = '';
-  late String GV_id = '';
-  late String IOS = '';
-  late String Phno = '';
+  late String gvId = '';
+  late String ios = '';
+  late String phNo = '';
   late String address = '';
   late String email = '';
   late String state = '';
@@ -53,24 +54,38 @@ class InfluencerProfilePageState extends State<InfluencerProfilePage> {
 
   TextEditingController titleController = TextEditingController();
 
-  late bool loading = true;
+  late bool pageLoading = true;
+  late bool interactionLoading = true;
 
   @override
   void initState() {
     super.initState();
-    setState(() {loading = true;});
-    GV_id = widget.id;
+    setState(() {pageLoading = true;});
+    loadData();
+  }
+
+  void loadData() async{
+    setState(() {pageLoading = true;});
+    gvId = widget.id;
     //log(GV_id[0][0]);
     fetchHashtags();
     getGanyavyakthi();
-    fetchTasks(GV_id);
-    fetchInteraction(GV_id);
-    setState(() {});
+    setState(() {
+      pageLoading = false; // Set loading to false after 2 seconds
+    });
     Future.delayed(Duration(seconds: 2), () {
+      setState(() {
+        pageLoading = false; // Set loading to false after 2 seconds
+      });
+    });
+    fetchTasks(gvId);
+    fetchInteraction(gvId);
+    setState(() {});
+    /*Future.delayed(Duration(seconds: 2), () {
       setState(() {
         loading = false; // Set loading to false after 2 seconds
       });
-    });
+    });*/
   }
 
   Future<void> fetchHashtags() async {
@@ -120,14 +135,14 @@ class InfluencerProfilePageState extends State<InfluencerProfilePage> {
   Future<bool> getGanyavyakthi() async{
     try {
       // Call the apiService.homePage() and store the result
-      result = await apiService.getGanyavyakthi(GV_id);
+      result = await apiService.getGanyavyakthi(gvId);
       setState(() {
         // Update the influencers list with the fetched data
         //meetings = result;
         name = '${result[0]['fname'] ?? ''} ${result[0]['lname'] ?? '.'}';
         designation = result[0]['designation']??'';
         description = result[0]['description']??'';
-        IOS = result[0]['impact_on_society']??'';
+        ios = result[0]['impact_on_society']??'';
         if (result[0]['soochi'] == 'AkhilaBharthiya'){
           soochi = 'AB';
         }else if(result[0]['soochi'] == 'PranthyaSampark'){
@@ -136,7 +151,7 @@ class InfluencerProfilePageState extends State<InfluencerProfilePage> {
           soochi = 'JS';
         }
         shreni = result[0]['shreni']??'';
-        Phno = result[0]['phone_number']??'';
+        phNo = result[0]['phone_number']??'';
         address = result[0]['address']??'';
         state = result[0]['state']??'';
         district = result[0]['district']??'';
@@ -173,10 +188,10 @@ class InfluencerProfilePageState extends State<InfluencerProfilePage> {
     }
   }
 
-  Future<void> fetchTasks(GV_id) async {
+  Future<void> fetchTasks(gvId) async {
     try {
       // Call the apiService.homePage() and store the result
-      var result = await apiService.getTasks(GV_id);
+      var result = await apiService.getTasks(gvId);
       setState(() {
         // Update the influencers list with the fetched data
         tasks = result;
@@ -187,13 +202,17 @@ class InfluencerProfilePageState extends State<InfluencerProfilePage> {
     }
   }
 
-  Future<void> fetchInteraction(GV_id) async {
+  Future<void> fetchInteraction(gvId) async {
     try {
+      setState(() {
+        interactionLoading = true;
+      });
       // Call the apiService.homePage() and store the result
-      var result = await apiService.getInteraction(GV_id);
+      var result = await apiService.getInteraction(gvId);
       setState(() {
         // Update the influencers list with the fetched data
         meetings = result;
+        interactionLoading = false;
         //log('interactions: $meetings');
       });
     } catch (e) {
@@ -203,167 +222,194 @@ class InfluencerProfilePageState extends State<InfluencerProfilePage> {
   }
 
 
-  void _showPopup(BuildContext context) {
-    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
-    double largeFontSize = normFontSize+4; //20
-    double smallFontSize = normFontSize-2;
-    largeFontSize = largeFontSize;
-    smallFontSize = smallFontSize;
+  void _influencerDetails(BuildContext context) {
+    double normFontSize = MediaQuery.of(context).size.width * 0.041;
+    double largeFontSize = normFontSize + 4;
+    double smallFontSize = normFontSize - 2;
+
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(20)),
-          ),
-          title: Text("Influencer Information", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Name: $name', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
-                Divider(),
-                Text("Email: $email", style: TextStyle(fontSize: 16)),
-                Divider(),
-                Text("Address: $address", style: TextStyle(fontSize: 16)),
-                Text("District: $district", style: TextStyle(fontSize: 16)),
-                Text("State: $state", style: TextStyle(fontSize: 16)),
-                Divider(),
-                Text("Phone: $Phno", style: TextStyle(fontSize: 16)),
-                SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () async {
-                        final call = Uri.parse('tel:+91 $Phno');
-                        if (await canLaunchUrl(call)) {
-                          launchUrl(call);
-                        } else {
-                          throw 'Could not launch $call';
-                        }
-                      },
-                      child: Row(
-                        children: [
-                          Icon(Icons.call),
-                          SizedBox(width: 5),
-                          Text("Call"),
-                        ],
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed: () async {
-                        final web = Uri.parse('https://wa.me/$Phno');
-                        if (await canLaunchUrl(web)) {
-                          launchUrl(web);
-                        } else {
-                          throw 'Could not launch $web';
-                        }
-                      },
-                      child: Row(
-                        children: [
-                          Icon(Icons.chat),
-                          SizedBox(width: 5),
-                          Text("WhatsApp"),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 10),
-              ],
-            ),
-          ),
-          actions: [
-            if(assignedKaryakartha.isNotEmpty && assignedKaryakartha==apiService.UserId)
-            Container(
-              width: MediaQuery.of(context).size.width * 0.25 * 1.1,
-              height: MediaQuery.of(context).size.width * 0.25 * 0.4,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(50),
-                gradient: const LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    Color.fromRGBO(133, 1, 1, 1.0),
-                    Color.fromRGBO(237, 62, 62, 1.0),
-                  ],
-                ),
-              ),
-              child: TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // First pop the current screen/dialog
-                  Future.delayed(Duration(milliseconds: 30), () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => ChangeRequestPage(GV_id)),
-                    ).then((result) {
-                      if (result == true) {
-                        getGanyavyakthi(); // Refresh after returning
-                      }
-                    });
-                  });
-                } ,
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Edit Profile',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white,
+                      Center(
+                        child: Text(
+                          "Influencer Information",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 5),
-                      Transform.rotate(
-                        angle: 5.7,
-                        child: Icon(
-                          Icons.arrow_forward,
-                          color: Colors.white,
-                          size: 24,
-                        ),
+                      const SizedBox(height: 10),
+                      Text('Name: $name', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
+                      const Divider(),
+                      Text("Email: $email", style: const TextStyle(fontSize: 16)),
+                      const Divider(),
+                      Text("Address: $address", style: const TextStyle(fontSize: 16)),
+                      Text("District: $district", style: const TextStyle(fontSize: 16)),
+                      Text("State: $state", style: const TextStyle(fontSize: 16)),
+                      const Divider(),
+                      Text("Phone: $phNo", style: const TextStyle(fontSize: 16)),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color.fromRGBO(14, 57, 196, 1.0),
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () async {
+                              final call = Uri.parse('tel:+91 $phNo');
+                              if (await canLaunchUrl(call)) {
+                                launchUrl(call);
+                              } else {
+                                throw 'Could not launch $call';
+                              }
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(Icons.call),
+                                SizedBox(width: 5),
+                                Text("Call"),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color.fromRGBO(59, 171, 144, 1.0),
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () async {
+                              final web = Uri.parse('https://wa.me/$phNo');
+                              if (await canLaunchUrl(web)) {
+                                launchUrl(web);
+                              } else {
+                                throw 'Could not launch $web';
+                              }
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(Icons.chat),
+                                SizedBox(width: 5),
+                                Text("WhatsApp"),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 10),
+                      if (assignedKaryakartha.isNotEmpty && assignedKaryakartha == apiService.UserId)
+                        Container(
+                          width: MediaQuery.of(context).size.width * 0.25 * 1.1,
+                          height: MediaQuery.of(context).size.width * 0.25 * 0.4,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(50),
+                            gradient: const LinearGradient(
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                              colors: [
+                                Color.fromRGBO(133, 1, 1, 1.0),
+                                Color.fromRGBO(237, 62, 62, 1.0),
+                              ],
+                            ),
+                          ),
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              Future.delayed(const Duration(milliseconds: 30), () async {
+                                if (!mounted) return; // ensure widget is still in the tree before using context
+
+                                final result = await Navigator.push<bool>(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ChangeRequestPage(gvId), // use _ to avoid capturing outer context
+                                  ),
+                                );
+
+                                if (!mounted) return; // ensure widget still exists after coming back
+
+                                if (result == true) {
+                                  getGanyavyakthi();
+                                }
+
+                              });
+                            },
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: Center(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text(
+                                    'Edit Profile',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Transform.rotate(
+                                    angle: 5.7,
+                                    child: const Icon(
+                                      Icons.arrow_forward,
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
               ),
-            ),
-            Expanded(child: SizedBox(height: 1)),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text("Close"),
-            ),
-          ],
+
+              // 🔴 Circular Close Button - Top Right
+              Positioned(
+                top: 8,
+                right: 8,
+                child: InkWell(
+                  onTap: () => Navigator.of(context).pop(),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color.fromRGBO(96, 125, 139, 1.0), // blue-gray
+                    ),
+                    child: const Icon(Icons.close, size: 18, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
   }
 
-  void _copyPhoneNumber(String phoneNumber) {
-    Clipboard.setData(ClipboardData(text: phoneNumber)); // Copy to clipboard
-    Fluttertoast.showToast(
-      msg: "$phoneNumber copied to clipboard",
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-      timeInSecForIosWeb: 1,
-      backgroundColor: Colors.black,
-      textColor: Colors.white,
-      fontSize: 16.0,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    String GV_id = widget.id;
+    String gvId = widget.id;
     //log(GV_id);
     //log(widget.id);
     double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
@@ -411,14 +457,14 @@ class InfluencerProfilePageState extends State<InfluencerProfilePage> {
                                     boxShadow: [
                                       if(profileImage.isNotEmpty)
                                         BoxShadow(
-                                          color: Color.fromRGBO(5, 50, 70, 1.0).withOpacity(0.5), // Grey shadow color with opacity
+                                          color: Color.fromRGBO(5, 50, 70, 1.0).withAlpha(180), // Grey shadow color with opacity
                                           spreadRadius: 1, // Spread radius of the shadow
                                           blurRadius: 7, // Blur radius of the shadow
                                           offset: Offset(0, 4), // Shadow position (x, y)
                                         ),
                                       if(profileImage.isEmpty)
                                         BoxShadow(
-                                          color: Colors.grey.withOpacity(0.5), // Grey shadow color with opacity
+                                          color: Colors.grey.withAlpha(180), // Grey shadow color with opacity
                                           spreadRadius: 1, // Spread radius of the shadow
                                           blurRadius: 3, // Blur radius of the shadow
                                           offset: Offset(0, 4), // Shadow position (x, y)
@@ -467,7 +513,7 @@ class InfluencerProfilePageState extends State<InfluencerProfilePage> {
                             // Influencer Details
                             TextButton(
                               onPressed: () {
-                                _showPopup(context);
+                                _influencerDetails(context);
                               },
                               child: ConstrainedBox(
                                 constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.38),
@@ -576,7 +622,7 @@ class InfluencerProfilePageState extends State<InfluencerProfilePage> {
                               children: [
                                 IconButton(
                                   icon: Icon(Icons.info_outline),
-                                  onPressed: () => _showPopup(context),
+                                  onPressed: () => _influencerDetails(context),
                                 ),
                               ],
                             ),
@@ -591,7 +637,7 @@ class InfluencerProfilePageState extends State<InfluencerProfilePage> {
                         SizedBox(height: 10,),
                         Text('Impact On Society:',style: TextStyle(fontSize: largeFontSize,color: Color.fromRGBO(2, 40, 60, 1),fontWeight: FontWeight.bold)),
                         SizedBox(height: 1),
-                        Text('   $IOS',style: TextStyle(fontSize: normFontSize)),
+                        Text('   $ios',style: TextStyle(fontSize: normFontSize)),
                         Divider(),
                         SizedBox(height: 16),
                         //Tasks
@@ -632,10 +678,10 @@ class InfluencerProfilePageState extends State<InfluencerProfilePage> {
                                               String title = titleController.text.trim();
                                               if (title.isNotEmpty) {
                                                 // Call ApiService to create the task
-                                                bool isTaskCreated = await apiService.createTask(GV_id, title);
+                                                bool isTaskCreated = await apiService.createTask(gvId, title);
                                                 Navigator.pop(context);
                                                 if (isTaskCreated) {
-                                                  fetchTasks(GV_id);
+                                                  fetchTasks(gvId);
                                                   // Show a dialog to confirm task creation
                                                   showDialog(
                                                     context: context,
@@ -717,7 +763,7 @@ class InfluencerProfilePageState extends State<InfluencerProfilePage> {
                         SizedBox(height: 16),
                         if(tasks.isNotEmpty)
                           if(tasks.length>3)
-                            Container(
+                            SizedBox(
                             height: 240,
                             child: Row(
                               children: [
@@ -783,70 +829,68 @@ class InfluencerProfilePageState extends State<InfluencerProfilePage> {
                             ),
                           ),
                           if(tasks.length<=3)
-                            Container(
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      children: tasks.asMap().entries.map<Widget>((entry) {
-                                        int index = entry.key;
-                                        var task = entry.value;
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    children: tasks.asMap().entries.map<Widget>((entry) {
+                                      int index = entry.key;
+                                      var task = entry.value;
 
-                                        return Card(
-                                          margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                                          child: ListTile(
-                                            title: Text(task['title']),
-                                            trailing: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                IconButton(
-                                                  icon: Icon(
-                                                    Icons.check_circle_outline,
-                                                    color: task['completed'] ? Colors.green : Colors.red,
-                                                  ),
-                                                  onPressed: () async {
-                                                    bool isTaskCompleted = await apiService.markTaskComplete(task['id']);
-                                                    if (isTaskCompleted) {
-                                                      setState(() {
-                                                        task['completed'] = true;
-                                                      });
-                                                      ScaffoldMessenger.of(context).showSnackBar(
-                                                        SnackBar(content: Text("Task marked as completed!")),
-                                                      );
-                                                    } else {
-                                                      ScaffoldMessenger.of(context).showSnackBar(
-                                                        SnackBar(content: Text("Failed to mark task as completed")),
-                                                      );
-                                                    }
-                                                  },
+                                      return Card(
+                                        margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                                        child: ListTile(
+                                          title: Text(task['title']),
+                                          trailing: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              IconButton(
+                                                icon: Icon(
+                                                  Icons.check_circle_outline,
+                                                  color: task['completed'] ? Colors.green : Colors.red,
                                                 ),
-                                                IconButton(
-                                                  icon: Icon(Icons.delete_outline, color: Colors.red),
-                                                  onPressed: () async {
-                                                    bool isTaskDeleted = await apiService.deleteTask(task['id']);
-                                                    if (isTaskDeleted) {
-                                                      setState(() {
-                                                        tasks.removeAt(index);
-                                                      });
-                                                      ScaffoldMessenger.of(context).showSnackBar(
-                                                        SnackBar(content: Text("Task deleted!")),
-                                                      );
-                                                    } else {
-                                                      ScaffoldMessenger.of(context).showSnackBar(
-                                                        SnackBar(content: Text("Failed to delete the task")),
-                                                      );
-                                                    }
-                                                  },
-                                                ),
-                                              ],
-                                            ),
+                                                onPressed: () async {
+                                                  bool isTaskCompleted = await apiService.markTaskComplete(task['id']);
+                                                  if (isTaskCompleted) {
+                                                    setState(() {
+                                                      task['completed'] = true;
+                                                    });
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(content: Text("Task marked as completed!")),
+                                                    );
+                                                  } else {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(content: Text("Failed to mark task as completed")),
+                                                    );
+                                                  }
+                                                },
+                                              ),
+                                              IconButton(
+                                                icon: Icon(Icons.delete_outline, color: Colors.red),
+                                                onPressed: () async {
+                                                  bool isTaskDeleted = await apiService.deleteTask(task['id']);
+                                                  if (isTaskDeleted) {
+                                                    setState(() {
+                                                      tasks.removeAt(index);
+                                                    });
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(content: Text("Task deleted!")),
+                                                    );
+                                                  } else {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(content: Text("Failed to delete the task")),
+                                                    );
+                                                  }
+                                                },
+                                              ),
+                                            ],
                                           ),
-                                        );
-                                      }).toList(),
-                                    ),
+                                        ),
+                                      );
+                                    }).toList(),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                         if(tasks.isEmpty)
                           Center(
@@ -870,7 +914,7 @@ class InfluencerProfilePageState extends State<InfluencerProfilePage> {
                                 onPressed: () {
                                     Navigator.push(
                                       context,
-                                      MaterialPageRoute(builder: (context) => AddInteractionPage(GV_id)),
+                                      MaterialPageRoute(builder: (context) => AddInteractionPage(gvId)),
                                     );
                                   },
                                 style: TextButton.styleFrom(
@@ -898,100 +942,49 @@ class InfluencerProfilePageState extends State<InfluencerProfilePage> {
                         ),
                         SizedBox(height: 16),
                         // meetings Cards
-                        Container(
-                          child: Column(
-                            children: [
-                              // If the list is empty, show a message
-                              if (loading)
-                                Center(
-                                  child: CircularProgressIndicator(
-                                    backgroundColor: Colors.white,
+                        Column(
+                          children: [
+                            // If the list is empty, show a message
+                            if (interactionLoading)
+                              Center(
+                                child: LoadingIndicatorGreen(),
+                              )
+                            else
+                              if (meetings.isEmpty)
+                                Container(
+                                  padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'No Meetings Available',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color.fromRGBO(2, 40, 60, 1),
+                                      ),
+                                    ),
                                   ),
                                 )
                               else
-                                if (meetings.isEmpty)
-                                  Container(
-                                    padding: const EdgeInsets.all(16), // Optional, for spacing inside the container
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        'No Meetings Available',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color.fromRGBO(2, 40, 60, 1),
-                                        ),
+                                Column(
+                                  children: List.generate(meetings.length, (index) {
+                                    final meeting = meetings[index]; // Access the meeting data for each item
+                                    return Padding(
+                                      padding: const EdgeInsets.only(left: 8, right: 8, top: 12),
+                                      child: MeetingCard(
+                                        title: meeting['title']!,
+                                        description: meeting['description']!,
+                                        dateTime: meeting['meeting_datetime']??'0000-00-00T00:00:00+00:00',
+                                        meetingPlace: meeting['meeting_place']??'none',
+                                        id: meeting['id']!,
                                       ),
-                                    ),
-                                  )
-                                else
-                                  Column(
-                                    children: List.generate(meetings.length, (index) {
-                                      final meeting = meetings[index]; // Access the meeting data for each item
-                                      return Padding(
-                                        padding: const EdgeInsets.only(left: 8, right: 8, top: 12),
-                                        child: meetingCard(
-                                          title: meeting['title']!,
-                                          description: meeting['description']!,
-                                          dateTime: meeting['meeting_datetime']??'0000-00-00T00:00:00+00:00',
-                                          id: meeting['id']!,
-                                        ),
-                                      );
-                                    }),
-                                  ),
+                                    );
+                                  }),
+                                ),
 
-                              /*ListView.builder(
-                                    shrinkWrap: true,
-                                    itemCount: meetings.length, // The number of items in your data list
-                                    itemBuilder: (context, index) {
-                                      final meeting = meetings[index]; // Access the influencer data for each item
-                                      return Padding(
-                                        padding: const EdgeInsets.only(left: 8, right: 8, top: 12),
-                                        child: meetingCard(
-                                          title: meeting['title']!,
-                                          description: meeting['description']!,
-                                          dateTime: meeting['meeting_datetime']!,
-                                          id: meeting['id']!,
-                                        ),
-                                      );
-                                    },
-                                  ),*/
-
-                              //if (meetings.isNotEmpty)
-                              // View All Influencers Button
-                                /*TextButton(
-                                  onPressed: () async {
-                                    /*Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (context) => InfluencerProfilePage('GV00000001')),
-                                    );*/
-                                  },
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'View all Meetings',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.grey[800],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Image.asset(
-                                        'assets/icon/arrow.png',
-                                        color: Colors.grey[800],
-                                        width: 12,
-                                        height: 12,
-                                      ),
-                                    ],
-                                  ),
-                                ),*/
-
-                            ],
-                          ),
+                          ],
                         ),
                       ],
                     ),
@@ -999,10 +992,10 @@ class InfluencerProfilePageState extends State<InfluencerProfilePage> {
               ),
             ],
           ),
-          if (loading)
+          if (pageLoading)
             Positioned.fill(
               child: Container(
-                color: Colors.black.withOpacity(0.5), // Semi-transparent overlay
+                color: Colors.black.withAlpha(180), // Semi-transparent overlay
                 child: Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -1030,38 +1023,35 @@ class InfluencerProfilePageState extends State<InfluencerProfilePage> {
   }
 }
 
-class meetingCard extends StatelessWidget {
+class MeetingCard extends StatelessWidget {
   final String title;
   final String description;
   final String dateTime;
+  final String meetingPlace;
   final String id;
 
-  const meetingCard({
+  const MeetingCard({
     super.key,
     required this.title,
     required this.description,
     required this.id,
     required this.dateTime,
+    required this.meetingPlace,
   });
-
 
   @override
   Widget build(BuildContext context) {
-    double normFontSize = MediaQuery.of(context).size.width * 0.041; //16
-    double largeFontSize = normFontSize+4; //20
-    double smallFontSize = normFontSize-2;
+    double normFontSize = MediaQuery.of(context).size.width * 0.041; // ~16
+    double largeFontSize = normFontSize + 4; // ~20
+    double smallFontSize = normFontSize - 2; // ~14
+
     return Container(
-      //padding: const EdgeInsets.all(0), // Container padding
-      decoration: BoxDecoration(
-        color: Colors.white, // Background color
+      decoration: const BoxDecoration(
+        color: Colors.white,
         border: Border(
-          bottom: BorderSide(
-            color: Colors.grey, // Bottom border color
-            width: 1, // Bottom border width
-          ),
+          bottom: BorderSide(color: Colors.grey, width: 1),
         ),
       ),
-
       child: TextButton(
         onPressed: () {
           Navigator.push(
@@ -1070,94 +1060,94 @@ class meetingCard extends StatelessWidget {
           );
         },
         style: ButtonStyle(
-          shape: WidgetStateProperty.all(RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(25),
-          )),
+          shape: WidgetStateProperty.all(
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+          ),
         ),
         child: Padding(
-          padding: const EdgeInsets.only(left: 0,right: 0,bottom: 4,top: 0), // Add padding to the content
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center, // Align all children to the start
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Column( // Column instead of single Row
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: MediaQuery.of(context).size.width * 0.6, // 50% width
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start, // Align text to the left
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 2.0), // Space between text
-                      child: Text(
-                        title,
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: largeFontSize,color: Color.fromRGBO(5, 50, 70, 1.0)),
-                      ),
+              // ===== Top Row: Title + Arrow Icon =====
+              Row(
+                children: [
+                  Expanded(
+                    flex: 6,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 2.0),
+                          child: AutoSizeText(
+                            title,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: largeFontSize,
+                              color: const Color.fromRGBO(5, 50, 70, 1.0),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 2.0),
+                          child: AutoSizeText(
+                            description,
+                            style: TextStyle(
+                              fontSize: normFontSize,
+                              color: const Color.fromRGBO(5, 50, 70, 1.0),
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 2.0),
-                      child: Text(
-                        description,
-                        style: TextStyle(fontSize: smallFontSize,color: Color.fromRGBO(5, 50, 70, 1.0)),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 2.0),
-                      child: Text(
-                        DateFormat('yyyy-MM-dd HH:mm a').format(DateTime.parse(dateTime)),
-                        style: TextStyle(fontSize: smallFontSize,color: Color.fromRGBO(0, 0, 0, 1)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(child: SizedBox()), // Fills the remaining space
-              //arrow
-              Center(
-                child: Column(
-                  children: [
-                    Transform.rotate(
-                      angle: 4.7124,  // Rotate the arrow 90 degrees
+                  ),
+                  const Spacer(),
+                  Center(
+                    child: Transform.rotate(
+                      angle: 4.7124,
                       child: Image.asset(
                         'assets/icon/arrow.png',
                         color: Colors.grey,
-                        width: 15,  // Adjust the size of the image
-                        height: 15, // Adjust the size of the image
+                        width: 15,
+                        height: 15,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 4),
+
+              // ===== NEW Full-width Row: Place & Date =====
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      meetingPlace,
+                      style: TextStyle(
+                        fontSize: smallFontSize,
+                        color: Colors.blue,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Text(
+                    DateFormat('yyyy-MM-dd').format(DateTime.parse(dateTime)),
+                    style: TextStyle(
+                      fontSize: smallFontSize,
+                      color: Colors.green,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-
         ),
       ),
     );
   }
 }
-//delete Button
-/*
-TextButton.icon(
-  onPressed: () async {
-    bool confirm = await showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text('Delete Profile'),
-        content: Text('Are you sure you want to delete this GanyaVyakthi profile? This action cannot be undone.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Delete')),
-        ],
-      ),
-    );
-
-    if (confirm) {
-      bool success = await apiService.deleteGanyaVyakthi(GV_id);
-      if (success) {
-        Navigator.pop(context); // Or go to list page
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Profile deleted successfully.")));
-      }
-    }
-  },
-  icon: Icon(Icons.delete, color: Colors.red),
-  label: Text("Delete Profile", style: TextStyle(color: Colors.red)),
-)
-*/

@@ -12,6 +12,7 @@ import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:samparka/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image/image.dart' as img;
 
@@ -43,7 +44,8 @@ class ApiService {
   late FlutterLocalNotificationsPlugin localNotifications;
   late bool _isInitialized = false;
   late String txt = '...';
-  late final FlutterSecureStorage secureStorage;
+  late FlutterSecureStorage secureStorage;
+
   Future<void> _initialize() async {
     dio = Dio();
     cookieJar = CookieJar();
@@ -69,7 +71,7 @@ class ApiService {
     _isInitialized = true;
   }
 
-  /***************FCM*******************/
+  /// ***************FCM*************************
 
   /*
   Future<void> _requestPermissions() async {
@@ -110,7 +112,6 @@ class ApiService {
       badge: true,
       sound: true,
     );
-
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       log("Notifications permission granted.");
     } else {
@@ -146,7 +147,7 @@ class ApiService {
       showNotification(message.notification?.title, message.notification?.body);
     });
   }
-  /******************FCM*************************/
+  /// ******************FCM - END*************************
 
   Future<bool> checkVersion() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -477,6 +478,13 @@ class ApiService {
         await saveData();
         await loadData();
         showDialogMsg(context, 'You Have been logged Out', 'Please Sign in again!');
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => MyApp()),
+                (route) => false, // removes all previous routes
+          );
+        });
         return false;
       } else {
         log('Dio error: ${e.response?.statusCode} - ${e.message}');
@@ -1424,7 +1432,7 @@ class ApiService {
     return false;
   }
 
-  Future<bool> createInteraction(List<dynamic> data) async {
+  Future<bool> createInteraction(Map<String, dynamic> data) async {
     dio.options.headers['Authorization'] = 'Token $token';
 
     try {
@@ -1433,38 +1441,23 @@ class ApiService {
         data: {
           'action': 'addInteraction',
           'created_by': this.UserId,
-          'ganya_vyakti': data[8],
-          'title': data[0],
-          'description': data[4],
-          'discussion_points': data[7],
-          'materials_distributed': data[5],
-          'status': data[3],
-          'virtual_meeting_link': data[6],
-          'meeting_place': data[1],
-          'meeting_datetime': data[2],
+          'title': data["title"],
+          'meeting_place': data["locationType"],
+          'meeting_datetime': data["meetingDate"],
+          'discussion_points': data["discussionPoints"],
+          'action_points': data["actionPoints"], // action points as description
+          'materials_distributed': data["materialsDistributed"],
+          'ganya_vyakti': data["ganyavyaktiId"],
         },
       );
 
-      // Check if the response is successful (status code 200)
-      if (response.statusCode == 201) {
-        return true;
-      } else {
-        // Log and throw exception if status code is not 200
-        log('Failed to create interaction: ${response.statusCode}');
-        return false;
-        throw Exception('Failed to create task. Status code: ${response.statusCode}');
-      }
+      return response.statusCode == 201;
     } catch (e) {
-      // log the error and rethrow it
       log('Error: $e');
       return false;
-      throw Exception('Failed to create task: $e');
-      return false;
     }
-
-    // Return false if for any reason the task could not be created
-    return false;
   }
+
 
   Future<bool> createMeeting(List<dynamic> data) async {
     dio.options.headers['Authorization'] = 'Token $token';
@@ -1723,12 +1716,12 @@ class ApiService {
     }
   }
 
-  Future<List<dynamic>> getEventByID(String meetingTypeID,String meetingID) async {
+  Future<List<dynamic>> getEventByID(String meetingID,String meetingTypeID) async {
     dio.options.headers['Authorization'] = 'Token $token';
 
     try {
       //log(meetingTypeID);
-      final response = await dio.post('$baseUrl/callHandler/',data: {'action':'get_interaction_by_id','id':meetingID});
+      final response = await dio.post('$baseUrl/callHandler/',data: {'action':'getEventById','id':meetingID ,'EventType':meetingTypeID});
       //log(response.data);
 
       if (response.statusCode == 200) {
@@ -1891,6 +1884,33 @@ class ApiService {
       throw Exception('Failed to load supervisor: $e');
     }
   }
+
+  Future<List<dynamic>> getEventsById(String eventID, String meetingTypeID) async {
+    dio.options.headers['Authorization'] = 'Token $token';
+    try {
+      final response = await dio.post('$baseUrl/callHandler/', data: {
+        'action': 'getEventsById',
+        'EventType': meetingTypeID,
+        'id': eventID
+      });
+
+      if (response.statusCode == 200) {
+        if (response.data is List<dynamic>) {
+          return response.data;
+        } else if (response.data is Map<String, dynamic>) {
+          return [response.data];
+        } else {
+          throw Exception('Unexpected data type: ${response.data.runtimeType}');
+        }
+      } else {
+        throw Exception('Failed to load Meeting details: Status code ${response.statusCode}');
+      }
+    } catch (e) {
+      log('Error: $e');
+      throw Exception('Failed to load Meeting details: $e');
+    }
+  }
+
 
   Future<List<dynamic>> getEventImages(String id,String meetingTypeID) async {
     dio.options.headers['Authorization'] = 'Token $token';

@@ -5,16 +5,16 @@ import '../Screens/user_profile_page.dart';
 
 class MemberCard extends StatelessWidget {
   final String id;
-  final String first_name;
-  final String last_name;
+  final String firstName;
+  final String lastName;
   final String designation;
   final String profileImage;
 
   const MemberCard({
     super.key,
 
-    required this.first_name,
-    required this.last_name,
+    required this.firstName,
+    required this.lastName,
     required this.designation,
     required this.profileImage,
     required this.id,
@@ -124,7 +124,7 @@ class MemberCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$first_name $last_name', // Dynamic name
+                      '$firstName $lastName', // Dynamic name
                       style: TextStyle(
                         fontSize: largeFontSize+6,
                         fontWeight: FontWeight.bold,
