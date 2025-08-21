@@ -5,10 +5,12 @@ import 'dart:developer';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:badges/badges.dart' as badges;
 import 'package:samparka/Screens/meeting.dart';
 import 'package:samparka/Screens/profile_page.dart';
 import 'package:samparka/Screens/team.dart';
 import 'package:samparka/Screens/view_meeting.dart';
+import '../Service/app_notification_service.dart';
 import '../utils/global_navigator_key.dart';
 import '../widgets/approval_card.dart';
 import '../widgets/influencer_card.dart';
@@ -110,9 +112,15 @@ class _InfluencersPageState extends State<InfluencersPage> {
 
   late String soochi;
 
+  int unreadCount = 0; //notification
+
   @override
   void initState() {
     super.initState();
+    _loadData();
+  }
+
+  void _loadData() async {
     handleAuth(context);
     //handleButtonPress();
     //apiService.token = 'c7117b29e594dda83130774d398a928021810c41';
@@ -127,8 +135,16 @@ class _InfluencersPageState extends State<InfluencersPage> {
     if(apiService.lvl>2){
       getUnapprovedProfile();
     }
+    updateBadge();
     //fetchTeam();
     setState(() {loading = false;});
+  }
+
+  void updateBadge() async {
+    //Future.delayed(Duration.zero, );
+    final count = await AppNotificationService.getUnreadCount();
+    setState(() { unreadCount = count; });
+    setState(() { unreadCount = 2; });
   }
 
   @override
@@ -490,12 +506,20 @@ class _InfluencersPageState extends State<InfluencersPage> {
               ),
               // Notification icon
               IconButton(
-                icon: const Icon(Icons.notifications, color: Color.fromRGBO(5, 50, 70, 1.0)),
-                onPressed: () {
-                  Navigator.push(
+                icon: badges.Badge(
+                  badgeContent: Text(
+                    unreadCount.toString(),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold,fontSize: 10),
+                  ),
+                  showBadge: unreadCount > 0,
+                  child: Icon(Icons.notifications, color: Color.fromRGBO(5, 50, 70, 1.0)),
+                ),
+                onPressed: () async {
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => NotificationsPage()),
                   );
+                  updateBadge(); // refresh on return from notifications page
                 },
               ),
             ],

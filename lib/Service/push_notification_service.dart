@@ -1,12 +1,9 @@
 import 'dart:developer';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:samparka/Screens/view_meeting.dart';
-
-import '../Screens/event_detail.dart';
 import '../utils/global_navigator_key.dart';
 import 'api_service.dart';
 
@@ -34,19 +31,12 @@ Future<void> handleMessageData(Map<String, dynamic> data) async {
     return {}; // Return empty map if error occurs or result is empty
   }
 
-  if (screen == 'event_detail' && id != null) {
+  if (screen == 'ViewEvent' && id != null) {
     eventData = await fetchEventData();
     navigatorKey.currentState?.push(
       MaterialPageRoute(
         builder: (_) => ViewEventPage(id, eventData,typeId),
       ),
-      /*MaterialPageRoute(
-        builder: (_) => EventDetailPage(
-          eventId: id,
-          meetingTypeId: typeId,
-        ),
-      ),
-       */
     );
   }
 
@@ -65,7 +55,7 @@ Future<void> setupFCMListeners() async {
 
   // Handle foreground messages
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    log('📬 Foreground: ${message.notification?.title}');
+    log('Foreground: ${message.notification?.title}');
 
     RemoteNotification? notification = message.notification;
     AndroidNotification? android = message.notification?.android;
@@ -89,15 +79,15 @@ Future<void> setupFCMListeners() async {
   });
 
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    log('📲 Notification clicked: ${message.data}');
-    handleMessageData(message.data); // No context needed!
+    log('Notification clicked: ${message.data}');
+    handleMessageData(message.data);
   });
 
   // App launched via notification (terminated state)
   FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
     if (message != null) {
-      log('🚀 App launched from notification: ${message.data}');
-      handleMessageData(message.data); // No context needed!
+      log('App launched from notification: ${message.data}');
+      handleMessageData(message.data);
     }
   });
 }

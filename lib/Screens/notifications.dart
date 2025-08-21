@@ -2,14 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:samparka/Screens/resources.dart';
 
+import '../Service/app_notification_service.dart';
+import '../utils/app_notification.dart';
+
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
 
   @override
-  _NotificationsPageState createState() => _NotificationsPageState();
+  State<NotificationsPage> createState() => _NotificationsPageState();
 }
 
 class _NotificationsPageState extends State<NotificationsPage> {
+  List<AppNotification> notifs = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadNotifications();
+  }
+
+  Future<void> loadNotifications() async {
+    final all = await AppNotificationService.getNotifications();
+    setState(() { notifs = all; });
+    await AppNotificationService.setAllRead();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -99,6 +116,29 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   ),
                 ),
               ],
+            ),
+            SizedBox(height: 25),
+            ListView.separated(
+              itemCount: notifs.length,
+              separatorBuilder: (_, __) => Divider(height: 1),
+              itemBuilder: (context, i) {
+                final n = notifs[i];
+                return ListTile(
+                  tileColor: !n.read ? Colors.grey.shade200 : null,
+                  leading: !n.read
+                      ? Icon(Icons.circle, color: Colors.red, size: 12) : null,
+                  title: Text(n.title),
+                  subtitle: Text(n.body),
+                  onTap: () {
+                    // navigate if needed
+                    setState(() {
+                      n.read = true;
+                    });
+                    // optionally re-save if you need:
+                    AppNotificationService.setRead(n.id);
+                  },
+                );
+              },
             ),
             SizedBox(height: 25),
             Text(
